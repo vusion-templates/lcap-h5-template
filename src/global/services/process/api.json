@@ -1,0 +1,20 @@
+{
+    "getTasks": {
+        "url": {
+            "path": "/gw/{domainName}/api/system/process/task/myList",
+            "method": "get"
+        }
+    },
+    "claimTask": {
+        "url": {
+            "path": "/gw/{domainName}/api/system/process/task/{id}/claim",
+            "method": "put"
+        }
+    },
+    "getDestinationUrl": {
+        "url": {
+            "path": "/gw/{domainName}/api/system/process/task/{id}/destinationUrl",
+            "method": "get"
+        }
+    }
+}
