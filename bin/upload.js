@@ -39,7 +39,7 @@ function listFile(dir, root) {
             if (fullpath.includes('.DS_Store'))
                 return;
             const fileinfo = fs.readFileSync(path.posix.join(process.cwd(), fullpath));
-            const objectKey = `packages/@lcap/lcap-h5-template@${version}/${fullpath}`.replace(/\/public/, '');
+            const objectKey = `packages/@lcap/mobile-template@${version}/${fullpath}`.replace(/\/public/, '');
 
             console.log(`NosClient: putObject start --------> ${objectKey}`);
 
