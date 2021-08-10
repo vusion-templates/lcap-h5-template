@@ -1,6 +1,6 @@
 {
   "name": "lcap-h5-template",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "base on vue",
   "scripts": {
     "dev": "vue-cli-service serve",

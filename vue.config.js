@@ -76,7 +76,7 @@ const vueConfig = {
         }
         webpackOptimization.chain(config, isDevelopment);
 
-        // webpackCloudUI.chain(config);
+        webpackCloudUI.chain(config);
         webpackStyle.chain(config);
         webpackRoutes.chain(config);
         webpackGQL.chain(config);
