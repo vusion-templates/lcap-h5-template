@@ -11,3 +11,4 @@ installComponents(Vue, CloudUI);
 Vue.mixin(CloudUI.MEmitter);
 Vue.mixin(CloudUI.MPubSub);
 Vue.use(mock);
+window.CloudUI = CloudUI;
