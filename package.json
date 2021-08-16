@@ -1,6 +1,6 @@
 {
   "name": "lcap-h5-template",
-  "version": "0.1.8",
+  "version": "0.2.6",
   "description": "base on vue",
   "scripts": {
     "dev": "vue-cli-service serve",
@@ -17,6 +17,7 @@
     "manage": "plop",
     "screenshot": "vusion screenshot --server public/index.html -o screenshots/0.png -w 1440 -h 900 && vusion screenshot --server public/index.html#/demo/list/basic -o screenshots/1.png -w 1440 -h 900 -d 200",
     "build:designer": "cross-env BUILD_LIB_ENV=designer vue-cli-service build --target lib --name cloudAdminDesigner src/global/features/designer/index.js",
+    "postbuild:designer": "npm run deploy:dev2",
     "deploy:dev": "lcap deploy ./public --platform http://lcp.vusion.top",
     "deploy:test": "lcap deploy ./public --platform http://defaulttenant.low-code-fe.qa-ci-lowcode.service.163.org",
     "deploy:online": "vusion deploy ./public",
@@ -108,7 +109,7 @@
     "qs": "^6.8.0",
     "request-pre": "^0.4.3",
     "uuid": "^7.0.3",
-    "vant": "^2.12.25",
+    "vant": "^2.12.26",
     "vue": "^2.6.12",
     "vue-apollo": "^3.0.4",
     "vue-i18n": "^8.14.0",
