@@ -48,5 +48,15 @@
                 "Version": "2020-06-01"
             }
         }
+    },
+    "Login": {
+        "url": {
+            "method": "post",
+            "path": "/gateway/nuims/nuims",
+            "query": {
+                "Action": "Login",
+                "Version": "2020-06-01"
+            }
+        }
     }
 }

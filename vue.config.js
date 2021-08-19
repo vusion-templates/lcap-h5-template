@@ -1,3 +1,5 @@
+const HtmlWebpackPlugin = require('html-webpack-plugin');
+const path = require('path');
 const pkg = require('./package.json');
 const pages = require('./pages.json');
 const argv = require('minimist')(process.argv.slice(2));
@@ -66,6 +68,13 @@ const vueConfig = {
     chainWebpack(config) {
         if (isDesigner) {
             webpackDesigner.chain(config, pages);
+            config
+                .plugin('html')
+                .use(HtmlWebpackPlugin, [{}])
+                .tap((args) => {
+                    args[0].template = path.resolve('./demo.html');
+                    return args;
+                });
         } else {
             webpackHtml.chain(config, isDevelopment);
             if (isMicro) {
