@@ -49,7 +49,7 @@
             }
         }
     },
-    "Login": {
+    "LoginH5": {
         "url": {
             "method": "post",
             "path": "/gateway/nuims/nuims",

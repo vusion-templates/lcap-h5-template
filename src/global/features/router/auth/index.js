@@ -1,12 +1,18 @@
 import Vue from 'vue';
 import authService from '@/global/services/auth';
 import cookie from '@/global/features/utils/cookie';
-
+window.authService = authService;
 let userInfoPromise = null;
 let userResourcesPromise = null;
 const maxTimes = 3;
+const getBaseHeaders = () => ({
+    Authorization: cookie.get('authorization'),
+    Env: window.appInfo && window.appInfo.env || 'dev',
+});
+
 const request = function (times) {
     return authService.GetUser({
+        headers: getBaseHeaders(),
         config: {
             noErrorTip: true,
         },
@@ -37,6 +43,7 @@ const auth = {
     getUserResources(DomainName) {
         if (!userResourcesPromise) {
             userResourcesPromise = authService.GetUserResources({
+                headers: getBaseHeaders(),
                 query: {
                     DomainName,
                 },
@@ -54,9 +61,17 @@ const auth = {
         return userResourcesPromise;
     },
     logout() {
-        return authService.Logout().then(() => {
-            cookie.remove('authorization');
-            cookie.remove('username');
+        return authService.Logout({
+            headers: getBaseHeaders(),
+        }).then(() => {
+            cookie.erase('authorization');
+            cookie.erase('username');
+        });
+    },
+    loginH5(data) {
+        return authService.LoginH5({
+            headers: getBaseHeaders(),
+            ...data,
         });
     },
     /**
@@ -76,7 +91,7 @@ const auth = {
      * @param {*} authPath 权限路径，如 /dashboard/entity/list
      */
     has(authPath) {
-        return this._map.has(authPath);
+        return this._map ? this._map.has(authPath) : true;
     },
 };
 export default auth;

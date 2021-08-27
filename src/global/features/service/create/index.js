@@ -73,6 +73,16 @@ const requester = function (requestInfo) {
     if (Object.keys(body).length || ['PUT', 'POST', 'PATCH'].includes(method2)) {
         data = formatContentType(headers['Content-Type'], body);
     }
+    // eslint-disable-next-line prefer-arrow-callback
+    axios.interceptors.response.use(function (response) {
+        if (response.headers.authorization) {
+            response.data.authorization = response.headers.authorization;
+        }
+        return response;
+    // eslint-disable-next-line prefer-arrow-callback
+    }, function (error) {
+        return Promise.reject(error);
+    });
     const req = axios({
         params: query,
         paramsSerializer,
