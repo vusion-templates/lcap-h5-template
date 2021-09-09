@@ -53,6 +53,7 @@ let baseConfig = {
         /vusion-micro-app/,
         /@cloud-ui/,
         /vant/,
+        /@lcap\/mobile-ui/,
     ],
 };
 if (isMicro) {
