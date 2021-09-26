@@ -1,7 +1,7 @@
 import gql from 'graphql-tag';
 import cloneDeep from 'lodash/cloneDeep';
 import { utils as cutils } from 'cloud-ui.vusion';
-import { addDays, subDays, addMonths, format, parse, formatRFC3339 } from 'date-fns';
+import { addDays, subDays, addMonths, format, parse, formatRFC3339, isValid } from 'date-fns';
 let enumsMap = {};
 
 function toValue(date, converter) {
@@ -18,6 +18,7 @@ function toValue(date, converter) {
 }
 
 export const utils = {
+    Vue: undefined,
     gql,
     Enum(enumName, value) {
         if (arguments.length === 0)
@@ -41,6 +42,13 @@ export const utils = {
             return enumsMap[enumName](value);
         else
             return '';
+    },
+    EnumList(enumName, value) {
+        const enumeration = enumsMap[enumName];
+        if (!enumeration)
+            return [];
+        else
+            return [{ text: '全部', value: undefined }].concat(Object.keys(enumeration).map((key) => ({ text: enumeration[key], value: key })));
     },
     Split(str, seperator) {
         return str.split(seperator);
@@ -70,7 +78,7 @@ export const utils = {
         return arr[index];
     },
     Set(arr, index, item) {
-        return arr[index] = item;
+        return this.Vue.set(arr, index, item);
     },
     Add(arr, item) {
         return arr.push(item);
@@ -121,14 +129,12 @@ export const utils = {
         return obj;
     },
     /**
-     * 这是个临时的方法。。。
-     * @param {*} obj1
-     * @param {*} obj2
+     * 将某个对象所有字段置为空，一般用于 filter
      */
     ClearObject(obj) {
         for (const key in obj) {
-            if (obj.hasOwnProperty(key) && obj[key] === undefined || obj[key] === null)
-                delete obj[key];
+            if (obj.hasOwnProperty(key))
+                obj[key] = undefined;
         }
         return obj;
     },
@@ -181,10 +187,75 @@ export const utils = {
         if (type === 'boolean') // 布尔值
             return !!value;
     },
+    /**
+     * 数字格式化
+     * @param {digits} 小数点保留个数
+     * @param {showGroup} 是否显示千位分割（默认逗号分隔）
+    */
+    FormatNumber(value, digits, showGroup) {
+        if (!value)
+            return value;
+        if (parseFloat(value) === 0)
+            return '0';
+        if (isNaN(parseFloat(value)) || isNaN(parseInt(digits)))
+            return;
+        if (digits !== undefined) {
+            value = Number(value).toFixed(parseInt(digits));
+        }
+        if (showGroup) {
+            const temp = ('' + value).split('.');
+            const right = temp[1];
+            let left = temp[0].split('').reverse().join('').match(/(\d{1,3})/g).join(',').split('').reverse().join('');
+            if (temp[0][0] === '-')
+                left = '-' + left;
+            if (right)
+                left = left + '.' + right;
+            value = left;
+        }
+        return '' + value;
+    },
+    /**
+     * 时间差
+     * @param {dateTime1} 时间
+     * @param {dateTime2} 时间
+     * @param {calcType} 计算类型：天数(day)、小时数(hour)、分钟数(minute)、秒数(second)
+    */
+    DateDiff(dateTime1, dateTime2, calcType) {
+        if (!dateTime1 || !dateTime2)
+            return;
+        if (!isValid(new Date(dateTime1)) || !isValid(new Date(dateTime2)))
+            return;
+        const map = {
+            d: {
+                diff: 24 * 60 * 60 * 1000,
+                formatter: 'yyyy-MM-dd',
+            },
+            h: {
+                diff: 60 * 60 * 1000,
+                formatter: 'yyyy-MM-dd HH:mm',
+            },
+            m: {
+                diff: 60 * 1000,
+                formatter: 'yyyy-MM-dd HH:mm',
+            },
+            s: {
+                diff: 1000,
+                formatter: 'yyyy-MM-dd HH:mm:ss',
+            },
+        };
+        if (!map[calcType])
+            return;
+        const config = map[calcType];
+        const dateTime1Temp = new Date(format(new Date(dateTime1), config.formatter)).getTime();
+        const dateTime2Temp = new Date(format(new Date(dateTime2), config.formatter)).getTime();
+        const dateDiff = dateTime2Temp - dateTime1Temp;
+        return Math.floor(dateDiff / (config.diff));
+    },
 };
 
 export default {
     install(Vue, options) {
+        this.Vue = Vue;
         Vue.prototype.$utils = utils;
         enumsMap = options.enumsMap;
     },

@@ -1,6 +1,6 @@
 {
   "name": "@lcap/mobile-template",
-  "version": "0.7.1",
+  "version": "0.7.2",
   "description": "base on vue",
   "scripts": {
     "dev": "vue-cli-service serve",
@@ -54,7 +54,7 @@
     "@vue/cli": "^4.4.1",
     "@vue/cli-plugin-babel": "^4.4.1",
     "@vue/cli-plugin-unit-jest": "^4.4.1",
-    "@vue/cli-service": "^4.4.1",
+    "@vue/cli-service": "^4.5.13",
     "@vue/test-utils": "1.0.2",
     "@vusion/mock": "^0.1.1",
     "@vusion/routes-loader": "^0.4.0",
@@ -67,7 +67,7 @@
     "cloud-admin-template-sdk": "^0.4.14",
     "copy-webpack-plugin": "^5.0.4",
     "core-js": "^3.6.5",
-    "cross-env": "^7.0.2",
+    "cross-env": "^7.0.3",
     "eslint": "^6.5.1",
     "eslint-config-vusion": "^3.0.2",
     "fs-extra": "^9.0.0",
