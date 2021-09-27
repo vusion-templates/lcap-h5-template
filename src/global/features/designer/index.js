@@ -1,5 +1,5 @@
 import '@/global/styles/theme.css';
-import '@lcap/mobile-ui/lib/index.css';
+// import '@lcap/mobile-ui/lib/index.css';
 import * as Vant from '@lcap/mobile-ui';
 
 import Vue from 'vue';
