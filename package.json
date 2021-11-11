@@ -136,9 +136,6 @@
       "git add"
     ]
   },
-  "vusionDependencies": {
-    "lcap-login": "^0.3.6"
-  },
   "ui": {
     "name": "cloud-ui.vusion",
     "version": "0.11.24"
