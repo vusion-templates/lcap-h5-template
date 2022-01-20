@@ -29,19 +29,19 @@ export default {
                         console.log(error, error.code);
                         switch (error.code) {
                             case error.PERMISSION_DENIED:
-                                this.$toast.show('用户禁止获取地理定位');
+                                window.Vue.prototype.$toast.show('用户禁止获取地理定位');
                                 rej({ code: error.code, msg: '用户禁止获取地理定位' });
                                 break;
                             case error.POSITION_UNAVAILABLE:
-                                this.$toast.show('地理定位信息无法获取');
+                                window.Vue.prototype.$toast.show('地理定位信息无法获取');
                                 rej({ code: error.code, msg: '地理定位信息无法获取' });
                                 break;
                             case error.TIMEOUT:
-                                this.$toast.show('地理定位信息获取超时');
+                                window.Vue.prototype.$toast.show('地理定位信息获取超时');
                                 rej({ code: error.code, msg: '地理定位信息获取超时' });
                                 break;
                             case error.UNKNOWN_ERROR:
-                                this.$toast.show('未知错误');
+                                window.Vue.prototype.$toast.show('未知错误');
                                 rej({ code: error.code, msg: '未知错误' });
                                 break;
                         }
@@ -51,7 +51,7 @@ export default {
                     } else {
                         // eslint-disable-next-line no-console
                         console.log('Geolocation is not supported by this browser.');
-                        this.$toast.show('当前系统不支持地理定位');
+                        window.Vue.prototype.$toast.show('当前系统不支持地理定位');
                         rej({ code: 666, msg: '当前系统不支持地理定位' });
                     }
                 });
