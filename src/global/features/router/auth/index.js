@@ -74,6 +74,11 @@ const auth = {
             ...data,
         });
     },
+    getConfig() {
+        return authService.GetConfig({
+            headers: getBaseHeaders(),
+        });
+    },
     /**
      * 权限服务是否初始化
      */
