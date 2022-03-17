@@ -1,6 +1,8 @@
 import Vue from 'vue';
 import authService from '@/global/services/auth';
 import cookie from '@/global/features/utils/cookie';
+import queryString from 'query-string';
+
 window.authService = authService;
 let userInfoPromise = null;
 let userResourcesPromise = null;
@@ -79,6 +81,9 @@ const auth = {
             headers: getBaseHeaders(),
         });
     },
+    // 处理数据的参数转化
+    parse: queryString.parse,
+    stringify: queryString.stringify,
     /**
      * 权限服务是否初始化
      */
