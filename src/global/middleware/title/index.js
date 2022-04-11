@@ -3,7 +3,7 @@ import { getComponentOption } from '../util';
 export default {
     after(appConfig) {
         return function ({ to, from, appConfig }) {
-            const appendTitle = (title) => title + ' - 轻舟・低代码';
+            const appendTitle = (title) => title;
             const metaTitle = to.matched.concat().reverse().map((item) => {
                 const componentOptions = getComponentOption(item);
                 return componentOptions?.meta?.title || item.meta?.title;
