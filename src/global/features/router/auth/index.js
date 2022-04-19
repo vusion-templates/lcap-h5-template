@@ -76,6 +76,12 @@ const auth = {
             ...data,
         });
     },
+    getNuims(query) {
+        return authService.GetNuims({
+            headers: getBaseHeaders(),
+            query,
+        });
+    },
     getConfig() {
         return authService.GetConfig({
             headers: getBaseHeaders(),

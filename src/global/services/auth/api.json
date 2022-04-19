@@ -9,6 +9,16 @@
             }
         }
     },
+    "GetNuims": {
+        "url": {
+            "method": "get",
+            "path": "/gateway/nuims/nuims",
+            "query": {
+                "Action": "GetTenantLoginTypes",
+                "Version": "2020-06-01"
+            }
+        }
+    }, 
     "GetUser": {
         "url": {
             "method": "get",
