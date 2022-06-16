@@ -4,6 +4,11 @@ const isPromise = function (func) {
     return func && typeof func.then === 'function';
 };
 function httpCode(response, params, requestInfo) {
+    const { config } = requestInfo;
+    const serviceType = config?.serviceType;
+    if (serviceType && serviceType === 'external') {
+        return response;
+    }
     const data = response.data;
     if ((data.code === undefined) || (data.code + '').startsWith('2')) {
         return response;
