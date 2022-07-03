@@ -1,6 +1,6 @@
 {
   "name": "@lcap/mobile-template",
-  "version": "0.7.11",
+  "version": "0.7.10-beta",
   "description": "base on vue",
   "scripts": {
     "dev": "vue-cli-service serve",
@@ -17,7 +17,7 @@
     "manage": "plop",
     "screenshot": "vusion screenshot --server public/index.html -o screenshots/0.png -w 1440 -h 900 && vusion screenshot --server public/index.html#/demo/list/basic -o screenshots/1.png -w 1440 -h 900 -d 200",
     "build:designer": "cross-env BUILD_LIB_ENV=designer vue-cli-service build --target lib --name cloudAdminDesigner src/global/features/designer/index.js",
-    "deploy:dev": "lcap deploy ./public --platform http://defaulttenant.lcap.ha.dt.com",
+    "deploy:dev": "lcap deploy ./public --platform http://defaulttenant.lcap.dev.lcap.group",
     "deploy:test": "lcap deploy ./public --platform http://defaulttenant.lcap.qa-ci.lcap.group",
     "deploy:pre": "lcap deploy ./public --platform http://defaulttenant.lcap.ha.dri.com",
     "deploy:online": "vusion deploy ./public",
@@ -91,6 +91,7 @@
     "webpack-micro": "^0.6.0"
   },
   "dependencies": {
+    "@lcap/mobile-ui": "^0.12.0",
     "@vusion/utils": "^0.4.9",
     "apollo-cache-inmemory": "^1.6.6",
     "apollo-client": "^2.6.10",
@@ -100,7 +101,6 @@
     "axios": "^0.19.0",
     "babel-polyfill": "^6.26.0",
     "cloud-ui.vusion": "^0.12.3",
-    "query-string": "^6.13.1",
     "date-fns": "^2.6.0",
     "event-hooks-webpack-plugin": "^2.1.6",
     "graphql-tools": "^6.2.1",
@@ -108,9 +108,9 @@
     "i-material-design.vue": "^5.1.0",
     "lodash": "^4.17.15",
     "qs": "^6.8.0",
+    "query-string": "^6.13.1",
     "request-pre": "^0.4.3",
     "uuid": "^7.0.3",
-    "@lcap/mobile-ui": "^0.12.0",
     "vue": "^2.6.12",
     "vue-apollo": "^3.0.4",
     "vue-i18n": "^8.14.0",
