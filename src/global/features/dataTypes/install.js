@@ -1,6 +1,8 @@
 import generate from '@babel/generator';
 import { genInitData } from './tools';
 import auth from '../router/auth';
+import storage from '../utils/storage/localStorage';
+import cookie from '../utils/cookie';
 
 export default {
     install(Vue, options = {}) {
@@ -75,19 +77,22 @@ export default {
                 return d * 1000;
             },
             logout() {
-                Vue.prototype.$confirm('确定退出登录吗？', '提示')
-                    .then(() => Vue.prototype.$auth.logout())
-                    .then(() => {
-                        const cookies = document.cookie.split(';');
-                        cookies.forEach((cookie) => {
-                            const eqPos = cookie.indexOf('=');
-                            const name = eqPos > -1 ? cookie.substr(0, eqPos) : cookie;
-                            const d = new Date();
-                            d.setTime(d.getTime() - (1 * 24 * 60 * 60 * 1000));
-                            document.cookie = `${name}=; expires=${d.toGMTString()}; path=/`;
-                        });
-                        location.reload();
-                    });
+                window.vant.VanDialog.confirm({
+                    title: '提示',
+                    message: '确定退出登录吗',
+                }).then(async () => {
+                    try {
+                        await this.$auth.logout();
+                    } catch (error) {
+                        console.warn(error);
+                    }
+
+                    storage.set('Authorization', '');
+                    cookie.eraseAll();
+                    window.location.href = '/login';
+                }).catch(() => {
+                    // on cancel
+                });
             },
         };
         new Vue({
