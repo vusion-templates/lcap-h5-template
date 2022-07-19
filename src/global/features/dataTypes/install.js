@@ -4,7 +4,7 @@ import auth from '../router/auth';
 
 export default {
     install(Vue, options = {}) {
-        Vue.prototype.$global = {
+        const $global = {
             userInfo: {},
             requestFullscreen() {
                 return document.body.requestFullscreen();
@@ -74,7 +74,29 @@ export default {
                 const d = R * c; // Distance in km
                 return d * 1000;
             },
+            logout() {
+                Vue.prototype.$confirm('确定退出登录吗？', '提示')
+                    .then(() => Vue.prototype.$auth.logout())
+                    .then(() => {
+                        const cookies = document.cookie.split(';');
+                        cookies.forEach((cookie) => {
+                            const eqPos = cookie.indexOf('=');
+                            const name = eqPos > -1 ? cookie.substr(0, eqPos) : cookie;
+                            const d = new Date();
+                            d.setTime(d.getTime() - (1 * 24 * 60 * 60 * 1000));
+                            document.cookie = `${name}=; expires=${d.toGMTString()}; path=/`;
+                        });
+                        location.reload();
+                    });
+            },
         };
+        new Vue({
+            data: {
+                $global,
+            },
+        });
+
+        Vue.prototype.$global = $global;
 
         /**
          * read datatypes from template, then parse schema
