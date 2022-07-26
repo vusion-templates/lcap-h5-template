@@ -96,7 +96,7 @@ export const genInitData = (
                 type: 'NumericLiteral',
                 value: parsedValue,
             };
-        } else if (typeName === 'Decimal') {
+        } else if (typeName === 'Double') {
             return {
                 type: 'NumericLiteral',
                 value: parsedValue,
