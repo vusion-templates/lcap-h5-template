@@ -59,7 +59,7 @@ function download(url) {
 }
 
 const requester = function (requestInfo) {
-    requestInfo = cloneDeep(requestInfo, (value) => value === undefined ? null : value);
+    // requestInfo = cloneDeep(requestInfo, (value) => value === undefined ? null : value);
 
     const { url, config = {} } = requestInfo;
     const { path, method, body = {}, headers = {}, query = {} } = url;
@@ -81,7 +81,7 @@ const requester = function (requestInfo) {
             response.data.authorization = response.headers.authorization;
         }
         return response;
-    // eslint-disable-next-line prefer-arrow-callback
+        // eslint-disable-next-line prefer-arrow-callback
     }, function (error) {
         return Promise.reject(error);
     });
