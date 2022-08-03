@@ -11,6 +11,13 @@ const getBaseHeaders = () => ({
     Authorization: cookie.get('authorization'),
     Env: window.appInfo && window.appInfo.env || 'dev',
 });
+const userInfo = {
+    UserName: cookie.get('zzdUserName') || '',
+    UserId: cookie.get('zzdUserId') || '',
+};
+
+const $global = Vue.prototype.$global = Vue.prototype.$global || {};
+$global.userInfo = userInfo;
 
 const request = function (times) {
     return authService.GetUser({
@@ -29,9 +36,26 @@ const request = function (times) {
 };
 const auth = {
     _map: undefined,
+    setUserInfoFromCookie() {
+        const userInfo = {
+            UserName: cookie.get('zzdUserName') || '',
+            UserId: cookie.get('zzdUserId') || '',
+        };
+        const $global = Vue.prototype.$global = Vue.prototype.$global || {};
+        $global.userInfo = userInfo;
+    },
     getUserInfo(times = 1) {
         if (!userInfoPromise) {
-            userInfoPromise = request(times).then((userInfo) => {
+            if (window.appInfo?.hasUserCenter || window.appInfo.envConfig.name === 'zhezhengding') {
+                const userInfo = {
+                    UserName: cookie.get('zzdUserName') || '',
+                    UserId: cookie.get('zzdUserId') || '',
+                };
+                userInfoPromise = Promise.resolve({ userInfo });
+            } else {
+                userInfoPromise = request(times);
+            }
+            userInfoPromise = userInfoPromise.then((userInfo) => {
                 const $global = Vue.prototype.$global = Vue.prototype.$global || {};
                 $global.userInfo = userInfo;
                 return userInfo;
