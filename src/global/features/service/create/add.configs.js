@@ -1,4 +1,5 @@
 import errHandles from './errHandles';
+import cloneDeep from '../../common/utils/cloneDeep';
 
 const isPromise = function (func) {
     return func && typeof func.then === 'function';
@@ -9,13 +10,14 @@ function httpCode(response, params, requestInfo) {
     if (serviceType && serviceType === 'external') {
         return response;
     }
-    const data = response.data;
-    if ((data.code === undefined) || (data.code + '').startsWith('2')) {
+    const data = response.data; // cloneDeep(response.data, (value) => value === null ? undefined : value);
+    const code = data.code || data.Code;
+    if ((code === undefined) || (code === 'Success') || (code + '').startsWith('2')) {
         return response;
     }
     return Promise.reject({
-        code: data.code,
-        msg: data.msg,
+        code,
+        msg: data.msg || data.Message,
     });
 }
 function shortResponse(response, params, requestInfo) {
@@ -30,16 +32,16 @@ const httpError = {
             throw err;
         }
         let handle;
-        if (!err.code) {
+        if (!err.response) {
             handle = errHandles.remoteError;
         } else {
-            handle = errHandles[err.code];
+            handle = errHandles[err.response.status];
             if (!handle)
                 handle = errHandles.defaults;
         }
         const handleOut = handle({
             config, baseURL: (config.baseURL || ''), url, method, body, headers,
-        }, err);
+        }, err.response.data);
 
         if (isPromise(handleOut))
             return handleOut;

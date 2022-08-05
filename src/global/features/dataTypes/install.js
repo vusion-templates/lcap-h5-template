@@ -1,10 +1,12 @@
 import generate from '@babel/generator';
 import { genInitData } from './tools';
 import auth from '../router/auth';
+import storage from '../utils/storage/localStorage';
+import cookie from '../utils/cookie';
 
 export default {
     install(Vue, options = {}) {
-        Vue.prototype.$global = {
+        const $global = {
             userInfo: {},
             requestFullscreen() {
                 return document.body.requestFullscreen();
@@ -74,7 +76,32 @@ export default {
                 const d = R * c; // Distance in km
                 return d * 1000;
             },
+            logout() {
+                window.vant.VanDialog.confirm({
+                    title: '提示',
+                    message: '确定退出登录吗',
+                }).then(async () => {
+                    try {
+                        await this.$auth.logout();
+                    } catch (error) {
+                        console.warn(error);
+                    }
+
+                    storage.set('Authorization', '');
+                    cookie.eraseAll();
+                    window.location.href = '/login';
+                }).catch(() => {
+                    // on cancel
+                });
+            },
         };
+        new Vue({
+            data: {
+                $global,
+            },
+        });
+
+        Vue.prototype.$global = $global;
 
         /**
          * read datatypes from template, then parse schema

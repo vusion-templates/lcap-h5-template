@@ -5,6 +5,7 @@ import addConfigs from './add.configs';
 import { getFilenameFromContentDispositionHeader } from './tools';
 import paramsSerializer from './paramsSerializer';
 import cookie from '@/global/features/utils/cookie';
+import cloneDeep from '../../common/utils/cloneDeep';
 
 const formatContentType = function (contentType, data) {
     const map = {
@@ -37,7 +38,7 @@ function download(url) {
         const downloadUrl = window.URL.createObjectURL(new Blob([data]));
         const link = document.createElement('a');
         link.href = downloadUrl;
-        link.setAttribute('download', effectiveFileName); //any other extension
+        link.setAttribute('download', effectiveFileName); // any other extension
         document.body.appendChild(link);
         link.click();
         link.remove();
@@ -47,18 +48,19 @@ function download(url) {
                 msg: statusText,
             },
         });
-    }).catch((err) => {
+    }).catch((err) =>
         // 基于 AxiosError 的错误类型 https://github.com/axios/axios/blob/b7e954eba3911874575ed241ec2ec38ff8af21bb/index.d.ts#L85
-        return Promise.resolve({
+        Promise.resolve({
             data: {
                 code: err.code,
                 msg: err.response.statusText,
             },
-        });
-    });
+        }));
 }
 
 const requester = function (requestInfo) {
+    // requestInfo = cloneDeep(requestInfo, (value) => value === undefined ? null : value);
+
     const { url, config = {} } = requestInfo;
     const { path, method, body = {}, headers = {}, query = {} } = url;
     const baseURL = config.baseURL ? config.baseURL : '';
@@ -70,7 +72,7 @@ const requester = function (requestInfo) {
     }
     let data;
     const method2 = method.toUpperCase();
-    if (Object.keys(body).length || ['PUT', 'POST', 'PATCH'].includes(method2)) {
+    if (Array.isArray(body) || Object.keys(body).length || ['PUT', 'POST', 'PATCH', 'DELETE'].includes(method2)) {
         data = formatContentType(headers['Content-Type'], body);
     }
     // eslint-disable-next-line prefer-arrow-callback
@@ -79,7 +81,7 @@ const requester = function (requestInfo) {
             response.data.authorization = response.headers.authorization;
         }
         return response;
-    // eslint-disable-next-line prefer-arrow-callback
+        // eslint-disable-next-line prefer-arrow-callback
     }, function (error) {
         return Promise.reject(error);
     });
