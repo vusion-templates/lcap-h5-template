@@ -3,6 +3,7 @@ import { genInitData } from './tools';
 import auth from '../router/auth';
 import storage from '../utils/storage/localStorage';
 import cookie from '../utils/cookie';
+import configurationService from '@/global/services/configuration';
 
 export default {
     install(Vue, options = {}) {
@@ -93,6 +94,12 @@ export default {
                 }).catch(() => {
                     // on cancel
                 });
+            },
+            async getCustomConfig(configKey = '') {
+                const res = await configurationService.getCustomConfig({
+                    path: { configKey },
+                });
+                return res;
             },
         };
         new Vue({
