@@ -90,6 +90,12 @@ export const utils = {
             arr.push(item);
         }
     },
+    AddAll(arr, addList) {
+        if (Array.isArray(arr) && Array.isArray(addList)) {
+            arr.push(...addList);
+            return arr.length;
+        }
+    },
     Insert(arr, index, item) {
         if (Array.isArray(arr)) {
             arr.splice(index, 0, item);
