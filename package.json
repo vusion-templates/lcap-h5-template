@@ -1,6 +1,6 @@
 {
   "name": "@lcap/mobile-template",
-  "version": "0.7.16",
+  "version": "0.7.17",
   "description": "base on vue",
   "scripts": {
     "dev": "vue-cli-service serve",
