@@ -4,11 +4,63 @@ import auth from '../router/auth';
 import storage from '../utils/storage/localStorage';
 import cookie from '../utils/cookie';
 import configurationService from '@/global/services/configuration';
+import { Decimal } from 'decimal.js';
 
 export default {
     install(Vue, options = {}) {
         const $global = {
             userInfo: {},
+            // 加
+            add(x, y) {
+                if (typeof (x) !== 'number' || typeof (y) !== 'number') {
+                    return x + y;
+                }
+                if (!x) {
+                    x = 0;
+                }
+                if (!y) {
+                    y = 0;
+                }
+                const xx = new Decimal(x + '');
+                const yy = new Decimal(y + '');
+                return xx.plus(yy).toNumber();
+            },
+            // 减
+            minus(x, y) {
+                if (!x) {
+                    x = 0;
+                }
+                if (!y) {
+                    y = 0;
+                }
+                const xx = new Decimal(x + '');
+                const yy = new Decimal(y + '');
+                return xx.minus(yy).toNumber();
+            },
+            // 乘
+            multiply(x, y) {
+                if (!x) {
+                    x = 0;
+                }
+                if (!y) {
+                    y = 0;
+                }
+                const xx = new Decimal(x + '');
+                const yy = new Decimal(y + '');
+                return xx.mul(yy).toNumber();
+            },
+            // 除
+            divide(x, y) {
+                if (!x) {
+                    x = 0;
+                }
+                if (!y) {
+                    y = 0;
+                }
+                const xx = new Decimal(x + '');
+                const yy = new Decimal(y + '');
+                return xx.div(yy).toNumber();
+            },
             requestFullscreen() {
                 return document.body.requestFullscreen();
             },
