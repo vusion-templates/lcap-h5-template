@@ -6,11 +6,15 @@ import queryString from 'query-string';
 window.authService = authService;
 let userInfoPromise = null;
 let userResourcesPromise = null;
-const maxTimes = 3;
-const getBaseHeaders = () => ({
-    Authorization: cookie.get('authorization'),
-    Env: window.appInfo && window.appInfo.env || 'dev',
-});
+const getBaseHeaders = () => {
+    const headers = {
+        Env: window.appInfo && window.appInfo.env,
+    };
+    if (cookie.get('authorization')) {
+        headers.Authorization = cookie.get('authorization');
+    }
+    return headers;
+};
 
 const request = function (times) {
     return authService.GetUser({
@@ -99,8 +103,8 @@ const auth = {
     /**
      * 初始化权限服务
      */
-    init(domainName, times) {
-        return this.getUserInfo(times || maxTimes).then(() => this.getUserResources(domainName));
+    init(domainName) {
+        return this.getUserInfo().then(() => this.getUserResources(domainName));
     },
     /**
      * 是否有权限
@@ -112,6 +116,6 @@ const auth = {
 };
 export default auth;
 
-export const runAhead = function (domainName, times) {
-    auth.init(domainName, times);
+export const runAhead = function (domainName) {
+    auth.init(domainName);
 };
