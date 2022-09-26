@@ -13,11 +13,8 @@ import installServices from '@/global/features/service/install';
 import installDataTypes from '@/global/features/dataTypes/install';
 import installLogics from '@/global/features/logic/install';
 import installUtils from '@/global/features/utils/install';
-import micro from './micro';
 
 import { initMiddleware } from '@/global/middleware';
-import { apolloProvider } from '@/global/features/apollo';
-import installApollo from '@/global/features/apollo/queryStrCollect';
 import originMetaData from '@/global/metaData';
 
 window.appVue = Vue;
@@ -32,20 +29,14 @@ export default {
         Vue.use(installServices, metaData);
         Vue.use(installDataTypes, metaData);
         Vue.use(installUtils, metaData);
-        Vue.use(installApollo, metaData);
 
-        if (window.microApp && window.microApp.isMicro) {
-            micro.init(genRouter);
-        } else {
-            const app = new Vue({
-                name: 'app',
-                apolloProvider,
-                router: genRouter(),
-                ...App,
-                // i18n: initI18n(),
-            });
-            app.$mount('#app');
-            return app;
-        }
+        const app = new Vue({
+            name: 'app',
+            router: genRouter(),
+            ...App,
+            // i18n: initI18n(),
+        });
+        app.$mount('#app');
+        return app;
     },
 };
