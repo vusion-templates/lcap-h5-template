@@ -17,7 +17,7 @@ window.VueRouter = VueRouter;
 Vue.prototype.$process = processService;
 
 Vue.prototype.$destination = function (url) {
-    if (url.startsWith('http'))
+    if (url.startsWith('http') || location.pathname === '/')
         location.href = encodeUrl(url);
     else {
         if (url[0] !== '/')
