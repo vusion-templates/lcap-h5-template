@@ -16,14 +16,14 @@ window.VueRouter = VueRouter;
 Vue.prototype.$process = processService;
 
 Vue.prototype.$destination = function (url) {
-    if (url.startsWith('http'))
+    if (url.startsWith('http') || location.pathname === '/')
         location.href = url;
     else {
         if (url[0] !== '/')
             this.$router.push(url);
         else {
             const oldPath = location.pathname.split('/');
-            if (url.startsWith('/' + (oldPath[1] || '')))
+            if (url.startsWith('/' + (oldPath[1] || '') + '/'))
                 this.$router.push(url.replace('/' + (oldPath[1] || ''), ''));
             else
                 location.href = url;
