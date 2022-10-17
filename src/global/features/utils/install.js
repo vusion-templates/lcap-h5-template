@@ -62,8 +62,8 @@ export const utils = {
             return arr.join(separator);
         }
     },
-    Concat(str1, str2) {
-        return String(str1) + String(str2);
+    Concat(...arr) {
+        return arr.join("")
     },
     Length(str1) {
         // List类型
@@ -334,15 +334,15 @@ export const utils = {
             },
             h: {
                 diff: 60 * 60 * 1000,
-                formatter: 'yyyy-MM-dd HH:mm',
+                formatter: 'yyyy/MM/dd HH:mm',
             },
             m: {
                 diff: 60 * 1000,
-                formatter: 'yyyy-MM-dd HH:mm',
+                formatter: 'yyyy/MM/dd HH:mm',
             },
             s: {
                 diff: 1000,
-                formatter: 'yyyy-MM-dd HH:mm:ss',
+                formatter: 'yyyy/MM/dd HH:mm:ss',
             },
         };
         if (!map[calcType])
