@@ -1,4 +1,5 @@
-import { UToast } from 'cloud-ui.vusion';
+import { UToast } from 'cloud-ui.vusion/dist';
+
 export default {
     defaults({ config }, err) {
         if (!config.noErrorTip) {

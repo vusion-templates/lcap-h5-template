@@ -5,7 +5,7 @@ export default {
         options.allowList = [].concat([], options.allowList);
 
         const router = options.router;
-        const base = options.base.replace(/\/$/, '');
+        const base = (options.base || '').replace(/\/$/, '');
         /**
         * 是否有当前路由下的子权限
         * 该方法只能在 Vue 中调用

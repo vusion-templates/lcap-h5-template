@@ -2,7 +2,7 @@ import Vue from 'vue';
 import { installFilters } from '@vusion/utils';
 import * as Vant from '@lcap/mobile-ui';
 
-import '@/global/styles/index.css';
+import '@/assets/css/index.css';
 import filters from '@/filters';
 import { AuthPlugin, DataTypesPlugin, LogicsPlugin, RouterPlugin, ServicesPlugin, UtilsPlugin } from '@/plugins';
 import { userInfoGuard, getAuthGuard, getTitleGuard, initRouter } from '@/router';
