@@ -1,10 +1,9 @@
 import Vue from 'vue';
-import { installOptions, installFilters, installDirectives, installComponents } from '@vusion/utils';
-import * as Vant from '@lcap/mobile-ui/dist-theme';
-import * as CloudUI from 'cloud-ui.vusion/dist';
+import { installFilters } from '@vusion/utils';
 
 import 'cloud-ui.vusion/dist/index.css';
 import '@lcap/mobile-ui/dist-theme/index.css';
+
 import '@/assets/css/index.css';
 import filters from '@/filters';
 import { AuthPlugin, DataTypesPlugin, LogicsPlugin, RouterPlugin, ServicesPlugin, UtilsPlugin } from '@/plugins';
@@ -16,13 +15,6 @@ window.appVue = Vue;
 
 const init = (appConfig, platformConfig, routes, metaData) => {
     window.appInfo = Object.assign(appConfig, platformConfig);
-
-    installOptions(Vue);
-    installDirectives(Vue, CloudUI.directives);
-    installComponents(Vue, CloudUI);
-    Vue.mixin(CloudUI.MEmitter);
-    Vue.mixin(CloudUI.MPubSub);
-    Vue.use(Vant);
 
     installFilters(Vue, filters);
 
