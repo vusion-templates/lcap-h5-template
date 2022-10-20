@@ -2,7 +2,15 @@ import cloneDeep from 'lodash/cloneDeep';
 import isObject from 'lodash/isObject';
 import isEqual from 'lodash/isEqual';
 import { utils as cutils } from 'cloud-ui.vusion';
-import dateFns, { addDays, subDays, addMonths, format, formatRFC3339, isValid } from 'date-fns';
+import { addDays, subDays, addMonths, format, formatRFC3339, isValid,
+    differenceInYears,
+    differenceInQuarters,
+    differenceInMonths,
+    differenceInWeeks,
+    differenceInDays,
+    differenceInHours,
+    differenceInMinutes,
+    differenceInSeconds } from 'date-fns';
 import { Decimal } from 'decimal.js';
 import Vue from 'vue';
 
@@ -325,22 +333,28 @@ export const utils = {
     DateDiff(dateTime1, dateTime2, calcType) {
         if (!dateTime1 || !dateTime2)
             return;
+        // Time
+        const timeReg = /^(20|21|22|23|[0-1]\d):[0-5]\d:[0-5]\d$/;
+        if (timeReg.test(dateTime1) && timeReg.test(dateTime2)) {
+            dateTime1 = `1970-01-01 ${dateTime1}`;
+            dateTime2 = `1970-01-01 ${dateTime2}`;
+        }
         if (!isValid(new Date(dateTime1)) || !isValid(new Date(dateTime2)))
             return;
         const map = {
-            y: 'differenceInYears',
-            q: 'differenceInQuarters',
-            M: 'differenceInMonths',
-            w: 'differenceInWeeks',
-            d: 'differenceInDays',
-            h: 'differenceInHours',
-            m: 'differenceInMinutes',
-            s: 'differenceInSeconds',
+            y: differenceInYears,
+            q: differenceInQuarters,
+            M: differenceInMonths,
+            w: differenceInWeeks,
+            d: differenceInDays,
+            h: differenceInHours,
+            m: differenceInMinutes,
+            s: differenceInSeconds,
         };
         if (!map[calcType])
             return;
-        const method = dateFns[map[calcType]];
-        return method(new Date(dateTime1), new Date(dateTime2));
+        const method = map[calcType];
+        return method(new Date(dateTime2), new Date(dateTime1));
     },
     /**
      * 字符串查找
