@@ -1,0 +1,10 @@
+/* @import 'cloud-ui.vusion/src/styles/theme.css'; */
+
+
+:root {
+    /* your variables */
+}
+
+body::backdrop {
+    background-color: var(--background-color-default);
+}
