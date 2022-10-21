@@ -51,7 +51,7 @@ export default {
     },
     getUserResources(DomainName) {
         if (!userResourcesPromise) {
-            userResourcesPromise = authService.GetUserResources({
+            userResourcesPromise = auth.GetUserResources({
                 headers: getBaseHeaders(),
                 query: {
                     DomainName,
@@ -70,7 +70,7 @@ export default {
         return userResourcesPromise;
     },
     logout() {
-        return authService.Logout({
+        return auth.Logout({
             headers: getBaseHeaders(),
         }).then(() => {
             cookie.erase('authorization');
@@ -78,19 +78,19 @@ export default {
         });
     },
     loginH5(data) {
-        return authService.LoginH5({
+        return auth.LoginH5({
             headers: getBaseHeaders(),
             ...data,
         });
     },
     getNuims(query) {
-        return authService.GetNuims({
+        return auth.GetNuims({
             headers: getBaseHeaders(),
             query,
         });
     },
     getConfig() {
-        return authService.GetConfig({
+        return auth.GetConfig({
             headers: getBaseHeaders(),
         });
     },

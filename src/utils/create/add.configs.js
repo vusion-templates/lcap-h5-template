@@ -3,6 +3,7 @@ import errHandles from './errHandles';
 const isPromise = function (func) {
     return func && typeof func.then === 'function';
 };
+
 function httpCode(response, params, requestInfo) {
     const { config } = requestInfo;
     const serviceType = config?.serviceType;
@@ -26,6 +27,7 @@ function shortResponse(response, params, requestInfo) {
 
     return response.data;
 }
+
 const httpError = {
     reject(err, params, requestInfo) {
         const { url, config = {} } = requestInfo;
@@ -35,16 +37,17 @@ const httpError = {
             throw err;
         }
         let handle;
-        if (!err.response) {
+        if (!err.response || err.code === undefined) {
             handle = errHandles.remoteError;
         } else {
-            handle = errHandles[err.response.status];
+            const code = err.response && err.response.status || err.code;
+            handle = errHandles[code];
             if (!handle)
                 handle = errHandles.defaults;
         }
         const handleOut = handle({
             config, baseURL: (config.baseURL || ''), url, method, body, headers,
-        }, err.response.data);
+        }, err.response && err.response.data || err);
 
         if (isPromise(handleOut))
             return handleOut;
@@ -52,6 +55,7 @@ const httpError = {
         throw err;
     },
 };
+
 export default function (service) {
     if (process.env.NODE_ENV === 'development') {
         service.preConfig.set('baseURL', (requestInfo, baseURL) => {
