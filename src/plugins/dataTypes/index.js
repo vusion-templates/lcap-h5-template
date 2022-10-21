@@ -1,7 +1,7 @@
 import generate from '@babel/generator';
 import { Decimal } from 'decimal.js';
 
-import configurationService from '@/apis/configuration';
+import configuration from '@/apis/configuration';
 import cookie from '@/utils/cookie';
 import storage from '@/utils/storage/localStorage';
 import authService from '../auth/authService';
@@ -9,11 +9,29 @@ import { genInitData } from './tools';
 
 export default {
     install(Vue, options = {}) {
+        const genInitFromSchema = (schema = {}, defaultValue, isRouteParam) => {
+            schema.defaultValue = defaultValue;
+
+            // read from file
+            const dataTypesMap = options.dataTypesMap || {}; // TODO 统一为  dataTypesMap
+            const expressDataTypeObject = genInitData(schema, dataTypesMap, isRouteParam);
+            const expression = generate(expressDataTypeObject).code;
+            // eslint-disable-next-line no-new-func
+            return Function('return ' + expression)();
+        };
+        const frontendVariables = {};
+        if (Array.isArray(options && options.frontendVariables)) {
+            options.frontendVariables.forEach((frontendVariable) => {
+                const { name, typeAnnotation } = frontendVariable;
+                frontendVariables[name] = genInitFromSchema(typeAnnotation);
+            });
+        }
+
         const $global = {
             // 用户信息
             userInfo: {},
             // 前端全局变量
-            frontendVariables: {},
+            frontendVariables,
             // 加
             add(x, y) {
                 if (typeof (x) !== 'number' || typeof (y) !== 'number') {
@@ -152,7 +170,7 @@ export default {
                 });
             },
             async getCustomConfig(configKey = '') {
-                const res = await configurationService.getCustomConfig({
+                const res = await configuration.getCustomConfig({
                     path: { configKey },
                 });
                 return res;
@@ -170,16 +188,7 @@ export default {
          * read datatypes from template, then parse schema
          * @param {*} schema 是前端用的 refSchema
          */
-        Vue.prototype.$genInitFromSchema = (schema = {}, defaultValue, isRouteParam) => {
-            schema.defaultValue = defaultValue;
-
-            // read from file
-            const dataTypesMap = options.dataTypesMap || {}; // TODO 统一为  dataTypesMap
-            const expressDataTypeObject = genInitData(schema, dataTypesMap, isRouteParam);
-            const expression = generate(expressDataTypeObject).code;
-            // eslint-disable-next-line no-new-func
-            return Function('return ' + expression)();
-        };
+        Vue.prototype.$genInitFromSchema = genInitFromSchema;
 
         const enumsMap = options.enumsMap || {};
         function createEnum(items) {
