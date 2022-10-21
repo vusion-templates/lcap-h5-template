@@ -21,6 +21,7 @@ Vue.mixin(CloudUI.MEmitter);
 Vue.mixin(CloudUI.MPubSub);
 Vue.use(Vant);
 
+// 需要兼容老应用的制品，因此新版本入口函数参数不做改变
 const init = (appConfig, platformConfig, routes, metaData) => {
     window.appInfo = Object.assign(appConfig, platformConfig);
 
