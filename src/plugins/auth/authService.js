@@ -62,6 +62,7 @@ export default {
                 // 初始化权限项
                 this._map = new Map();
                 resources.forEach((resource) => this._map.set(resource.ResourceValue, resource));
+                return resources;
             }).catch((e) => {
                 // 获取权限异常
                 userResourcesPromise = undefined;
