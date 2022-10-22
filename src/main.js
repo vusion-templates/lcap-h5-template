@@ -1,3 +1,5 @@
+import '@lcap/mobile-ui/lib/index.css';
+
 import metaData from './metaData.json';
 import platformConfig from './platform.config.json';
 import { routes } from './router/routes';
