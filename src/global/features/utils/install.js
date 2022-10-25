@@ -21,6 +21,15 @@ function toValue(date, converter) {
         return date;
 }
 
+/* 改变ios的-时间格式 */
+function fixIOSDateString(value) {
+    if (/^\d{4}-\d{1,2}-\d{1,2}\s\d{1,2}:\d{1,2}:\d{1,2}$/.test(value) || /^\d{4}-\d{1,2}-\d{1,2}/.test(value)) {
+        return value.replace(/-/g, '/');
+    } else {
+        return value;
+    }
+}
+
 export const utils = {
     Vue: undefined,
     Enum(enumName, value) {
@@ -268,21 +277,21 @@ export const utils = {
     Convert(value, typeAnnotation) {
         if (typeAnnotation && typeAnnotation.typeKind === 'primitive') {
             if (typeAnnotation.typeName === 'DateTime')
-                return formatRFC3339(new Date(value));
+                return formatRFC3339(new Date(fixIOSDateString(value)));
             else if (typeAnnotation.typeName === 'Date')
-                return format(new Date(value), 'yyyy-MM-dd');
+                return format(new Date(fixIOSDateString(value)), 'yyyy-MM-dd');
             else if (typeAnnotation.typeName === 'Time') {
                 if (/^\d{2}:\d{2}:\d{2}$/.test(value)) // 纯时间 12:30:00
                     return format(new Date('2022-01-01 ' + value), 'HH:mm:ss');
                 else
-                    return format(new Date(value), 'HH:mm:ss');
+                    return format(new Date(fixIOSDateString(value)), 'HH:mm:ss');
             } else if (typeAnnotation.typeName === 'String')
                 return String(value);
             else if (typeAnnotation.typeName === 'Double' || typeAnnotation.typeName === 'Decimal') // 小数
                 return parseFloat(+value);
             else if (typeAnnotation.typeName === 'Integer' || typeAnnotation.typeName === 'Long')
                 // 日期时间格式特殊处理; 整数： format 'int' ; 长整数: format: 'long'
-                return /^\d{4}-\d{2}-\d{2}(.*)+/.test(value) ? new Date(value).getTime() : Math.round(+value);
+                return /^\d{4}-\d{2}-\d{2}(.*)+/.test(value) ? new Date(fixIOSDateString(value)).getTime() : Math.round(+value);
             else if (typeAnnotation.typeName === 'Boolean') // 布尔值
                 return !!value;
         }
@@ -348,8 +357,8 @@ export const utils = {
         if (!map[calcType])
             return;
         const config = map[calcType];
-        const dateTime1Temp = new Date(format(new Date(dateTime1), config.formatter)).getTime();
-        const dateTime2Temp = new Date(format(new Date(dateTime2), config.formatter)).getTime();
+        const dateTime1Temp = new Date(dateTime1).getTime();
+        const dateTime2Temp = new Date(dateTime2).getTime();
         const dateDiff = dateTime2Temp - dateTime1Temp;
         return Math.floor(dateDiff / (config.diff));
     },
