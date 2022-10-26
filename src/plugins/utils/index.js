@@ -30,6 +30,14 @@ function toValue(date, converter) {
     else
         return date;
 }
+/* 改变ios的-时间格式 */
+function fixIOSDateString(value) {
+    if (/^\d{4}-\d{1,2}-\d{1,2}\s\d{1,2}:\d{1,2}:\d{1,2}$/.test(value) || /^\d{4}-\d{1,2}-\d{1,2}/.test(value)) {
+        return value.replace(/-/g, '/');
+    } else {
+        return value;
+    }
+}
 
 export const utils = {
     Vue: undefined,
@@ -200,14 +208,14 @@ export const utils = {
         return new Date().toJSON();
     },
     AddDays(date = new Date(), amount = 1, converter = 'json') {
-        return toValue(addDays(new Date(date), amount), converter);
+        return toValue(addDays(new Date(fixIOSDateString(date)), amount), converter);
     },
     AddMonths(date = new Date(), amount = 1, converter = 'json') {
         /** 传入的值为标准的时间格式 */
-        return toValue(addMonths(new Date(date), amount), converter);
+        return toValue(addMonths(new Date(fixIOSDateString(date)), amount), converter);
     },
     SubDays(date = new Date(), amount = 1, converter = 'json') {
-        return toValue(subDays(new Date(date), amount), converter);
+        return toValue(subDays(new Date(fixIOSDateString(date)), amount), converter);
     },
     FormatDate(value, formatter) {
         if (!value)
@@ -278,21 +286,21 @@ export const utils = {
     Convert(value, typeAnnotation) {
         if (typeAnnotation && typeAnnotation.typeKind === 'primitive') {
             if (typeAnnotation.typeName === 'DateTime')
-                return formatRFC3339(new Date(value));
+                return formatRFC3339(new Date(fixIOSDateString(value)));
             else if (typeAnnotation.typeName === 'Date')
-                return format(new Date(value), 'yyyy-MM-dd');
+                return format(new Date(fixIOSDateString(value)), 'yyyy/MM/dd');
             else if (typeAnnotation.typeName === 'Time') {
                 if (/^\d{2}:\d{2}:\d{2}$/.test(value)) // 纯时间 12:30:00
-                    return format(new Date('2022-01-01 ' + value), 'HH:mm:ss');
+                    return format(new Date('2022/01/01 ' + value), 'HH:mm:ss');
                 else
-                    return format(new Date(value), 'HH:mm:ss');
+                    return format(new Date(fixIOSDateString(value)), 'HH:mm:ss');
             } else if (typeAnnotation.typeName === 'String')
                 return String(value);
             else if (typeAnnotation.typeName === 'Double' || typeAnnotation.typeName === 'Decimal') // 小数
                 return parseFloat(+value);
             else if (typeAnnotation.typeName === 'Integer' || typeAnnotation.typeName === 'Long')
                 // 日期时间格式特殊处理; 整数： format 'int' ; 长整数: format: 'long'
-                return /^\d{4}-\d{2}-\d{2}(.*)+/.test(value) ? new Date(value).getTime() : Math.round(+value);
+                return /^\d{4}-\d{2}-\d{2}(.*)+/.test(value) ? new Date(fixIOSDateString(value)).getTime() : Math.round(+value);
             else if (typeAnnotation.typeName === 'Boolean') // 布尔值
                 return !!value;
         }
@@ -338,10 +346,10 @@ export const utils = {
         // Time
         const timeReg = /^(20|21|22|23|[0-1]\d):[0-5]\d:[0-5]\d$/;
         if (timeReg.test(dateTime1) && timeReg.test(dateTime2)) {
-            dateTime1 = `1970-01-01 ${dateTime1}`;
-            dateTime2 = `1970-01-01 ${dateTime2}`;
+            dateTime1 = `1970/01/01 ${dateTime1}`;
+            dateTime2 = `1970/01/01 ${dateTime2}`;
         }
-        if (!isValid(new Date(dateTime1)) || !isValid(new Date(dateTime2)))
+        if (!isValid(new Date(fixIOSDateString(dateTime1))) || !isValid(new Date(fixIOSDateString(dateTime2))))
             return;
         const map = {
             y: differenceInYears,
@@ -356,7 +364,7 @@ export const utils = {
         if (!map[calcType])
             return;
         const method = map[calcType];
-        return Math.abs(method(new Date(dateTime2), new Date(dateTime1)));
+        return Math.abs(method(new Date(fixIOSDateString(dateTime2)), new Date(fixIOSDateString(dateTime1))));
     },
     /**
      * 字符串查找
