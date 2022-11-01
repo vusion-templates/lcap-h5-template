@@ -175,6 +175,10 @@ export default {
                 });
                 return res;
             },
+            async getCurrentIp() {
+                const res = await configuration.getCurrentIp();
+                return res;
+            },
         };
         new Vue({
             data: {
