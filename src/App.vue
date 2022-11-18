@@ -27,7 +27,6 @@ export default {
             return +window.appInfo?.tenantType === 1;
         },
     },
-    watch: {},
     async mounted() {
         if (this.isSharePage && this.isFreeSass) {
             try {
@@ -42,9 +41,6 @@ export default {
                 this.$refs.freeSassLogin.open();
             }
         }
-    },
-    methods: {
-
     },
 };
 
