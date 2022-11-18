@@ -1,4 +1,24 @@
 {
+    "GenerateExtendToken": {
+        "url": {
+            "method": "get",
+            "path": "/gateway/nuims/nuims",
+            "query": {
+                "Action": "GenerateExtendToken",
+                "Version": "2020-06-01"
+            }
+        }
+    },
+    "CheckExtendToken": {
+        "url": {
+            "method": "get",
+            "path": "/gateway/nuims/nuims",
+            "query": {
+                "Action": "CheckExtendToken",
+                "Version": "2020-06-01"
+            }
+        }
+    },
     "Authentication": {
         "url": {
             "method": "post",
@@ -18,7 +38,7 @@
                 "Version": "2020-06-01"
             }
         }
-    }, 
+    },
     "GetUser": {
         "url": {
             "method": "get",
@@ -68,8 +88,8 @@
                 "Version": "2020-06-01"
             }
         }
-    }, 
-    "GetConfig" : {
+    },
+    "GetConfig": {
         "url": {
             "method": "get",
             "path": "/config",
