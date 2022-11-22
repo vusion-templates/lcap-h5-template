@@ -73,13 +73,70 @@ export default {
         }
         return userResourcesPromise;
     },
-    logout() {
-        return auth.Logout({
-            headers: getBaseHeaders(),
-        }).then(() => {
-            cookie.erase('authorization');
-            cookie.erase('username');
-        });
+    async getKeycloakLogoutUrl() {
+        let logoutUrl = '';
+        if (window.appInfo.hasUserCenter) {
+            // const res = await lowauth.getAppLoginTypes({
+            //     query: {
+            //         Action: 'GetTenantLoginTypes',
+            //         Version: '2020-06-01',
+            //         TenantName: window.appInfo.tenant,
+            //     },
+            // });
+            // const KeycloakConfig = res?.Data.Keycloak;
+            // if (KeycloakConfig) {
+            //     logoutUrl = `${KeycloakConfig?.config?.logoutUrl}?redirect_uri=${window.location.protocol}//${window.location.host}/login`;
+            // }
+        } else {
+            const res = await auth.getNuimsTenantLoginTypes({
+                query: {
+                    Action: 'GetTenantLoginTypes',
+                    Version: '2020-06-01',
+                    TenantName: window.appInfo.tenant,
+                },
+            });
+            const KeycloakConfig = res?.Data.find((item) => (item.LoginType === 'Keycloak'));
+
+            if (KeycloakConfig) {
+                logoutUrl = `${KeycloakConfig?.extendProperties?.logoutUrl}?redirect_uri=${window.location.protocol}//${window.location.host}/login`;
+            }
+        }
+
+        return logoutUrl;
+    },
+    async logout() {
+        const sleep = (t) => new Promise((r) => setTimeout(r, t));
+        if (window.appInfo.hasUserCenter) {
+
+            // const logoutUrl = await this.getKeycloakLogoutUrl();
+            // localStorage.setItem('logoutUrl', logoutUrl);
+            // if (logoutUrl) {
+            //     window.location.href = logoutUrl;
+            //     await sleep(1000);
+            // } else {
+            //     return lowauth.Logout({
+            //         headers: getBaseHeaders(),
+            //     }).then(() => {
+            //         // 用户中心，去除认证和用户名信息
+            //         cookie.erase('authorization');
+            //         cookie.erase('username');
+            //     });
+            // }
+        } else {
+            const logoutUrl = await this.getKeycloakLogoutUrl();
+            localStorage.setItem('logoutUrl', logoutUrl);
+            if (logoutUrl) {
+                window.location.href = logoutUrl;
+                await sleep(1000);
+            } else {
+                return auth.Logout({
+                    headers: getBaseHeaders(),
+                }).then(() => {
+                    cookie.erase('authorization');
+                    cookie.erase('username');
+                });
+            }
+        }
     },
     loginH5(data) {
         return auth.LoginH5({

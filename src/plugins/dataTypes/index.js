@@ -154,10 +154,10 @@ export default {
             logout() {
                 window.vant.VanDialog.confirm({
                     title: '提示',
-                    message: '确定退出登录吗',
+                    message: '确定退出登录吗?',
                 }).then(async () => {
                     try {
-                        await this.$auth.logout();
+                        await authService.logout();
                     } catch (error) {
                         console.warn(error);
                     }
