@@ -163,7 +163,9 @@ export default {
                     }
 
                     storage.set('Authorization', '');
-                    cookie.eraseAll();
+                    // cookie.eraseAll();
+                    cookie.erase('authorization');
+                    cookie.erase('username');
                     window.location.href = '/login';
                 }).catch(() => {
                     // on cancel
