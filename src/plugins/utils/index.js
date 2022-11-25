@@ -187,16 +187,20 @@ export const utils = {
     },
     MapFilter(map, filterByKey, filterByVal) {
         if (isObject(map) && typeof filterByKey === 'function' && typeof filterByVal === 'function') {
-            const res = [];
+            const res = {};
             for (const key in map) {
                 if (Object.hasOwnProperty.call(map, key)) {
                     if (filterByKey.call(this, key) && filterByVal.call(this, map[key])) {
-                        res.push(map[key]);
+                        res[key] = map[key];
                     }
                 }
             }
+            if (!Object.keys(res).length) {
+                return null;
+            }
             return res;
         }
+        return null;
     },
     CurrDate() {
         return new Date().toJSON().replace(/T.+?Z/, '');
