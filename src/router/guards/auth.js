@@ -1,20 +1,32 @@
 import Vue from 'vue';
 
-import { filterRoutes } from '@/utils/route';
+import { filterRoutes, parsePath } from '@/utils/route';
+
+/**
+ * 是否有无权限页面
+ * @param {*} routes
+ */
+function findNoAuthView(routes) {
+    if (Array.isArray(routes)) {
+        return routes.find((route) => route?.path === '/noAuth');
+    }
+}
 
 export const getAuthGuard = (router, routes, authResourcePaths, appConfig) => async (to, from, next) => {
     const userInfo = Vue.prototype.$global.userInfo || {};
     const $auth = Vue.prototype.$auth;
-
-    if (!$auth.isInit()) {
-        const toPath = to.redirectedFrom || to.path;
-        const authPath = authResourcePaths.find((authResourcePath) => {
-            if (authResourcePath === toPath || `${authResourcePath}/` === toPath) {
-                return true;
-            }
-            return false;
-        });
-        if (authPath) {
+    const redirectedFrom = parsePath(to.redirectedFrom);
+    const toPath = redirectedFrom?.path || to.path;
+    const toQuery = redirectedFrom?.query || to.query;
+    const authPath = authResourcePaths.find((authResourcePath) => {
+        if (authResourcePath === toPath || `${authResourcePath}/` === toPath) {
+            return true;
+        }
+        return false;
+    });
+    const noAuthView = findNoAuthView(routes);
+    if (authPath) {
+        if (!$auth.isInit()) {
             if (!userInfo.UserId) {
                 next({ path: '/login' });
             } else {
@@ -31,11 +43,22 @@ export const getAuthGuard = (router, routes, authResourcePaths, appConfig) => as
                         otherRoutes.forEach((route) => {
                             router.addRoute(route);
                         });
-                        next({ path: toPath });
                     }
+                    // 即使没有查到权限，也需要重新进一遍，来决定去 无权限页面 还是 404页面
+                    next({
+                        path: toPath,
+                        query: toQuery,
+                    });
                 } catch (err) {
+                    if (noAuthView?.path) {
+                        next({ path: noAuthView.path });
+                    }
                     console.log(err);
                 }
+            }
+        } else if (redirectedFrom?.path !== to.path && to.path === '/notFound') {
+            if (noAuthView?.path) {
+                next({ path: noAuthView.path });
             }
         }
     }

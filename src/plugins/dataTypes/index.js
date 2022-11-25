@@ -9,12 +9,12 @@ import { genInitData } from './tools';
 
 export default {
     install(Vue, options = {}) {
-        const genInitFromSchema = (schema = {}, defaultValue, isRouteParam) => {
+        const genInitFromSchema = (schema = {}, defaultValue) => {
             schema.defaultValue = defaultValue;
 
             // read from file
             const dataTypesMap = options.dataTypesMap || {}; // TODO 统一为  dataTypesMap
-            const expressDataTypeObject = genInitData(schema, dataTypesMap, isRouteParam);
+            const expressDataTypeObject = genInitData(schema, dataTypesMap);
             const expression = generate(expressDataTypeObject).code;
             // eslint-disable-next-line no-new-func
             return Function('return ' + expression)();
@@ -154,16 +154,18 @@ export default {
             logout() {
                 window.vant.VanDialog.confirm({
                     title: '提示',
-                    message: '确定退出登录吗',
+                    message: '确定退出登录吗?',
                 }).then(async () => {
                     try {
-                        await this.$auth.logout();
+                        await authService.logout();
                     } catch (error) {
                         console.warn(error);
                     }
 
                     storage.set('Authorization', '');
-                    cookie.eraseAll();
+                    // cookie.eraseAll();
+                    cookie.erase('authorization');
+                    cookie.erase('username');
                     window.location.href = '/login';
                 }).catch(() => {
                     // on cancel

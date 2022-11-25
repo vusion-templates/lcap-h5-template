@@ -31,7 +31,7 @@ const init = (appConfig, platformConfig, routes, metaData) => {
     Vue.use(LogicsPlugin, metaData);
     Vue.use(RouterPlugin);
     Vue.use(ServicesPlugin, metaData);
-    Vue.use(AuthPlugin);
+    Vue.use(AuthPlugin, appConfig);
     Vue.use(DataTypesPlugin, metaData);
     Vue.use(UtilsPlugin, metaData);
 
