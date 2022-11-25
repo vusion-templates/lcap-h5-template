@@ -104,43 +104,43 @@ export const utils = {
     Trim(str) {
         return str && str.trim();
     },
-    Get(arr, index) {
-        if (Array.isArray(arr)) {
-            return arr[index];
-        }
-    },
-    Set(arr, index, item) {
-        return utils.Vue.set(arr, index, item);
-    },
-    Contains(arr, item) {
-        return typeof arr.find((ele) => isEqual(ele, item)) !== 'undefined';
-    },
-    Add(arr, item) {
+    ListAdd(arr, item) {
         if (Array.isArray(arr)) {
             arr.push(item);
         }
     },
-    AddAll(arr, addList) {
+    ListAddAll(arr, addList) {
         if (Array.isArray(arr) && Array.isArray(addList)) {
             arr.push(...addList);
             return arr.length;
         }
     },
-    Insert(arr, index, item) {
+    ListInsert(arr, index, item) {
         if (Array.isArray(arr)) {
             arr.splice(index, 0, item);
         }
     },
-    Remove(arr, item) {
+    ListRemove(arr, item) {
         if (Array.isArray(arr)) {
             const index = arr.indexOf(item);
             ~index && arr.splice(index, 1);
         }
     },
-    RemoveAt(arr, index) {
+    ListRemoveAt(arr, index) {
         if (Array.isArray(arr)) {
             return arr.splice(index, 1)[0];
         }
+    },
+    ListGet(arr, index) {
+        if (Array.isArray(arr)) {
+            return arr[index];
+        }
+    },
+    ListSet(arr, index, item) {
+        return utils.Vue.set(arr, index, item);
+    },
+    ListContains(arr, item) {
+        return typeof arr.find((ele) => isEqual(ele, item)) !== 'undefined';
     },
     MapGet(map, key) {
         if (isObject(map)) {
@@ -185,14 +185,12 @@ export const utils = {
         }
         return [];
     },
-    MapFilter(map, filterByKey, filterByVal) {
-        if (isObject(map) && typeof filterByKey === 'function' && typeof filterByVal === 'function') {
-            const res = {};
+    MapFilter(map, predicate) {
+        if (isObject(map) && typeof predicate === 'function') {
+            const res = new Map();
             for (const key in map) {
-                if (Object.hasOwnProperty.call(map, key)) {
-                    if (filterByKey.call(this, key) && filterByVal.call(this, map[key])) {
-                        res[key] = map[key];
-                    }
+                if (Object.hasOwnProperty.call(map, key) && predicate.call(this, key, map[key])) {
+                    res.push(key, map[key]);
                 }
             }
             if (!Object.keys(res).length) {
