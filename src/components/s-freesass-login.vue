@@ -89,4 +89,7 @@ export default {
      [class^=u-modal_close__] {
         display: none!important;
     }
+    [class^=u-modal_dialog__]{
+        margin: 0 !important;
+    }
 </style>
