@@ -337,40 +337,40 @@ export const utils = {
         return 0;
     },
     MapValues(map) {
-        if (isObject(map)) {
-            if ('values' in Object) {
-                return Object.values(map);
-            } else {
-                const res = [];
-                for (const key in map) {
-                    if (Object.hasOwnProperty.call(map, key)) {
-                        res.push(map[key]);
-                    }
-                }
-                return res;
-            }
+        if (!isObject(map)) {
+            return [];
         }
-        return [];
+        if ('values' in Object) {
+            return Object.values(map);
+        } else {
+            const res = [];
+            for (const key in map) {
+                if (Object.hasOwnProperty.call(map, key)) {
+                    res.push(map[key]);
+                }
+            }
+            return res;
+        }
     },
-    MapFilter(map, predicate) {
+    MapFilter(map, by) {
         if (!isObject(map) || !(typeof predicate === 'function')) {
             return null;
         }
         const res = new Map();
-        for (const key in map) {
-            if (Object.hasOwnProperty.call(map, key) && predicate.call(this, key, map[key])) {
-                res.push(key, map[key]);
+        for (const [k, v] of map) {
+            if (by(k, v)) {
+                res.set(k, v);
             }
         }
         return res;
     },
-    MapTransform(map, trans) {
-        if (!isObject(map) || typeof predicate != 'function') {
+    MapTransform(map, by) {
+        if (!isObject(map) || typeof predicate !== 'function') {
             return null;
         }
         const res = new Map();
         for (const [k, v] of map) {
-            res.push(trans(k, v));
+            res.set(...by(k, v));
         }
         return res;
     },
@@ -393,9 +393,17 @@ export const utils = {
     },
     // let mmm2 = new Map([['a', 1], ['b', 1], ['c', 1], ['d', 4]]);
     // let mmm3 = MapDistinctBy(mmm2, (k, v) => v); // [ Map(2) { 'a' => 1, 'd' => 4 } ]
-    ListToMap(list) {
-        console.log("ListToMap is not implemented yet.");
-        console.assert(false);
+    ListToMap(arr, toKey) {
+        if (typeof arr != 'object' || typeof toKey != 'function') {
+            return null;
+        }
+        const res = new Map();
+        arr.forEach(e => {
+            if (toKey(e)) {
+                res.set(toKey(e), e);
+            }
+        });
+        return res;
     },
     CurrDate() {
         return new Date().toJSON().replace(/T.+?Z/, '');
