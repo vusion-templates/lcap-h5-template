@@ -41,6 +41,9 @@ export default {
             this.$refs.iframe2.$el.style.height = `${value - 190}px`;
         },
         async dealMessage(msg) {
+            if(msg?.data === 'undefined')
+                return;
+
             if (msg?.data && typeof msg?.data === 'string' && JSON.parse(msg?.data)?.name === 'updateHeight') {
                 this.updateHeight(JSON.parse(msg?.data)?.value);
             }
