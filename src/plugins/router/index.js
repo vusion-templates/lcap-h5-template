@@ -14,7 +14,11 @@ export default {
             if (url.startsWith('http'))
                 location.href = encodeUrl(url);
             else {
-                this.$router.push(url);
+                try {
+                    this.$router.push(url);
+                } catch(err) {
+                    console.log(err);
+                }
             }
         };
     },
