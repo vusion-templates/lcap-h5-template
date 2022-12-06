@@ -13,7 +13,6 @@ import {
     differenceInMinutes,
     differenceInSeconds,
 } from 'date-fns';
-import { Decimal } from 'decimal.js';
 import Vue from 'vue';
 
 let enumsMap = {};
@@ -201,6 +200,95 @@ export const utils = {
             return res;
         }
         return null;
+    },
+    ListReverse(arr) {
+        if (Array.isArray(arr)) {
+            arr.reverse();
+        }
+    },
+    ListSort(arr, callback, sort) {
+        if (Array.isArray(arr)) {
+            if (typeof callback === 'function') {
+                arr.sort((a, b) => {
+                    const valueA = callback(a);
+                    const valueB = callback(b);
+                    if (Number.isNaN(valueA) || Number.isNaN(valueB) || typeof valueA === 'undefined' || typeof valueB === 'undefined' || valueA === null || valueB === null) {
+                        return 1;
+                    } else {
+                        if (valueA >= valueB) {
+                            if (sort) {
+                                return 1;
+                            }
+                            return -1;
+                        } else {
+                            if (sort) {
+                                return -1;
+                            }
+                            return 1;
+                        }
+                    }
+                });
+            }
+        }
+    },
+    ListFind(arr, callback) {
+        if (Array.isArray(arr)) {
+            if (typeof callback === 'function') {
+                return arr.find(callback);
+            }
+        }
+    },
+    ListFindAll(arr, callback) {
+        if (Array.isArray(arr)) {
+            if (typeof callback === 'function') {
+                return arr.filter(callback);
+            }
+        }
+    },
+    ListFindIndex(arr, callback) {
+        if (Array.isArray(arr)) {
+            if (typeof callback === 'function') {
+                return arr.findIndex(callback);
+            }
+        }
+    },
+    ListSlice(arr, start, end) {
+        if (Array.isArray(arr)) {
+            return arr.slice(start, end);
+        }
+    },
+    ListDistinct(arr) {
+        if (Array.isArray(arr)) {
+            const map = new Map();
+            let i = 0;
+            while (i < arr.length) {
+                if (map.get(arr[i])) {
+                    arr.splice(i, 1);
+                    i--;
+                } else {
+                    map.set(arr[i], true);
+                }
+                i++;
+            }
+        }
+    },
+    ListSliceToPageOf(arr, page, size) {
+        if (Array.isArray(arr) && page) {
+            const content = arr.slice((page - 1) * size, size);
+            const total = arr.length;
+            const totalPages = Math.ceil(total / size);
+            return {
+                content,
+                number: page,
+                size,
+                numberOfElements: content.length,
+                totalPages,
+                totalElements: total,
+                last: page === totalPages,
+                first: page === 1,
+                empty: total,
+            };
+        }
     },
     CurrDate() {
         return new Date().toJSON().replace(/T.+?Z/, '');
