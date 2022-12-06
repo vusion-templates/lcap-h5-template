@@ -7,8 +7,8 @@
 </template>
 
 <script>
-import SFreesassLogin from '@/components/s-freesass-login';
-import SFreesassBanner from '@/components/s-freesass-banner';
+import SFreesassLogin from '@/components/s-freesass-login.vue';
+import SFreesassBanner from '@/components/s-freesass-banner.vue';
 import auth from '@/apis/auth';
 
 export default {
