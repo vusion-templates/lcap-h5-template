@@ -7,8 +7,8 @@
 </template>
 
 <script>
-import SFreesassLogin from '@/components/s-freesass-login';
-import SFreesassBanner from '@/components/s-freesass-banner';
+import SFreesassLogin from '@/components/s-freesass-login.vue';
+import SFreesassBanner from '@/components/s-freesass-banner.vue';
 import auth from '@/apis/auth';
 
 export default {
@@ -23,7 +23,7 @@ export default {
         },
     },
     async mounted() {
-        if (0&&this.isSharePage && this.isFreeSass) {
+        if (this.isSharePage && this.isFreeSass) {
             try {
                 const res = await auth.CheckExtendToken({ config: {
                     noErrorTip: true,

@@ -14,7 +14,9 @@ export default {
             if (url.startsWith('http'))
                 location.href = encodeUrl(url);
             else {
-                this.$router.push(url);
+                this.$router.push(url)
+                    // eslint-disable-next-line no-empty-function
+                    .catch((err) => {});
             }
         };
     },
