@@ -10,6 +10,8 @@ import { genInitData } from './tools';
 export default {
     install(Vue, options = {}) {
         const genInitFromSchema = (schema = {}, defaultValue) => {
+            if (!schema)
+                schema = {};
             schema.defaultValue = defaultValue;
 
             // read from file
