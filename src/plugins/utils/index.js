@@ -14,6 +14,7 @@ import {
     differenceInSeconds,
 } from 'date-fns';
 import Vue from 'vue';
+import string from '@/filters/string';
 
 let enumsMap = {};
 
@@ -36,6 +37,10 @@ function fixIOSDateString(value) {
     } else {
         return value;
     }
+}
+
+function uniqueByKey(array, key) {
+    return [...new Map(array.map((x) => [x[key], x])).values()];
 }
 
 export const utils = {
@@ -141,6 +146,167 @@ export const utils = {
             return arr.splice(index, 1)[0];
         }
     },
+    ListHead(arr) {
+        if (!Array.isArray(arr) || arr.length === 0) {
+            return null;
+        } else {
+            return arr[0];
+        }
+    },
+    ListLast(arr) {
+        if (!Array.isArray(arr) || arr.length === 0) {
+            return null;
+        } else {
+            return arr[arr.length - 1];
+        }
+    },
+    ListFlatten(arr) {
+        if (Array.isArray(arr) && arr.every((elem) => Array.isArray(elem))) {
+            return arr.flat();
+        } else {
+            return null;
+        }
+    },
+    ListTransform(arr, trans) {
+        if (Array.isArray(arr)) {
+            return arr.map((elem) => trans(elem));
+        } else {
+            return null;
+        }
+    },
+    ListSum(arr) {
+        if (Array.isArray(arr)) {
+            return arr.reduce((prev, cur) => prev + cur, 0);
+        } else {
+            return null;
+        }
+    },
+    ListProduct(arr) {
+        if (Array.isArray(arr)) {
+            return arr.reduce((prev, cur) => prev * cur, 1);
+        } else {
+            return null;
+        }
+    },
+    ListAverage(arr) {
+        if (!Array.isArray(arr) || arr.length === 0) {
+            return null;
+        } else {
+            return this.ListSum(arr) / arr.length;
+        }
+    },
+    ListMax(arr) {
+        if (!Array.isArray(arr) || arr.length === 0) {
+            return null;
+        } else {
+            return arr.reduce((prev, cur) => prev >= cur ? prev : cur, arr[0]);
+        }
+    },
+    ListMin(arr) {
+        if (!Array.isArray(arr) || arr.length === 0) {
+            return null;
+        } else {
+            return arr.reduce((prev, cur) => prev <= cur ? prev : cur, arr[0]);
+        }
+    },
+    ListLength(arr) {
+        if (Array.isArray(arr)) {
+            return arr.length;
+        } else {
+            return null;
+        }
+    },
+    ListReverse(arr) {
+        if (Array.isArray(arr)) {
+            arr.reverse();
+        }
+    },
+    ListSort(arr, callback, sort) {
+        if (Array.isArray(arr)) {
+            if (typeof callback === 'function') {
+                arr.sort((a, b) => {
+                    const valueA = callback(a);
+                    const valueB = callback(b);
+                    if (Number.isNaN(valueA) || Number.isNaN(valueB) || typeof valueA === 'undefined' || typeof valueB === 'undefined' || valueA === null || valueB === null) {
+                        return 1;
+                    } else {
+                        if (valueA >= valueB) {
+                            if (sort) {
+                                return 1;
+                            }
+                            return -1;
+                        } else {
+                            if (sort) {
+                                return -1;
+                            }
+                            return 1;
+                        }
+                    }
+                });
+            }
+        }
+    },
+    ListFind(arr, by) {
+        if (Array.isArray(arr)) {
+            if (typeof by === 'function') {
+                return arr.find(by);
+            }
+        }
+    },
+    ListFilter(arr, by) {
+        if (!Array.isArray(arr) || typeof by !== 'function') {
+            return null;
+        }
+        return arr.filter(by);
+    },
+    ListFindIndex(arr, callback) {
+        if (Array.isArray(arr)) {
+            if (typeof callback === 'function') {
+                return arr.findIndex(callback);
+            }
+        }
+    },
+    ListSlice(arr, start, end) {
+        if (Array.isArray(arr)) {
+            return arr.slice(start, end);
+        }
+    },
+    // 不修改原 list，返回新 list
+    ListDistinctBy(arr, getVal) {
+        // getVal : <A,B> . A => B 给一个 A 类型的数据，返回 A 类型中被用户选中的 field 的 value
+        if (!arr || typeof getVal !== 'function') {
+            return null;
+        }
+        if (arr.length === 0) {
+            return arr;
+        }
+        return [...new Map(arr.map((x) => [getVal(x), x])).values()];
+    },
+    ListGroupBy(arr, getVal) {
+        // getVal : <A,B> . A => B 给一个 A 类型的数据，返回 A 类型中被用户选中的 field 的 value
+        if (!arr || typeof getVal !== 'function') {
+            return null;
+        }
+        if (arr.length === 0) {
+            return arr;
+        }
+        const res = Object.create(null);
+        arr.forEach((e) => {
+            const val = getVal(e);
+            if (res[val]) {
+                // res.get(val) 是一个 array
+                res[val].push(e);
+            } else {
+                res[val] = [e];
+            }
+        });
+        return res;
+    },
+    ListSliceToPageOf(arr, page, size) {
+        if (Array.isArray(arr) && page) {
+            return arr.slice((page - 1) * size, size);
+        }
+    },
     MapGet(map, key) {
         if (isObject(map)) {
             return map[key];
@@ -169,37 +335,54 @@ export const utils = {
         return 0;
     },
     MapValues(map) {
-        if (isObject(map)) {
-            if ('values' in Object) {
-                return Object.values(map);
-            } else {
-                const res = [];
-                for (const key in map) {
-                    if (Object.hasOwnProperty.call(map, key)) {
-                        res.push(map[key]);
-                    }
-                }
-                return res;
-            }
+        if (!isObject(map)) {
+            return [];
         }
-        return [];
-    },
-    MapFilter(map, filterByKey, filterByVal) {
-        if (isObject(map) && typeof filterByKey === 'function' && typeof filterByVal === 'function') {
-            const res = {};
+        if ('values' in Object) {
+            return Object.values(map);
+        } else {
+            const res = [];
             for (const key in map) {
                 if (Object.hasOwnProperty.call(map, key)) {
-                    if (filterByKey.call(this, key) && filterByVal.call(this, map[key])) {
-                        res[key] = map[key];
-                    }
+                    res.push(map[key]);
                 }
-            }
-            if (!Object.keys(res).length) {
-                return null;
             }
             return res;
         }
-        return null;
+    },
+    MapFilter(map, by) {
+        if (!isObject(map) || typeof by !== 'function') {
+            return null;
+        }
+        const res = Object.create(null);
+        for (const [k, v] of Object.entries(map)) {
+            if (by(k, v)) {
+                res[k] = v;
+            }
+        }
+        return res;
+    },
+    MapTransform(map, toKey, toValue) {
+        if (!isObject(map) || typeof toKey !== 'function' || typeof toValue !== 'function') {
+            return null;
+        }
+        const res = Object.create(null);
+        for (const [k, v] of Object.entries(map)) {
+            res[toKey(k, v)] = toValue(k, v);
+        }
+        return res;
+    },
+    ListToMap(arr, toKey, toValue) {
+        if (typeof arr !== 'object' || typeof toKey !== 'function' || typeof toValue !== 'function') {
+            return null;
+        }
+        const res = Object.create(null);
+        arr.forEach((e) => {
+            if (toKey(e)) {
+                res[toKey(e)] = toValue(e);
+            }
+        });
+        return res;
     },
     ListReverse(arr) {
         if (Array.isArray(arr)) {
