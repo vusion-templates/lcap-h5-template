@@ -148,21 +148,21 @@ export const utils = {
         }
     },
     ListHead(arr) {
-        if (!Array.isArray(arr) || arr.length == 0) {
+        if (!Array.isArray(arr) || arr.length === 0) {
             return null;
         } else {
             return arr[0];
         }
     },
     ListLast(arr) {
-        if (!Array.isArray(arr) || arr.length == 0) {
+        if (!Array.isArray(arr) || arr.length === 0) {
             return null;
         } else {
             return arr[arr.length - 1];
         }
     },
     ListFlatten(arr) {
-        if (Array.isArray(arr) && arr.every(elem => Array.isArray(elem))) {
+        if (Array.isArray(arr) && arr.every((elem) => Array.isArray(elem))) {
             return arr.flat();
         } else {
             return null;
@@ -170,7 +170,7 @@ export const utils = {
     },
     ListTransform(arr, trans) {
         if (Array.isArray(arr)) {
-            return arr.map(elem => trans(elem));
+            return arr.map((elem) => trans(elem));
         } else {
             return null;
         }
@@ -184,28 +184,28 @@ export const utils = {
     },
     ListProduct(arr) {
         if (Array.isArray(arr)) {
-            return arr.reduce((prev, cur) => prev * cur, 0);
+            return arr.reduce((prev, cur) => prev * cur, 1);
         } else {
             return null;
         }
     },
     ListAverage(arr) {
-        if (!Array.isArray(arr) || arr.length == 0) {
+        if (!Array.isArray(arr) || arr.length === 0) {
             return null;
         } else {
-            this.ListSum(arr) / arr.length;
+            return this.ListSum(arr) / arr.length;
         }
     },
     ListMax(arr) {
-        if (!Array.isArray(arr) || arr.length == 0) {
-            return null
+        if (!Array.isArray(arr) || arr.length === 0) {
+            return null;
         } else {
             return arr.reduce((prev, cur) => prev >= cur ? prev : cur, arr[0]);
         }
     },
     ListMin(arr) {
-        if (!Array.isArray(arr) || arr.length == 0) {
-            return null
+        if (!Array.isArray(arr) || arr.length === 0) {
+            return null;
         } else {
             return arr.reduce((prev, cur) => prev <= cur ? prev : cur, arr[0]);
         }
@@ -247,18 +247,18 @@ export const utils = {
             }
         }
     },
+    ListFind(arr, by) {
+        if (Array.isArray(arr)) {
+            if (typeof by === 'function') {
+                return arr.find(by);
+            }
+        }
+    },
     ListFilter(arr, by) {
         if (!Array.isArray(arr) || typeof by !== 'function') {
             return null;
         }
         return arr.filter(by);
-    },
-    ListFindAll(arr, by) {
-        if (Array.isArray(arr)) {
-            if (typeof by === 'function') {
-                return arr.filter(by);
-            }
-        }
     },
     ListFindIndex(arr, callback) {
         if (Array.isArray(arr)) {
@@ -275,30 +275,30 @@ export const utils = {
     // 不修改原 list，返回新 list
     ListDistinctBy(arr, getVal) {
         // getVal : <A,B> . A => B 给一个 A 类型的数据，返回 A 类型中被用户选中的 field 的 value
-        if (!arr || typeof getVal != 'function') {
+        if (!arr || typeof getVal !== 'function') {
             return null;
         }
         if (arr.length === 0) {
             return arr;
         }
-        return [...new Map(arr.map((x) => [getVal(x), x])).values()]
+        return [...new Map(arr.map((x) => [getVal(x), x])).values()];
     },
     ListGroupBy(arr, getVal) {
         // getVal : <A,B> . A => B 给一个 A 类型的数据，返回 A 类型中被用户选中的 field 的 value
-        if (!arr || typeof getVal != 'function') {
+        if (!arr || typeof getVal !== 'function') {
             return null;
         }
         if (arr.length === 0) {
             return arr;
         }
-        const res = new Map();
-        arr.forEach(e => {
+        const res = Object.create(null);
+        arr.forEach((e) => {
             const val = getVal(e);
-            if (res.has(val)) {
+            if (res[val]) {
                 // res.get(val) 是一个 array
-                res.get(val).push(e);
+                res[val].push(e);
             } else {
-                res.set(val, [e]);
+                res[val] = [e];
             }
         });
         return res;
@@ -352,13 +352,13 @@ export const utils = {
         }
     },
     MapFilter(map, by) {
-        if (!isObject(map) || !(typeof by === 'function')) {
+        if (!isObject(map) || typeof by !== 'function') {
             return null;
         }
-        const res = new Map();
-        for (const [k, v] of map) {
+        const res = Object.create(null);
+        for (const [k, v] of Object.entries(map)) {
             if (by(k, v)) {
-                res.set(k, v);
+                res[k] = v;
             }
         }
         return res;
@@ -367,20 +367,20 @@ export const utils = {
         if (!isObject(map) || typeof toKey !== 'function' || typeof toValue !== 'function') {
             return null;
         }
-        const res = new Map();
-        for (const [k, v] of map) {
-            res.set(toKey(k, v), toValue(k, v));
+        const res = Object.create(null);
+        for (const [k, v] of Object.entries(map)) {
+            res[toKey(k, v)] = toValue(k, v);
         }
         return res;
     },
-ListToMap(arr, toKey, toValue) {
+    ListToMap(arr, toKey, toValue) {
         if (typeof arr !== 'object' || typeof toKey !== 'function' || typeof toValue !== 'function') {
             return null;
         }
-        const res = new Map();
-        arr.forEach(e => {
+        const res = Object.create(null);
+        arr.forEach((e) => {
             if (toKey(e)) {
-                res.set(toKey(e), toValue(e));
+                res[toKey(e)] = toValue(e);
             }
         });
         return res;
