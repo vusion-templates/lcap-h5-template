@@ -302,11 +302,6 @@ export const utils = {
         });
         return res;
     },
-    ListSliceToPageOf(arr, page, size) {
-        if (Array.isArray(arr) && page) {
-            return arr.slice((page - 1) * size, size);
-        }
-    },
     MapGet(map, key) {
         if (isObject(map)) {
             return map[key];
