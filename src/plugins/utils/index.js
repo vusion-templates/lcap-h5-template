@@ -290,7 +290,7 @@ export const utils = {
         if (arr.length === 0) {
             return arr;
         }
-        const res = Object.create(null);
+        const res = {};
         arr.forEach((e) => {
             const val = getVal(e);
             if (res[val]) {
@@ -349,7 +349,7 @@ export const utils = {
         if (!isObject(map) || typeof by !== 'function') {
             return null;
         }
-        const res = Object.create(null);
+        const res = {};
         for (const [k, v] of Object.entries(map)) {
             if (by(k, v)) {
                 res[k] = v;
@@ -361,7 +361,7 @@ export const utils = {
         if (!isObject(map) || typeof toKey !== 'function' || typeof toValue !== 'function') {
             return null;
         }
-        const res = Object.create(null);
+        const res = {};
         for (const [k, v] of Object.entries(map)) {
             res[toKey(k, v)] = toValue(k, v);
         }
@@ -371,7 +371,7 @@ export const utils = {
         if (typeof arr !== 'object' || typeof toKey !== 'function' || typeof toValue !== 'function') {
             return null;
         }
-        const res = Object.create(null);
+        const res = {};
         arr.forEach((e) => {
             if (toKey(e)) {
                 res[toKey(e)] = toValue(e);
