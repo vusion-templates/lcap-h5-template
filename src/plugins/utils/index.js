@@ -121,7 +121,7 @@ export const utils = {
     },
     Add(arr, item) {
         if (Array.isArray(arr)) {
-            arr.push(item);
+            return arr.push(item);
         }
     },
     AddAll(arr, addList) {
