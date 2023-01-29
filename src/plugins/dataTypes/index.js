@@ -84,6 +84,10 @@ export default {
                 const yy = new Decimal(y + '');
                 return xx.div(yy).toNumber();
             },
+            // 相等
+            isEqual(x, y) {
+                return x == y;
+            },
             requestFullscreen() {
                 return document.body.requestFullscreen();
             },
