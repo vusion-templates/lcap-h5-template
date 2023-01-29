@@ -5,22 +5,21 @@ import configuration from '@/apis/configuration';
 import cookie from '@/utils/cookie';
 import storage from '@/utils/storage/localStorage';
 import authService from '../auth/authService';
-import { genInitData } from './tools';
+import { initApplicationConstructor, genInitData, isInstanceOf } from './tools';
 
 export default {
     install(Vue, options = {}) {
+        const dataTypesMap = options.dataTypesMap || {}; // TODO 统一为  dataTypesMap
+
+        initApplicationConstructor(dataTypesMap);
+
         const genInitFromSchema = (schema = {}, defaultValue) => {
             if (!schema)
                 schema = {};
             schema.defaultValue = defaultValue;
-
-            // read from file
-            const dataTypesMap = options.dataTypesMap || {}; // TODO 统一为  dataTypesMap
-            const expressDataTypeObject = genInitData(schema, dataTypesMap);
-            const expression = generate(expressDataTypeObject).code;
-            // eslint-disable-next-line no-new-func
-            return Function('return ' + expression)();
+            return genInitData(schema);
         };
+
         const frontendVariables = {};
         if (Array.isArray(options && options.frontendVariables)) {
             options.frontendVariables.forEach((frontendVariable) => {
@@ -187,6 +186,8 @@ export default {
          * @param {*} schema 是前端用的 refSchema
          */
         Vue.prototype.$genInitFromSchema = genInitFromSchema;
+
+        Vue.prototype.$isInstanceOf = isInstanceOf;
 
         const enumsMap = options.enumsMap || {};
         function createEnum(items) {
