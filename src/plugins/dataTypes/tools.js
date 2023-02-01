@@ -233,7 +233,6 @@ export const genInitData = (typeAnnotation, parentLevel) => {
     if (level > 2 && !defaultValue) {
         return;
     }
-
     if (typeKind === 'generic' && typeNamespace === 'nasl.collection') { // 范型
         let initVal = (typeName === 'List' ? [] : {});
         if (Array.isArray(typeArguments) && typeArguments.length > 0) {
@@ -258,18 +257,21 @@ export const genInitData = (typeAnnotation, parentLevel) => {
         return initVal;
     }
     const typeKey = genTypeKey(typeAnnotation);
-    let TypeConstructor = typeMap[typeKey] || typeMap[`app.${typeKey}`];
-    if (typeKind !== 'primitive' && !TypeConstructor) {
-        TypeConstructor = genConstructor(typeKey, typeAnnotation);
+    if (typeKey) {
+        let TypeConstructor = typeMap[typeKey] || typeMap[`app.${typeKey}`];
+        if (typeKind !== 'primitive' && !TypeConstructor) {
+            TypeConstructor = genConstructor(typeKey, typeAnnotation);
+        }
+        // union 不使用构造函数初始化
+        if (TypeConstructor && typeKind !== 'union' && (typeKind !== 'reference' || typeNamespace !== 'app.enums')) {
+            const instance = new TypeConstructor({
+                defaultValue: parsedValue,
+                level,
+            });
+            return instance;
+        }
     }
-    // union 不使用构造函数初始化
-    if (TypeConstructor && typeKind !== 'union') {
-        const instance = new TypeConstructor({
-            defaultValue: parsedValue,
-            level,
-        });
-        return instance;
-    } else if (parsedValue) {
+    if (parsedValue) {
         return parsedValue;
     }
 };
