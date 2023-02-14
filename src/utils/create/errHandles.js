@@ -1,4 +1,4 @@
-import { UToast } from 'cloud-ui.vusion';
+import { Toast as UToast } from '@lcap/mobile-ui';
 
 export default {
     defaults({ config }, err) {

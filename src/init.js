@@ -1,7 +1,12 @@
 import Vue from 'vue';
-import { installOptions, installFilters, installDirectives, installComponents } from '@vusion/utils';
+import { installOptions, installFilters, installDirectives, install } from '@vusion/utils';
 import * as Vant from '@lcap/mobile-ui';
-import * as CloudUI from 'cloud-ui.vusion';
+// import { directives, MEmitter, MPubSub } from 'cloud-ui.vusion';
+// 👆TreeShaking效果不理想
+import * as directives from 'cloud-ui.vusion/src/directives';
+import MEmitter from 'cloud-ui.vusion/src/components/m-emitter.vue';
+import MPubSub from 'cloud-ui.vusion/src/components/m-pub-sub.vue';
+
 import 'cloud-ui.vusion.css';
 
 import '@/assets/css/index.css';
@@ -12,14 +17,16 @@ import { filterRoutes } from '@/utils/route';
 import App from './App.vue';
 
 window.appVue = Vue;
-window.CloudUI = CloudUI;
+// 梳理下来只有install被使用过
+window.CloudUI = {
+    install,
+};
 
 // 预览沙箱不需要调用init来初始化，但是需要使用到CloudUI和Vant组件，所以放在外边
 installOptions(Vue);
-installDirectives(Vue, CloudUI.directives);
-installComponents(Vue, CloudUI);
-Vue.mixin(CloudUI.MEmitter);
-Vue.mixin(CloudUI.MPubSub);
+installDirectives(Vue, directives);
+Vue.mixin(MEmitter);
+Vue.mixin(MPubSub);
 Vue.use(Vant);
 
 // 需要兼容老应用的制品，因此新版本入口函数参数不做改变
