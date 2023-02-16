@@ -6,6 +6,7 @@ import cookie from '@/utils/cookie';
 import storage from '@/utils/storage/localStorage';
 import authService from '../auth/authService';
 import { initApplicationConstructor, genInitData, isInstanceOf } from './tools';
+import { navigateToUserInfoPage } from '../common/wx';
 
 export default {
     install(Vue, options = {}) {
@@ -138,6 +139,29 @@ export default {
                     }
                 });
             },
+            getIsMiniApp() {
+                if (!window.wx) {
+                    return false;
+                }
+                return new Promise((resolve) =>
+                    window.wx.miniProgram.getEnv((res) => {
+                        resolve(!!res.miniprogram);
+                    }));
+            },
+
+            getWeChatOpenid() {
+                return localStorage.getItem('_wx_openid');
+            },
+            getWeChatHeadImg() {
+                return localStorage.getItem('_wx_headimg');
+            },
+            getWeChatNickName() {
+                return localStorage.getItem('_wx_nickname');
+            },
+            navigateToUserInfo() {
+                navigateToUserInfoPage();
+            },
+
             getDistance(s1, s2) {
                 function deg2rad(deg) {
                     return deg * (Math.PI / 180);
