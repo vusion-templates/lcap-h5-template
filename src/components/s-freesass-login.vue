@@ -5,7 +5,7 @@
         </template>
         <template #body>
             <div :class="$style.title">轻舟低代码，人人都可开发专属应用</div>
-            <u-iframe ref="iframe2" style="width:100%;height:350px;" src="https://id-test.163yun.com/sdk-login?cmsKey=SdkLoginPage&i18nEnable=true&locale=zh_CN&h=shufanqzlcap&t=shufanqzlcap"></u-iframe>
+            <u-iframe ref="iframe2" style="width:100%;height:360px;" src="//id.163yun.com/sdk-login?cmsKey=SdkLoginPage&i18nEnable=true&locale=zh_CN&h=shufanqzlcap&t=shufanqzlcap&fromnsf=lcapAppShare"></u-iframe>
             <div :class="$style.content">
                 <div style="width:14px;height:14px;margin-top:3px;">
                     <svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -34,7 +34,19 @@ export default {
         window.addEventListener('message', this.dealMessage);
     },
     methods: {
+          updateHeight(value) {
+            if (value < 700) {
+                return;
+            }
+            this.$refs.iframe2.$el.style.height = `${value - 190}px`;
+        },
         async dealMessage(msg) {
+            if(msg?.data === 'undefined')
+                return;
+
+            if (msg?.data && typeof msg?.data === 'string' && JSON.parse(msg?.data)?.name === 'updateHeight') {
+                this.updateHeight(JSON.parse(msg?.data)?.value);
+            }
             if (msg?.data && typeof msg?.data === 'string' && JSON.parse(msg?.data)?.token) {
                 const userId = JSON.parse(msg?.data)?.token.userId;
                 cookie.set({ authorization_extend_token_key: userId }, 15);
@@ -58,6 +70,9 @@ export default {
 </script>
 
 <style module>
+    [class^=u-modal__]::before {
+        height: 0!important;
+    }
      .title{
         font-family: 'PingFang SC';
         font-style: normal;
@@ -74,4 +89,10 @@ export default {
         align-items: flex-start;
         gap:10px;
      }
+     [class^=u-modal_close__] {
+        display: none!important;
+    }
+    [class^=u-modal_dialog__]{
+        margin: 0 !important;
+    }
 </style>

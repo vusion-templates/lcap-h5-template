@@ -7,21 +7,16 @@
 </template>
 
 <script>
-import SFreesassLogin from '@/components/s-freesass-login';
-import SFreesassBanner from '@/components/s-freesass-banner';
+import SFreesassLogin from '@/components/s-freesass-login.vue';
+import SFreesassBanner from '@/components/s-freesass-banner.vue';
 import auth from '@/apis/auth';
 
 export default {
     components: { SFreesassLogin, SFreesassBanner },
     computed: {
         isSharePage() {
-            const { env, dnsAddr } = window.appInfo;
-            return true;
-            // if (env === 'dev') {
-            //     return `dev.${dnsAddr}` === location.host;
-            // } else {
-            //     return `${dnsAddr}` === location.host;
-            // }
+            const neteaseStrList = 'lcap.qz.163yun'.split('.');
+            return neteaseStrList.some((it) => location.host.includes(it));
         },
         isFreeSass() {
             return +window.appInfo?.tenantType === 1;
@@ -33,9 +28,6 @@ export default {
                 const res = await auth.CheckExtendToken({ config: {
                     noErrorTip: true,
                 } });
-                if (!res.Data.userId) {
-                    this.$refs.freeSassLogin.open();
-                }
             } catch (error) {
                 console.error('CheckExtendToken: ', error);
                 this.$refs.freeSassLogin.open();

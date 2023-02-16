@@ -1,14 +1,24 @@
 {
-    "GenerateExtendToken": {
-         "url": {
-             "method": "get",
-             "path": "/gateway/nuims/nuims",
-             "query": {
-                 "Action": "GenerateExtendToken",
-                 "Version": "2020-06-01"
-             }
-         }
+    "getNuimsTenantLoginTypes": {
+          "url": {
+              "method": "get",
+              "path": "/gateway/nuims/nuims",
+              "query": {
+                  "Action": "getNuimsTenantLoginTypes",
+                  "Version": "2020-06-01"
+              }
+          }
      },
+    "GenerateExtendToken": {
+        "url": {
+            "method": "get",
+            "path": "/gateway/nuims/nuims",
+            "query": {
+                "Action": "GenerateExtendToken",
+                "Version": "2020-06-01"
+            }
+        }
+    },
     "CheckExtendToken": {
         "url": {
             "method": "get",
@@ -89,7 +99,7 @@
             }
         }
     },
-    "GetConfig" : {
+    "GetConfig": {
         "url": {
             "method": "get",
             "path": "/config",

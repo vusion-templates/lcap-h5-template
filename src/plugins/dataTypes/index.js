@@ -5,20 +5,28 @@ import configuration from '@/apis/configuration';
 import cookie from '@/utils/cookie';
 import storage from '@/utils/storage/localStorage';
 import authService from '../auth/authService';
-import { genInitData } from './tools';
+import { initApplicationConstructor, genInitData, isInstanceOf } from './tools';
+import { navigateToUserInfoPage } from '../common/wx';
 
 export default {
     install(Vue, options = {}) {
-        const genInitFromSchema = (schema = {}, defaultValue) => {
-            schema.defaultValue = defaultValue;
+        const dataTypesMap = options.dataTypesMap || {}; // TODO 统一为  dataTypesMap
 
-            // read from file
-            const dataTypesMap = options.dataTypesMap || {}; // TODO 统一为  dataTypesMap
-            const expressDataTypeObject = genInitData(schema, dataTypesMap);
-            const expression = generate(expressDataTypeObject).code;
-            // eslint-disable-next-line no-new-func
-            return Function('return ' + expression)();
+        initApplicationConstructor(dataTypesMap);
+
+        const genInitFromSchema = (schema = {}, defaultValue, level) => {
+            if (!schema)
+                schema = {};
+            schema.defaultValue = defaultValue;
+            return genInitData(schema, level);
         };
+
+        /**
+         * read datatypes from template, then parse schema
+         * @param {*} schema 是前端用的 refSchema
+         */
+        Vue.prototype.$genInitFromSchema = genInitFromSchema;
+
         const frontendVariables = {};
         if (Array.isArray(options && options.frontendVariables)) {
             options.frontendVariables.forEach((frontendVariable) => {
@@ -83,6 +91,10 @@ export default {
                 const yy = new Decimal(y + '');
                 return xx.div(yy).toNumber();
             },
+            // 相等
+            isEqual(x, y) {
+                return x == y;
+            },
             requestFullscreen() {
                 return document.body.requestFullscreen();
             },
@@ -96,14 +108,10 @@ export default {
                 return new Promise((res, rej) => {
                     function showPosition(position) {
                         const { latitude, longitude } = position.coords;
-                        // eslint-disable-next-line no-console
-                        console.log(latitude, longitude);
                         const [mglng, mglat] = [longitude, latitude];
                         res(`${mglng},${mglat}`);
                     }
                     function showError(error) {
-                        // eslint-disable-next-line no-console
-                        console.log(error, error.code);
                         switch (error.code) {
                             case error.PERMISSION_DENIED:
                                 window.Vue.prototype.$toast.show('用户禁止获取地理定位');
@@ -126,13 +134,34 @@ export default {
                     if (navigator.geolocation) {
                         navigator.geolocation.getCurrentPosition(showPosition, showError);
                     } else {
-                        // eslint-disable-next-line no-console
-                        console.log('Geolocation is not supported by this browser.');
                         window.Vue.prototype.$toast.show('当前系统不支持地理定位');
                         rej({ code: 666, msg: '当前系统不支持地理定位' });
                     }
                 });
             },
+            getIsMiniApp() {
+                if (!window.wx) {
+                    return false;
+                }
+                return new Promise((resolve) =>
+                    window.wx.miniProgram.getEnv((res) => {
+                        resolve(!!res.miniprogram);
+                    }));
+            },
+
+            getWeChatOpenid() {
+                return localStorage.getItem('_wx_openid');
+            },
+            getWeChatHeadImg() {
+                return localStorage.getItem('_wx_headimg');
+            },
+            getWeChatNickName() {
+                return localStorage.getItem('_wx_nickname');
+            },
+            navigateToUserInfo() {
+                navigateToUserInfoPage();
+            },
+
             getDistance(s1, s2) {
                 function deg2rad(deg) {
                     return deg * (Math.PI / 180);
@@ -154,16 +183,18 @@ export default {
             logout() {
                 window.vant.VanDialog.confirm({
                     title: '提示',
-                    message: '确定退出登录吗',
+                    message: '确定退出登录吗?',
                 }).then(async () => {
                     try {
-                        await this.$auth.logout();
+                        await authService.logout();
                     } catch (error) {
                         console.warn(error);
                     }
 
                     storage.set('Authorization', '');
-                    cookie.eraseAll();
+                    // cookie.eraseAll();
+                    cookie.erase('authorization');
+                    cookie.erase('username');
                     window.location.href = '/login';
                 }).catch(() => {
                     // on cancel
@@ -184,11 +215,7 @@ export default {
 
         Vue.prototype.$global = $global;
 
-        /**
-         * read datatypes from template, then parse schema
-         * @param {*} schema 是前端用的 refSchema
-         */
-        Vue.prototype.$genInitFromSchema = genInitFromSchema;
+        Vue.prototype.$isInstanceOf = isInstanceOf;
 
         const enumsMap = options.enumsMap || {};
         function createEnum(items) {
