@@ -6,7 +6,7 @@ import * as Vant from '@lcap/mobile-ui';
 import MEmitter from 'cloud-ui.vusion/src/components/m-emitter.vue';
 import MPubSub from 'cloud-ui.vusion/src/components/m-pub-sub.vue';
 
-import 'cloud-ui.vusion.css';
+// import 'cloud-ui.vusion.css';
 
 import '@/assets/css/index.css';
 import filters from '@/filters';
