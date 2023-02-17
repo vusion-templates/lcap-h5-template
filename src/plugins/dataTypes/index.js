@@ -140,13 +140,7 @@ export default {
                 });
             },
             getIsMiniApp() {
-                if (!window.wx) {
-                    return false;
-                }
-                return new Promise((resolve) =>
-                    window.wx.miniProgram.getEnv((res) => {
-                        resolve(!!res.miniprogram);
-                    }));
+                return window.__wxjs_environment === 'miniprogram';
             },
 
             getWeChatOpenid() {
