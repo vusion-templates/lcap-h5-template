@@ -15,6 +15,8 @@ import {
 import Vue from 'vue';
 import string from '@/filters/string';
 
+import { dateFormatter } from './Formatters';
+
 let enumsMap = {};
 
 function toValue(date, converter) {
@@ -504,12 +506,12 @@ export const utils = {
     FormatDate(value, formatter) {
         if (!value)
             return '-';
-        return format(value, formatter);
+        return dateFormatter.format(value, formatter);
     },
     FormatDateTime(value, formatter) {
         if (!value)
             return '-';
-        return format(value, formatter);
+        return dateFormatter.format(value, formatter);
     },
     Clone(obj) {
         return cloneDeep(obj);
