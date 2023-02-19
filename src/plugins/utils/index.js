@@ -46,7 +46,6 @@ function uniqueByKey(array, key) {
 export const utils = {
     Vue: undefined,
     EnumValueToText(value, enumTypeAnnotation) {
-        console.log(enumTypeAnnotation, value);
         const { typeName, typeNamespace } = enumTypeAnnotation || {};
         if (typeName) {
             let enumName = typeName;
@@ -61,15 +60,10 @@ export const utils = {
         return value;
     },
     EnumToList(enumTypeAnnotation) {
-        console.log(enumTypeAnnotation);
         const { typeName, typeNamespace } = enumTypeAnnotation || {};
-        const enumName = typeName;
-        if (typeName) {
-            let value = typeName;
-            if (typeNamespace?.startsWith('extensions')) {
-                value = typeNamespace + '.' + value;
-            }
-            return enumsMap[enumName](value);
+        let enumName = typeName;
+        if (typeName && typeNamespace?.startsWith('extensions')) {
+            enumName = typeNamespace + '.' + enumName;
         }
         const enumeration = enumsMap[enumName];
         if (!enumeration)
