@@ -135,6 +135,8 @@ export default {
     justify-content: space-between;
     align-items: flex-start;
     gap: 10px;
+    font-weight: 400;
+    line-height: 22px;
 }
 
 .iframeWrap {
