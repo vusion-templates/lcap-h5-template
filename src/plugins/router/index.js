@@ -13,6 +13,7 @@ function downloadClick(realUrl, target) {
     }, 500);
 }
 
+import { navigateTo } from '../common/wx';
 export default {
     install(Vue, options = {}) {
         /**
@@ -26,12 +27,19 @@ export default {
                 if (url.startsWith('http'))
                     location.href = encodeUrl(url);
                 else {
-                    this.$router.push(url)
-                        // eslint-disable-next-line no-empty-function
-                        .catch((err) => {});
+                    /* 判断是否在小程序当中 */
+                    if (window.__wxjs_environment === 'miniprogram') {
+                        navigateTo({ url });
+                    } else {
+                        this.$router.push(url);
+                    }
                 }
             } else {
-                downloadClick(url, target);
+                if (window.__wxjs_environment === 'miniprogram') {
+                    navigateTo({ url });
+                } else {
+                    downloadClick(url, target);
+                }
             }
         };
 
