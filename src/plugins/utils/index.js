@@ -1,7 +1,6 @@
 import cloneDeep from 'lodash/cloneDeep';
 import isEqual from 'lodash/isEqual';
 import isObject from 'lodash/isObject';
-import { utils as cutils } from 'cloud-ui.vusion/dist';
 import {
     addDays, subDays, addMonths, format, formatRFC3339, isValid,
     differenceInYears,
@@ -15,6 +14,8 @@ import {
 } from 'date-fns';
 import Vue from 'vue';
 import string from '@/filters/string';
+
+import { dateFormatter } from './Formatters';
 
 let enumsMap = {};
 
@@ -375,7 +376,7 @@ export const utils = {
             return null;
         }
         const res = {};
-        for(let i=arr.length-1;i>=0;i--) {
+        for (let i = arr.length - 1; i >= 0; i--) {
             const e = arr[i];
             if (toKey(e)) {
                 res[toKey(e)] = toValue(e);
@@ -505,12 +506,12 @@ export const utils = {
     FormatDate(value, formatter) {
         if (!value)
             return '-';
-        return cutils.dateFormatter.format(value, formatter);
+        return dateFormatter.format(value, formatter);
     },
     FormatDateTime(value, formatter) {
         if (!value)
             return '-';
-        return cutils.dateFormatter.format(value, formatter);
+        return dateFormatter.format(value, formatter);
     },
     Clone(obj) {
         return cloneDeep(obj);
