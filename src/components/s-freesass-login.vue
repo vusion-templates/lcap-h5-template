@@ -116,6 +116,8 @@ export default {
     background: #fff;
     border: 1px solid #E5E5E5;
     border-radius: 4px;
+    max-width: 375px;
+    margin: auto;
 }
 
 .title {
@@ -132,9 +134,10 @@ export default {
 .content {
     padding: 0 32px 32px 32px;
     display: flex;
-    justify-content: space-between;
+    justify-content: center;
     align-items: flex-start;
     gap: 10px;
+    font-size: 14px;
     font-weight: 400;
     line-height: 22px;
 }
