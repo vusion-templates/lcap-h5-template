@@ -53,12 +53,6 @@ Vue.use(Vant);
 
 // 需要兼容老应用的制品，因此新版本入口函数参数不做改变
 const init = (appConfig, platformConfig, routes, metaData) => {
-    if (platformConfig?.miniEnable) {
-        const url = 'https://res.wx.qq.com/open/js/jweixin-1.3.2.js';
-        const el = document.createElement('script');
-        el.src = url;
-        document.body.append(el);
-    }
     window.appInfo = Object.assign(appConfig, platformConfig);
 
     installFilters(Vue, filters);
