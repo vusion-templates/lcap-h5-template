@@ -1,19 +1,17 @@
 import Vue from 'vue';
 import { installOptions, installFilters, install } from '@vusion/utils';
 import * as Vant from '@lcap/mobile-ui';
-// import { directives, MEmitter, MPubSub } from 'cloud-ui.vusion';
-// 👆TreeShaking效果不理想
+
 import MEmitter from 'cloud-ui.vusion/src/components/m-emitter.vue';
 import MPubSub from 'cloud-ui.vusion/src/components/m-pub-sub.vue';
 
-// import 'cloud-ui.vusion.css';
-
-import '@/assets/css/index.css';
 import filters from '@/filters';
 import { AuthPlugin, DataTypesPlugin, LogicsPlugin, RouterPlugin, ServicesPlugin, UtilsPlugin } from '@/plugins';
 import { userInfoGuard, getAuthGuard, getTitleGuard, initRouter } from '@/router';
 import { filterRoutes } from '@/utils/route';
+
 import App from './App.vue';
+import '@/assets/css/index.css';
 
 /* 👇CloudUI中入口逻辑 */
 Vue.prototype.$env = Vue.prototype.$env || {};
