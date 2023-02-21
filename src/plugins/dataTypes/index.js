@@ -1,4 +1,4 @@
-import generate from '@babel/generator';
+// import generate from '@babel/generator';
 import { Decimal } from 'decimal.js';
 
 import configuration from '@/apis/configuration';
@@ -14,12 +14,7 @@ export default {
 
         initApplicationConstructor(dataTypesMap);
 
-        const genInitFromSchema = (schema = {}, defaultValue, level) => {
-            if (!schema)
-                schema = {};
-            schema.defaultValue = defaultValue;
-            return genInitData(schema, level);
-        };
+        const genInitFromSchema = (typeKey, defaultValue, level) => genInitData(typeKey, defaultValue, level);
 
         /**
          * read datatypes from template, then parse schema
