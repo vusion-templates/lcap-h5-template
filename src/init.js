@@ -1,25 +1,54 @@
 import Vue from 'vue';
-import { installOptions, installFilters, installDirectives, installComponents } from '@vusion/utils';
+import { installOptions, installFilters, install } from '@vusion/utils';
 import * as Vant from '@lcap/mobile-ui';
-import * as CloudUI from 'cloud-ui.vusion';
-import 'cloud-ui.vusion.css';
 
-import '@/assets/css/index.css';
+import MEmitter from 'cloud-ui.vusion/src/components/m-emitter.vue';
+import MPubSub from 'cloud-ui.vusion/src/components/m-pub-sub.vue';
+
 import filters from '@/filters';
 import { AuthPlugin, DataTypesPlugin, LogicsPlugin, RouterPlugin, ServicesPlugin, UtilsPlugin } from '@/plugins';
 import { userInfoGuard, getAuthGuard, getTitleGuard, initRouter } from '@/router';
 import { filterRoutes } from '@/utils/route';
+
 import App from './App.vue';
+import '@/assets/css/index.css';
+
+/* 👇CloudUI中入口逻辑 */
+Vue.prototype.$env = Vue.prototype.$env || {};
+Vue.prototype.$env.VUE_APP_DESIGNER
+    = String(process.env.VUE_APP_DESIGNER) === 'true';
+Vue.prototype.$at2 = function (obj, propertyPath) {
+    if (propertyPath === '' && !this.$env.VUE_APP_DESIGNER)
+        return obj;
+    return this.$at(obj, propertyPath);
+};
+
+function getAsyncPublicPath() {
+    const script = document.querySelector('script[src*="cloud-ui.vusion"]');
+    if (!script)
+        return;
+
+    const src = script.src;
+    const publicPath = src.replace(/\/[^/]+$/, '/');
+    // eslint-disable-next-line camelcase, no-undef
+    __webpack_public_path__ = publicPath;
+}
+getAsyncPublicPath();
+/* 👆CloudUI中入口逻辑 */
 
 window.appVue = Vue;
+const CloudUI = {
+    install,
+    MEmitter,
+    MPubSub,
+};
+// 梳理下来只有install被使用过
 window.CloudUI = CloudUI;
 
 // 预览沙箱不需要调用init来初始化，但是需要使用到CloudUI和Vant组件，所以放在外边
 installOptions(Vue);
-installDirectives(Vue, CloudUI.directives);
-installComponents(Vue, CloudUI);
-Vue.mixin(CloudUI.MEmitter);
-Vue.mixin(CloudUI.MPubSub);
+Vue.mixin(MEmitter);
+Vue.mixin(MPubSub);
 Vue.use(Vant);
 
 // 需要兼容老应用的制品，因此新版本入口函数参数不做改变
