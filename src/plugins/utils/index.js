@@ -32,7 +32,7 @@ function toValue(date, converter) {
 }
 /* 改变ios的-时间格式 */
 function fixIOSDateString(value) {
-    if (/^\d{4}-\d{1,2}-\d{1,2}\s\d{1,2}:\d{1,2}:\d{1,2}$/.test(value) || /^\d{4}-\d{1,2}-\d{1,2}/.test(value)) {
+    if (/^\d{4}-\d{1,2}-\d{1,2}\s\d{1,2}:\d{1,2}:\d{1,2}$/.test(value) || /^\d{4}-\d{1,2}-\d{1,2}$/.test(value)) {
         return value.replace(/-/g, '/');
     } else {
         return value;
