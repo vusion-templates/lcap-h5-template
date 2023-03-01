@@ -315,7 +315,7 @@ export const genInitData = (typeAnnotation, parentLevel) => {
         if (['', null].includes(defaultValue)) {
             parsedValue = undefined;
         } else {
-            parsedValue = tryJSONParse(defaultValue) ?? defaultValue;
+            parsedValue = tryJSONParse(defaultValue) !== undefined ? tryJSONParse(defaultValue) : defaultValue;
         }
     }
     if (level > 2 && parsedValue === undefined) {
