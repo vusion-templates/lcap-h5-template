@@ -1,11 +1,20 @@
 <template>
-    <u-modal disable-esc :visible.sync="visible" ok-button="" cancel-button="" @cancel="close">
-        <template #title>
-            <div style="font-style: normal;font-weight: 500;font-size: 16px;color: #333333;">登录/注册</div>
-        </template>
-        <template #body>
+    <div :class="$style.login" v-if="visible">
+        <div :class="$style.wrap">
+
+            <div style="font-style: normal;font-weight: 500;font-size: 16px;color: #333333; padding: 16px; border-bottom: 1px solid #E5E5E5;;">登录/注册</div>
+
             <div :class="$style.title">轻舟低代码，人人都可开发专属应用</div>
-            <u-iframe ref="iframe2" style="width:100%;height:360px;" src="//id.163yun.com/sdk-login?cmsKey=SdkLoginPage&i18nEnable=true&locale=zh_CN&h=shufanqzlcap&t=shufanqzlcap&fromnsf=lcapAppShare"></u-iframe>
+            <div :class="$style.iframeWrap" style="width:100%;height:360px;">
+                <van-loading v-show="!loaded" type="spinner"></van-loading>
+                <iframe
+                    @load="onLoad($event)"
+                    v-show="loaded"
+                    ref="iframe2"
+                    frameborder="0"
+                    style="width:100%;height:100%;"
+                    src="//id.163yun.com/sdk-login?cmsKey=SdkLoginPage&i18nEnable=true&locale=zh_CN&h=shufanqzlcap&t=shufanqzlcap&fromnsf=lcapAppShare"></iframe>
+            </div>
             <div :class="$style.content">
                 <div style="width:14px;height:14px;margin-top:3px;">
                     <svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -15,8 +24,9 @@
                 </div>
                 <div>为防止不法分子发布违规应用，用户需先登录才可查看。如需无限制查看，开发者可将应用域名更换为自有域名。</div>
             </div>
-        </template>
-    </u-modal>
+        </div>
+
+    </div>
 </template>
 
 <script>
@@ -28,20 +38,21 @@ export default {
     data() {
         return {
             visible: false,
+            loaded: false,
         };
     },
     created() {
         window.addEventListener('message', this.dealMessage);
     },
     methods: {
-          updateHeight(value) {
+        updateHeight(value) {
             if (value < 700) {
                 return;
             }
             this.$refs.iframe2.$el.style.height = `${value - 190}px`;
         },
         async dealMessage(msg) {
-            if(msg?.data === 'undefined')
+            if (msg?.data === 'undefined')
                 return;
 
             if (msg?.data && typeof msg?.data === 'string' && JSON.parse(msg?.data)?.name === 'updateHeight') {
@@ -64,35 +75,76 @@ export default {
         close() {
             this.visible = false;
         },
+        onLoad() {
+            this.loaded = true;
+        }
     },
 };
 
 </script>
 
 <style module>
-    [class^=u-modal__]::before {
-        height: 0!important;
+.login {
+    position: fixed;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    z-index: var(--z-index-modal, 5000);
+    -webkit-overflow-scrolling: touch;
+    -ms-touch-action: cross-slide-y pinch-zoom double-tap-zoom;
+    touch-action: cross-slide-y pinch-zoom double-tap-zoom;
+    overflow: hidden;
+    overflow-y: auto;
+    background: rgba(0, 0, 0, 0.6);
+    padding-top: 65px;
+    padding-bottom: 30px;
+    animation: fadeIn 0.25s ease-out 0s 1 both;
+}
+
+@keyframes fadeIn {
+    0% {
+        opacity: 0;
     }
-     .title{
-        font-family: 'PingFang SC';
-        font-style: normal;
-        font-weight: 500;
-        font-size: 16px;
-        line-height: 24px;
-        color: #333333;
-        text-align: center;
-     }
-     .content {
-        padding:10px;
-        display: flex;
-        justify-content: space-between;
-        align-items: flex-start;
-        gap:10px;
-     }
-     [class^=u-modal_close__] {
-        display: none!important;
+
+    100% {
+        opacity: 1;
     }
-    [class^=u-modal_dialog__]{
-        margin: 0 !important;
-    }
+}
+
+.wrap {
+    background: #fff;
+    border: 1px solid #E5E5E5;
+    border-radius: 4px;
+    max-width: 375px;
+    margin: auto;
+}
+
+.title {
+    padding-top: 32px;
+    font-family: 'PingFang SC';
+    font-style: normal;
+    font-weight: 500;
+    font-size: 16px;
+    line-height: 24px;
+    color: #333333;
+    text-align: center;
+}
+
+.content {
+    padding: 0 32px 32px 32px;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    gap: 10px;
+    font-size: 14px;
+    font-weight: 400;
+    line-height: 22px;
+}
+
+.iframeWrap {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
 </style>

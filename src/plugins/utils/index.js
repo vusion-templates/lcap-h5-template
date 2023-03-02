@@ -1,7 +1,6 @@
 import cloneDeep from 'lodash/cloneDeep';
 import isEqual from 'lodash/isEqual';
 import isObject from 'lodash/isObject';
-import { utils as cutils } from 'cloud-ui.vusion/dist';
 import {
     addDays, subDays, addMonths, format, formatRFC3339, isValid,
     differenceInYears,
@@ -15,6 +14,8 @@ import {
 } from 'date-fns';
 import Vue from 'vue';
 import string from '@/filters/string';
+
+import { dateFormatter } from './Formatters';
 
 let enumsMap = {};
 
@@ -32,7 +33,7 @@ function toValue(date, converter) {
 }
 /* 改变ios的-时间格式 */
 function fixIOSDateString(value) {
-    if (/^\d{4}-\d{1,2}-\d{1,2}\s\d{1,2}:\d{1,2}:\d{1,2}$/.test(value) || /^\d{4}-\d{1,2}-\d{1,2}/.test(value)) {
+    if (/^\d{4}-\d{1,2}-\d{1,2}\s\d{1,2}:\d{1,2}:\d{1,2}$/.test(value) || /^\d{4}-\d{1,2}-\d{1,2}$/.test(value)) {
         return value.replace(/-/g, '/');
     } else {
         return value;
@@ -45,30 +46,37 @@ function uniqueByKey(array, key) {
 
 export const utils = {
     Vue: undefined,
-    Enum(enumName, value) {
-        if (arguments.length === 0)
-            return '';
-        else if (arguments.length === 1)
-            return enumsMap[enumName];
-        else if (enumsMap[enumName])
+    EnumValueToText(value, enumTypeAnnotation) {
+        const { typeName, typeNamespace } = enumTypeAnnotation || {};
+        if (typeName) {
+            let enumName = typeName;
+            if (typeNamespace?.startsWith('extensions')) {
+                enumName = typeNamespace + '.' + enumName;
+            }
             return enumsMap[enumName](value);
-        else
-            return '';
+        }
+        return '';
     },
-    EnumValue(enumName, value) {
-        return value;
+    StringToEnumValue(value, enumTypeAnnotation) {
+        const { typeName, typeNamespace } = enumTypeAnnotation || {};
+        if (typeName) {
+            let enumName = typeName;
+            if (typeNamespace?.startsWith('extensions')) {
+                enumName = typeNamespace + '.' + enumName;
+            }
+            if (enumsMap[enumName] && enumsMap[enumName].hasOwnProperty(value)) {
+                return value;
+            }
+            return null;
+        }
+        return null;
     },
-    EnumLabel(enumName, value) {
-        if (arguments.length === 0)
-            return '';
-        else if (arguments.length === 1)
-            return enumsMap[enumName];
-        else if (enumsMap[enumName])
-            return enumsMap[enumName](value);
-        else
-            return '';
-    },
-    EnumList(enumName, value) {
+    EnumToList(enumTypeAnnotation) {
+        const { typeName, typeNamespace } = enumTypeAnnotation || {};
+        let enumName = typeName;
+        if (typeName && typeNamespace?.startsWith('extensions')) {
+            enumName = typeNamespace + '.' + enumName;
+        }
         const enumeration = enumsMap[enumName];
         if (!enumeration)
             return [];
@@ -375,9 +383,9 @@ export const utils = {
             return null;
         }
         const res = {};
-        for(let i=arr.length-1;i>=0;i--) {
+        for (let i = arr.length - 1; i >= 0; i--) {
             const e = arr[i];
-            if (toKey(e)) {
+            if (toKey(e) !== undefined) {
                 res[toKey(e)] = toValue(e);
             }
         }
@@ -505,12 +513,12 @@ export const utils = {
     FormatDate(value, formatter) {
         if (!value)
             return '-';
-        return cutils.dateFormatter.format(value, formatter);
+        return dateFormatter.format(value, formatter);
     },
     FormatDateTime(value, formatter) {
         if (!value)
             return '-';
-        return cutils.dateFormatter.format(value, formatter);
+        return dateFormatter.format(value, formatter);
     },
     Clone(obj) {
         return cloneDeep(obj);

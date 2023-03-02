@@ -1,4 +1,4 @@
-import generate from '@babel/generator';
+// import generate from '@babel/generator';
 import { Decimal } from 'decimal.js';
 
 import configuration from '@/apis/configuration';
@@ -6,6 +6,7 @@ import cookie from '@/utils/cookie';
 import storage from '@/utils/storage/localStorage';
 import authService from '../auth/authService';
 import { initApplicationConstructor, genInitData, isInstanceOf } from './tools';
+import { navigateToUserInfoPage } from '../common/wx';
 
 export default {
     install(Vue, options = {}) {
@@ -13,12 +14,7 @@ export default {
 
         initApplicationConstructor(dataTypesMap);
 
-        const genInitFromSchema = (schema = {}, defaultValue, level) => {
-            if (!schema)
-                schema = {};
-            schema.defaultValue = defaultValue;
-            return genInitData(schema, level);
-        };
+        const genInitFromSchema = (typeKey, defaultValue, level) => genInitData(typeKey, defaultValue, level);
 
         /**
          * read datatypes from template, then parse schema
@@ -138,6 +134,23 @@ export default {
                     }
                 });
             },
+            getIsMiniApp() {
+                return window.__wxjs_environment === 'miniprogram';
+            },
+
+            getWeChatOpenid() {
+                return localStorage.getItem('_wx_openid');
+            },
+            getWeChatHeadImg() {
+                return localStorage.getItem('_wx_headimg');
+            },
+            getWeChatNickName() {
+                return localStorage.getItem('_wx_nickname');
+            },
+            navigateToUserInfo() {
+                navigateToUserInfoPage();
+            },
+
             getDistance(s1, s2) {
                 function deg2rad(deg) {
                     return deg * (Math.PI / 180);
