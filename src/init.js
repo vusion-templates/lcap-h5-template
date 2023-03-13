@@ -37,6 +37,7 @@ getAsyncPublicPath();
 /* 👆CloudUI中入口逻辑 */
 
 window.appVue = Vue;
+window.Vue = Vue;
 const CloudUI = {
     install,
     MEmitter,
