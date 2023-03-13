@@ -148,7 +148,7 @@ function genConstructor(typeKey, definition) {
                 if (needGenInitFromSchema) {
                     code += `Vue.prototype.$genInitFromSchema('${sortedTypeKey}',`;
                 }
-                code += `(defaultValue && defaultValue.${propertyName}) ?? ${parsedValue}`;
+                code += `((defaultValue && defaultValue.${propertyName}) === null || (defaultValue && defaultValue.${propertyName}) === undefined) ? ${parsedValue} : defaultValue && defaultValue.${propertyName}`;
                 if (needGenInitFromSchema) {
                     code += `, level)`;
                 }
