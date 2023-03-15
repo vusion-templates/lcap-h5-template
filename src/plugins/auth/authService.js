@@ -180,6 +180,12 @@ export default {
         }
         return (this._map && this._map.has(authPath)) || false;
     },
+    syncHas(authPath) {
+        if (!this.isInit()) {
+            return false;
+        }
+        return (this._map && this._map.has(authPath)) || false;
+    },
 };
 
 export const runAhead = function (domainName) {
