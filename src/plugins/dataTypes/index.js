@@ -1,11 +1,11 @@
-import generate from '@babel/generator';
+// import generate from '@babel/generator';
 import { Decimal } from 'decimal.js';
 
 import configuration from '@/apis/configuration';
 import cookie from '@/utils/cookie';
 import storage from '@/utils/storage/localStorage';
 import authService from '../auth/authService';
-import { initApplicationConstructor, genInitData, isInstanceOf } from './tools';
+import { initApplicationConstructor, genSortedTypeKey, genInitData, isInstanceOf } from './tools';
 import { navigateToUserInfoPage } from '../common/wx';
 
 export default {
@@ -26,7 +26,7 @@ export default {
         if (Array.isArray(options && options.frontendVariables)) {
             options.frontendVariables.forEach((frontendVariable) => {
                 const { name, typeAnnotation, defaultValue } = frontendVariable;
-                frontendVariables[name] = genInitFromSchema(typeAnnotation, defaultValue);
+                frontendVariables[name] = genInitFromSchema(genSortedTypeKey(typeAnnotation), defaultValue);
             });
         }
 
@@ -135,13 +135,7 @@ export default {
                 });
             },
             getIsMiniApp() {
-                if (!window.wx) {
-                    return false;
-                }
-                return new Promise((resolve) =>
-                    window.wx.miniProgram.getEnv((res) => {
-                        resolve(!!res.miniprogram);
-                    }));
+                return window.__wxjs_environment === 'miniprogram';
             },
 
             getWeChatOpenid() {
