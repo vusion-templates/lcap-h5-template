@@ -17,8 +17,6 @@ import string from '@/filters/string';
 
 import { dateFormatter } from './Formatters';
 
-import { toString, fromString } from '../dataTypes/tools';
-
 let enumsMap = {};
 
 function toValue(date, converter) {
@@ -154,6 +152,7 @@ export const utils = {
     RemoveAt(arr, index) {
         if (Array.isArray(arr)) {
             return arr.splice(index, 1)[0];
+            console.log(1)
         }
     },
     ListHead(arr) {
@@ -601,12 +600,6 @@ export const utils = {
         }
 
         return value;
-    },
-    ToString(value, typeKey) {
-        return toString(value, typeKey);
-    },
-    FromString(value, typeKey) {
-        return fromString(value, typeKey);
     },
     /**
      * 数字格式化
