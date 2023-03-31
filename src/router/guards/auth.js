@@ -8,7 +8,7 @@ import { filterRoutes, parsePath } from '@/utils/route';
  */
 function findNoAuthView(routes) {
     if (Array.isArray(routes)) {
-        return routes.find((route) => route?.path === '/noAuth');
+        return routes.find((route) => route?.path === `${window.appInfo.basePath ? window.appInfo.basePath : ''}/noAuth`);
     }
 }
 
@@ -28,7 +28,7 @@ export const getAuthGuard = (router, routes, authResourcePaths, appConfig) => as
     if (authPath) {
         if (!$auth.isInit()) {
             if (!userInfo.UserId) {
-                next({ path: '/login' });
+                next({ path: `${window.appInfo.basePath ? window.appInfo.basePath : ''}/login` });
             } else {
                 try {
                     const resources = await $auth.getUserResources(appConfig.domainName);
@@ -62,6 +62,6 @@ export const getAuthGuard = (router, routes, authResourcePaths, appConfig) => as
         }
     } else if (!$auth.isInit() && userInfo.UserId)
         await $auth.getUserResources(appConfig.domainName);
-        
+
     next();
 };
