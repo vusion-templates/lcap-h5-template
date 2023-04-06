@@ -11,6 +11,8 @@ import { userInfoGuard, getAuthGuard, getTitleGuard, initRouter } from '@/router
 import { filterRoutes } from '@/utils/route';
 
 import App from './App.vue';
+// 一些应用全局样式
+import 'cloud-ui.vusion.css';
 import '@/assets/css/index.css';
 
 /* 👇CloudUI中入口逻辑 */
@@ -37,6 +39,7 @@ getAsyncPublicPath();
 /* 👆CloudUI中入口逻辑 */
 
 window.appVue = Vue;
+window.Vue = Vue;
 const CloudUI = {
     install,
     MEmitter,
