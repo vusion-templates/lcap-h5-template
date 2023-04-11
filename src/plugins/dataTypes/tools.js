@@ -240,7 +240,6 @@ export function isInstanceOf(variable, typeKey) {
     } else if (
         typeKind === 'generic'
         && typeNamespace === 'nasl.collection'
-        && ['List', 'Map'].includes(typeName)
     ) {
         if (!((typeName === 'List' && varStr === '[object Array]') || (typeName === 'Map' && varStr === '[object Object]'))) {
             return false;
