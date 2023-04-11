@@ -33,7 +33,7 @@ export const getAuthGuard = (router, routes, authResourcePaths, appConfig) => as
                 try {
                     const resources = await $auth.getUserResources(appConfig.domainName);
                     if (resources && resources.length) {
-                        const userResourcePaths = (resources || []).map((resource) => resource.ResourceValue);
+                        const userResourcePaths = (resources || []).map((resource) => resource?.resourceValue || resource?.ResourceValue);
                         const otherRoutes = filterRoutes(routes, null, (route, ancestorPaths) => {
                             const routePath = route.path;
                             const completePath = [...ancestorPaths, routePath].join('/');

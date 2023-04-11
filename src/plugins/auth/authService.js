@@ -63,20 +63,23 @@ export default {
     },
     getUserResources(DomainName) {
         if (!userResourcesPromise) {
-            userResourcesPromise = auth.GetUserResources({
+            userResourcesPromise = lowauth.GetUserResources({
                 headers: getBaseHeaders(),
                 query: {
-                    DomainName,
+                    userId: Vue.prototype.$global.userInfo.UserId,
+                    userName: Vue.prototype.$global.userInfo.UserName,
                 },
                 config: {
                     noErrorTip: true,
                 },
             }).then((result) => {
-                const resources = result.Data.items.filter((resource) => resource.ResourceType === 'ui');
-
+                let resources = [];
                 // 初始化权限项
                 this._map = new Map();
-                resources.forEach((resource) => this._map.set(resource.ResourceValue, resource));
+                if (Array.isArray(result)) {
+                    resources = result.filter((resource) => resource?.resourceType === 'ui');
+                    resources.forEach((resource) => this._map.set(resource.resourceValue, resource));
+                }
                 return resources;
             }).catch((e) => {
                 // 获取权限异常
