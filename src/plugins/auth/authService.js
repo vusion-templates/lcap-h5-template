@@ -112,6 +112,7 @@ export default {
     },
     async getKeycloakLogoutUrl() {
         let logoutUrl = '';
+        const basePath = window.appInfo && window.appInfo.basePath ? window.appInfo.basePath : '';
         if (window.appInfo.hasUserCenter) {
             const res = await lowauth.getAppLoginTypes({
                 query: {
@@ -122,7 +123,9 @@ export default {
             });
             const KeycloakConfig = res?.Data.Keycloak;
             if (KeycloakConfig) {
-                logoutUrl = `${KeycloakConfig?.config?.logoutUrl}?redirect_uri=${window.location.protocol}//${window.location.host}/login`;
+                logoutUrl = `${KeycloakConfig?.config?.logoutUrl}?redirect_uri=${window.location.protocol}//${window.location.host}${basePath}/login`;
+            } else {
+                logoutUrl = basePath;
             }
         } else {
             const res = await auth.getNuimsTenantLoginTypes({
@@ -135,7 +138,9 @@ export default {
             const KeycloakConfig = res?.Data.find((item) => (item.LoginType === 'Keycloak'));
 
             if (KeycloakConfig) {
-                logoutUrl = `${KeycloakConfig?.extendProperties?.logoutUrl}?redirect_uri=${window.location.protocol}//${window.location.host}/login`;
+                logoutUrl = `${KeycloakConfig?.extendProperties?.logoutUrl}?redirect_uri=${window.location.protocol}//${window.location.host}${basePath}/login`;
+            } else {
+                logoutUrl = basePath;
             }
         }
 
