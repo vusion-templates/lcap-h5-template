@@ -3,7 +3,7 @@ import Vue from 'vue';
 import { filterRoutes, parsePath } from '@/utils/route';
 
 function getBasePath() {
-    return window.appInfo.basePath ? window.appInfo.basePath : '';
+    return window.appInfo && window.appInfo.basePath ? window.appInfo.basePath : '';
 }
 
 /**

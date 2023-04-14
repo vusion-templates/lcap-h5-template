@@ -5,6 +5,10 @@ import auth from '@/apis/auth';
 import cookie from '@/utils/cookie';
 import lowauth from '@/apis/lowauth';
 
+function getBasePath() {
+    return window.appInfo && window.appInfo.basePath ? window.appInfo.basePath : '';
+}
+
 const getBaseHeaders = () => {
     const headers = {
         Env: window.appInfo && window.appInfo.env,
@@ -112,7 +116,7 @@ export default {
     },
     async getKeycloakLogoutUrl() {
         let logoutUrl = '';
-        const basePath = window.appInfo && window.appInfo.basePath ? window.appInfo.basePath : '';
+        const basePath = getBasePath();
         if (window.appInfo.hasUserCenter) {
             const res = await lowauth.getAppLoginTypes({
                 query: {
