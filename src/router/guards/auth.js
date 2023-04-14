@@ -28,6 +28,22 @@ export const getAuthGuard = (router, routes, authResourcePaths, appConfig) => as
         }
         return false;
     });
+
+    function addAuthRoutes(resources) {
+        if (resources && resources.length) {
+            const userResourcePaths = (resources || []).map((resource) => resource?.resourceValue || resource?.ResourceValue);
+            const otherRoutes = filterRoutes(routes, null, (route, ancestorPaths) => {
+                const routePath = route.path;
+                const completePath = [...ancestorPaths, routePath].join('/');
+                const authPath = userResourcePaths.find((userResourcePath) => userResourcePath.startsWith(completePath));
+                return authPath;
+            });
+            otherRoutes.forEach((route) => {
+                router.addRoute(route);
+            });
+        }
+    }
+    
     const noAuthView = findNoAuthView(routes);
     if (authPath) {
         if (!$auth.isInit()) {
@@ -36,18 +52,8 @@ export const getAuthGuard = (router, routes, authResourcePaths, appConfig) => as
             } else {
                 try {
                     const resources = await $auth.getUserResources(appConfig.domainName);
-                    if (resources && resources.length) {
-                        const userResourcePaths = (resources || []).map((resource) => resource?.resourceValue || resource?.ResourceValue);
-                        const otherRoutes = filterRoutes(routes, null, (route, ancestorPaths) => {
-                            const routePath = route.path;
-                            const completePath = [...ancestorPaths, routePath].join('/');
-                            const authPath = userResourcePaths.find((userResourcePath) => userResourcePath.startsWith(completePath));
-                            return authPath;
-                        });
-                        otherRoutes.forEach((route) => {
-                            router.addRoute(route);
-                        });
-                    }
+                    addAuthRoutes(resources);
+
                     // 即使没有查到权限，也需要重新进一遍，来决定去 无权限页面 还是 404页面
                     next({
                         path: toPath,
@@ -64,8 +70,11 @@ export const getAuthGuard = (router, routes, authResourcePaths, appConfig) => as
                 next({ path: noAuthView.path });
             }
         }
-    } else if (!$auth.isInit() && userInfo.UserId)
-        await $auth.getUserResources(appConfig.domainName);
+    } else if (!$auth.isInit() && userInfo.UserId) {
+        const resources = await $auth.getUserResources(appConfig.domainName);
+        addAuthRoutes(resources);
+    }
+        
 
     next();
 };
