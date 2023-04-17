@@ -2,7 +2,7 @@
 	"getCustomConfig": {
 		"url": {
 			"method": "get",
-			"path": "/api/getCustomConfig/{configKey}"
+			"path": "/api/system/getCustomConfig/{configKey}"
 		}
 	}
 }
