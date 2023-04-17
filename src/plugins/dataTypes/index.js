@@ -190,8 +190,18 @@ export default {
                 });
             },
             async getCustomConfig(configKey = '') {
+                const configKeys = configKey.split('.');
+                const finalConfigKey = configKeys.pop();
+                const groupName = configKeys[configKeys.length - 2];
+                const query = {
+                    group: groupName,
+                };
+                if (configKey.startsWith('extensions.')) {
+                    query.group = `${configKeys[0]}.${configKeys[1]}.${groupName}`;
+                }
                 const res = await configuration.getCustomConfig({
-                    path: { configKey },
+                    path: { configKey: finalConfigKey },
+                    query,
                 });
                 return res;
             },
