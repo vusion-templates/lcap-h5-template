@@ -1,10 +1,7 @@
 import Vue from 'vue';
 
 import { filterRoutes, parsePath } from '@/utils/route';
-
-function getBasePath() {
-    return window.appInfo && window.appInfo.basePath ? window.appInfo.basePath : '';
-}
+import { getBasePath } from '@/utils/encodeUrl';
 
 /**
  * 是否有无权限页面
@@ -43,7 +40,7 @@ export const getAuthGuard = (router, routes, authResourcePaths, appConfig) => as
             });
         }
     }
-    
+
     const noAuthView = findNoAuthView(routes);
     if (authPath) {
         if (!$auth.isInit()) {
@@ -74,7 +71,6 @@ export const getAuthGuard = (router, routes, authResourcePaths, appConfig) => as
         const resources = await $auth.getUserResources(appConfig.domainName);
         addAuthRoutes(resources);
     }
-        
 
     next();
 };
