@@ -7,6 +7,7 @@ import storage from '@/utils/storage/localStorage';
 import authService from '../auth/authService';
 import { initApplicationConstructor, genSortedTypeKey, genInitData, isInstanceOf } from './tools';
 import { navigateToUserInfoPage } from '../common/wx';
+import { getBasePath } from '@/utils/encodeUrl';
 
 export default {
     install(Vue, options = {}) {
@@ -184,7 +185,7 @@ export default {
                     // cookie.eraseAll();
                     cookie.erase('authorization');
                     cookie.erase('username');
-                    window.location.href = '/login';
+                    window.location.href = `${getBasePath()}/login`;
                 }).catch(() => {
                     // on cancel
                 });
