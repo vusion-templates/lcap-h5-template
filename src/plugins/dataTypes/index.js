@@ -7,6 +7,7 @@ import storage from '@/utils/storage/localStorage';
 import authService from '../auth/authService';
 import { initApplicationConstructor, genSortedTypeKey, genInitData, isInstanceOf } from './tools';
 import { navigateToUserInfoPage } from '../common/wx';
+import { getBasePath } from '@/utils/encodeUrl';
 
 export default {
     install(Vue, options = {}) {
@@ -184,14 +185,24 @@ export default {
                     // cookie.eraseAll();
                     cookie.erase('authorization');
                     cookie.erase('username');
-                    window.location.href = '/login';
+                    window.location.href = `${getBasePath()}/login`;
                 }).catch(() => {
                     // on cancel
                 });
             },
             async getCustomConfig(configKey = '') {
+                const configKeys = configKey.split('.');
+                const finalConfigKey = configKeys.pop();
+                const groupName = configKeys[configKeys.length - 2];
+                const query = {
+                    group: groupName,
+                };
+                if (configKey.startsWith('extensions.')) {
+                    query.group = `${configKeys[0]}.${configKeys[1]}.${groupName}`;
+                }
                 const res = await configuration.getCustomConfig({
-                    path: { configKey },
+                    path: { configKey: finalConfigKey },
+                    query,
                 });
                 return res;
             },
@@ -268,5 +279,69 @@ export default {
                 return '';
             }
         };
+
+        // 实体的 updateBy 和 deleteBy 需要提前处理请求参数
+        function parseRequestDataType(root, prop, event, current) {
+            // eslint-disable-next-line no-eval
+            const value = eval(root[prop]);
+            const type = typeof value;
+            // console.log('type:', type, value)
+            if (type === 'number') {
+                root.concept = 'NumericLiteral';
+                root.value = value + '';
+            } else if (type === 'string') {
+                root.concept = 'StringLiteral';
+                root.value = value;
+            } else if (type === 'boolean') {
+                root.concept = 'BooleanLiteral';
+                root.value = value;
+            } else if (type === 'object') {
+                if (Array.isArray(value)) {
+                    const itemValue = value[0];
+                    if (itemValue !== undefined) {
+                        const itemType = typeof itemValue;
+                        root.concept = 'ListLiteral';
+                        if (itemType === 'number') {
+                            root.value = value.map((v) => v + '').join(',');
+                        } else if (itemType === 'string') {
+                            root.value = value.map((v) => "'" + v + "'").join(',');
+                        } else if (itemType === 'boolean') {
+                            root.value = value.join(',');
+                        }
+                    }
+                }
+            }
+        }
+
+        // 实体的 updateBy 和 deleteBy 需要提前处理请求参数
+        function resolveRequestData(root, event, current) {
+            if (!root)
+                return;
+            // console.log(root.concept)
+            delete root.folded;
+
+            if (root.concept === 'NumericLiteral') {
+                // eslint-disable-next-line no-self-assign
+                root.value = root.value;
+            } else if (root.concept === 'StringLiteral') {
+                // eslint-disable-next-line no-self-assign
+                root.value = root.value;
+            } else if (root.concept === 'NullLiteral') {
+                delete root.value;
+            } else if (root.concept === 'BooleanLiteral') {
+                root.value = root.value === 'true';
+            } else if (root.concept === 'Identifier') {
+                parseRequestDataType.call(this, root, 'expression', event, current);
+            } else if (root.concept === 'MemberExpression') {
+                if (root.expression) {
+                    parseRequestDataType.call(this, root, 'expression', event, current);
+                }
+            }
+            resolveRequestData.call(this, root.left, event, current);
+            resolveRequestData.call(this, root.right, event, current);
+            return root;
+        }
+
+        Vue.prototype.$resolveRequestData = resolveRequestData;
     },
 };

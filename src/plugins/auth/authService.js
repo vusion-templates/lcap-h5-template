@@ -3,6 +3,9 @@ import queryString from 'query-string';
 
 import auth from '@/apis/auth';
 import cookie from '@/utils/cookie';
+import lowauth from '@/apis/lowauth';
+
+import { getBasePath } from '@/utils/encodeUrl';
 
 const getBaseHeaders = () => {
     const headers = {
@@ -15,12 +18,23 @@ const getBaseHeaders = () => {
 };
 
 const request = function (times) {
-    return auth.GetUser({
-        headers: getBaseHeaders(),
-        config: {
-            noErrorTip: true,
-        },
-    }).then((result) => result.Data).catch((err) => {
+    let userInfoPromise;
+    if (window.appInfo.hasUserCenter) {
+        userInfoPromise = lowauth.GetUser({
+            headers: getBaseHeaders(),
+            config: {
+                noErrorTip: true,
+            },
+        });
+    } else {
+        userInfoPromise = auth.GetUser({
+            headers: getBaseHeaders(),
+            config: {
+                noErrorTip: true,
+            },
+        });
+    }
+    return userInfoPromise.then((result) => result.Data).catch((err) => {
         times--;
         if (times > 0) {
             return request(times);
@@ -51,42 +65,68 @@ export default {
     },
     getUserResources(DomainName) {
         if (!userResourcesPromise) {
-            userResourcesPromise = auth.GetUserResources({
-                headers: getBaseHeaders(),
-                query: {
-                    DomainName,
-                },
-                config: {
-                    noErrorTip: true,
-                },
-            }).then((result) => {
-                const resources = result.Data.items.filter((resource) => resource.ResourceType === 'ui');
+            if (window.appInfo.hasAuth) {
+                userResourcesPromise = lowauth.GetUserResources({
+                    headers: getBaseHeaders(),
+                    query: {
+                        userId: Vue.prototype.$global.userInfo.UserId,
+                        userName: Vue.prototype.$global.userInfo.UserName,
+                    },
+                    config: {
+                        noErrorTip: true,
+                    },
+                }).then((result) => {
+                    let resources = [];
+                    // 初始化权限项
+                    this._map = new Map();
+                    if (Array.isArray(result)) {
+                        resources = result.filter((resource) => resource?.resourceType === 'ui');
+                        resources.forEach((resource) => this._map.set(resource.resourceValue, resource));
+                    }
+                    return resources;
+                }).catch((e) => {
+                    // 获取权限异常
+                    userResourcesPromise = undefined;
+                });
+            } else {
+                userResourcesPromise = auth.GetUserResources({
+                    headers: getBaseHeaders(),
+                    query: {
+                        DomainName,
+                    },
+                    config: {
+                        noErrorTip: true,
+                    },
+                }).then((result) => {
+                    const resources = result.Data.items.filter((resource) => resource.ResourceType === 'ui');
 
-                // 初始化权限项
-                this._map = new Map();
-                resources.forEach((resource) => this._map.set(resource.ResourceValue, resource));
-                return resources;
-            }).catch((e) => {
-                // 获取权限异常
-                userResourcesPromise = undefined;
-            });
+                    // 初始化权限项
+                    this._map = new Map();
+                    resources.forEach((resource) => this._map.set(resource.ResourceValue, resource));
+                    return resources;
+                }).catch((e) => {
+                    // 获取权限异常
+                    userResourcesPromise = undefined;
+                });
+            }
         }
         return userResourcesPromise;
     },
     async getKeycloakLogoutUrl() {
         let logoutUrl = '';
+        const basePath = getBasePath();
         if (window.appInfo.hasUserCenter) {
-            // const res = await lowauth.getAppLoginTypes({
-            //     query: {
-            //         Action: 'GetTenantLoginTypes',
-            //         Version: '2020-06-01',
-            //         TenantName: window.appInfo.tenant,
-            //     },
-            // });
-            // const KeycloakConfig = res?.Data.Keycloak;
-            // if (KeycloakConfig) {
-            //     logoutUrl = `${KeycloakConfig?.config?.logoutUrl}?redirect_uri=${window.location.protocol}//${window.location.host}/login`;
-            // }
+            const res = await lowauth.getAppLoginTypes({
+                query: {
+                    Action: 'GetTenantLoginTypes',
+                    Version: '2020-06-01',
+                    TenantName: window.appInfo.tenant,
+                },
+            });
+            const KeycloakConfig = res?.Data.Keycloak;
+            if (KeycloakConfig) {
+                logoutUrl = `${KeycloakConfig?.config?.logoutUrl}?redirect_uri=${window.location.protocol}//${window.location.host}${basePath}/login`;
+            }
         } else {
             const res = await auth.getNuimsTenantLoginTypes({
                 query: {
@@ -98,7 +138,7 @@ export default {
             const KeycloakConfig = res?.Data.find((item) => (item.LoginType === 'Keycloak'));
 
             if (KeycloakConfig) {
-                logoutUrl = `${KeycloakConfig?.extendProperties?.logoutUrl}?redirect_uri=${window.location.protocol}//${window.location.host}/login`;
+                logoutUrl = `${KeycloakConfig?.extendProperties?.logoutUrl}?redirect_uri=${window.location.protocol}//${window.location.host}${basePath}/login`;
             }
         }
 
@@ -107,21 +147,20 @@ export default {
     async logout() {
         const sleep = (t) => new Promise((r) => setTimeout(r, t));
         if (window.appInfo.hasUserCenter) {
-
-            // const logoutUrl = await this.getKeycloakLogoutUrl();
-            // localStorage.setItem('logoutUrl', logoutUrl);
-            // if (logoutUrl) {
-            //     window.location.href = logoutUrl;
-            //     await sleep(1000);
-            // } else {
-            //     return lowauth.Logout({
-            //         headers: getBaseHeaders(),
-            //     }).then(() => {
-            //         // 用户中心，去除认证和用户名信息
-            //         cookie.erase('authorization');
-            //         cookie.erase('username');
-            //     });
-            // }
+            const logoutUrl = await this.getKeycloakLogoutUrl();
+            localStorage.setItem('logoutUrl', logoutUrl);
+            if (logoutUrl) {
+                window.location.href = logoutUrl;
+                await sleep(1000);
+            } else {
+                return lowauth.Logout({
+                    headers: getBaseHeaders(),
+                }).then(() => {
+                    // 用户中心，去除认证和用户名信息
+                    cookie.erase('authorization');
+                    cookie.erase('username');
+                });
+            }
         } else {
             const logoutUrl = await this.getKeycloakLogoutUrl();
             localStorage.setItem('logoutUrl', logoutUrl);
