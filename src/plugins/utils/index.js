@@ -115,8 +115,10 @@ export const utils = {
         if (isObject(str1)) {
             return Object.keys(str1).length;
         }
-        // string类型 & List类型
-        return str1 ? str1.length : null;
+        if (typeof str1 !== 'undefined' && str1 !== null && typeof str1.length !== 'undefined') {
+            return str1.length
+        }
+        return null;
     },
     ToLower(str) {
         return str && str.toLowerCase();
