@@ -115,8 +115,10 @@ export const utils = {
         if (isObject(str1)) {
             return Object.keys(str1).length;
         }
-        // string类型 & List类型
-        return str1 ? str1.length : null;
+        if (typeof str1 !== 'undefined' && str1 !== null && typeof str1.length !== 'undefined') {
+            return str1.length;
+        }
+        return null;
     },
     ToLower(str) {
         return str && str.toLowerCase();
@@ -548,7 +550,7 @@ export const utils = {
         } else if (isObject(obj)) {
             for (const key in obj) {
                 if (obj.hasOwnProperty(key))
-                    utils.Vue.delete(obj, key);
+                    obj[key] = null;
             }
         } else {
             obj = undefined;
@@ -594,7 +596,7 @@ export const utils = {
             if (typeAnnotation.typeName === 'DateTime')
                 return formatRFC3339(new Date(fixIOSDateString(value)));
             else if (typeAnnotation.typeName === 'Date')
-                return format(new Date(fixIOSDateString(value)), 'yyyy/MM/dd');
+                return format(new Date(fixIOSDateString(value)), 'yyyy-MM-dd');
             else if (typeAnnotation.typeName === 'Time') {
                 if (/^\d{2}:\d{2}:\d{2}$/.test(value)) // 纯时间 12:30:00
                     return format(new Date('2022/01/01 ' + value), 'HH:mm:ss');

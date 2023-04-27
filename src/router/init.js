@@ -11,9 +11,6 @@ export function initRouter(routes) {
     });
 
     router.afterEach((to, from) => {
-        const [, result] = to.path.split('/');
-        const route = window.appInfo?.rootViewData?.find((item) => item.name === result);
-        document.title = route?.title;
         const saveList = ['_wx_openid', '_wx_headimg', '_wx_nickname'];
         if (to.query)
             for (const i in to.query) {
