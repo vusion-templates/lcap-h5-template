@@ -1,4 +1,4 @@
-import '@lcap/mobile-ui/dist-theme/index.css';
+// import '@lcap/mobile-ui/dist-theme/index.css';
 
 import metaData from './metaData.json';
 import platformConfig from './platform.config.json';
