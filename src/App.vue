@@ -12,9 +12,11 @@ import SFreesassLogin from '@/components/s-freesass-login.vue';
 import SFreesassBanner from '@/components/s-freesass-banner.vue';
 import SFreesassTransfer from '@/components/s-freesass-transfer';
 import auth from '@/apis/auth';
+const newDomain = location.host.split('.').includes('163');
 const serviceMap = {
     // generateSfToken: 'http://sfsso.community1.lcap.qz.163yun.com/api/generateSfToken',
     checkSfToken: 'http://sfsso.community1.lcap.qz.163yun.com/api/checkSfToken',
+    checkSfTokenNew: `${location.protocol}//sfsso-community1.app.codewave.163.com/api/checkSfToken`,
 };
 export default {
     components: { SFreesassLogin, SFreesassBanner,SFreesassTransfer },
@@ -25,7 +27,9 @@ export default {
     },
     computed: {
         isSharePage() {
-            const neteaseStrList = 'lcap.qz.163yun'.split('.');
+             let str = 'lcap.qz.163yun';
+            if (newDomain) { str = 'app.codewave.163'; }
+            const neteaseStrList = str.split('.');
             return neteaseStrList.some((it) => location.host.includes(it));
         },
         isFreeSass() {
@@ -35,8 +39,10 @@ export default {
     async mounted() {
         if (this.isSharePage && +window.appInfo?.tenantType === 1) {
             try {
-                 // 校验接口
-                const res = await fetch(serviceMap.checkSfToken, {
+                  let url = serviceMap.checkSfToken;
+                if (newDomain) { url = serviceMap.checkSfTokenNew; }
+                // 校验接口
+                const res = await fetch(url, {
                     method: 'POST',
                     mode: 'cors',
                     credentials: 'include',

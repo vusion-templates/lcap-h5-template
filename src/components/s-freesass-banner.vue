@@ -26,9 +26,10 @@ export default {
     created () {
     },
     methods: {
-        jumpPage () {
-            const url = 'https://defaulttenant.lcap.qz.163yun.com/sso?tenantSource=1&from=shufan';
-            window.location.href = url
+        jumpPage() {
+            const url = 'https://defaulttenant.domainnew.163yun.com/sso?tenantSource=1&from=shufan';
+            // const url = 'https://defaulttenant.lcap.qz.163yun.com/sso?tenantSource=1&from=shufan';
+            window.location.href = url;
         },
     },
 };
