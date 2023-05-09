@@ -21,7 +21,7 @@ const replacers = {
         }
         return fix(date.getDate());
     },
-    QQ(date) { return `Q${Math.ceil((date.getMonth() + 1)/3)}`},
+    QQ(date) { return `Q${Math.ceil((date.getMonth() + 1) / 3)}`; },
     DD(date) { return fix(date.getDate()); },
     HH(date) { return fix(date.getHours()); },
     mm(date) { return fix(date.getMinutes()); },
@@ -41,6 +41,11 @@ export class DateFormatter extends Formatter {
 
         if (value && !isNaN(value))
             value = +value;
+        // 处理iOS上‘2023/05’InvalidDate
+        if (/^\d{4}\/\d{1,2}$/.test(value)) {
+            value = value.replace('/', '-');
+        }
+
         const date = new Date(value);
         if (String(date) === 'Invalid Date')
             return value;
@@ -48,6 +53,7 @@ export class DateFormatter extends Formatter {
         return pattern.replace(trunk, (cap) => replacers[cap] ? replacers[cap](date) : '');
     }
 
+    // 没有用到的方法
     parse(value, pattern) {
         pattern = pattern || this.pattern;
 
