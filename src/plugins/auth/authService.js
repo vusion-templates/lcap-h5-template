@@ -1,9 +1,9 @@
 import Vue from 'vue';
 import queryString from 'query-string';
 
-import auth from '@/apis/auth';
+import { initService as authInitService } from '@/apis/auth';
 import cookie from '@/utils/cookie';
-import lowauth from '@/apis/lowauth';
+import { initService as lowauthInitService } from '@/apis/lowauth';
 
 import { getBasePath } from '@/utils/encodeUrl';
 
@@ -20,14 +20,14 @@ const getBaseHeaders = () => {
 const request = function (times) {
     let userInfoPromise;
     if (window.appInfo.hasUserCenter) {
-        userInfoPromise = lowauth.GetUser({
+        userInfoPromise = this.lowauthInitService.GetUser({
             headers: getBaseHeaders(),
             config: {
                 noErrorTip: true,
             },
         });
     } else {
-        userInfoPromise = auth.GetUser({
+        userInfoPromise = this.authService.GetUser({
             headers: getBaseHeaders(),
             config: {
                 noErrorTip: true,
@@ -44,12 +44,18 @@ const request = function (times) {
     });
 };
 
-window.authService = auth;
 let userInfoPromise = null;
 let userResourcesPromise = null;
 
 export default {
     _map: undefined,
+    authService: undefined,
+    lowauthInitService: undefined,
+    start() {
+        this.authService = authInitService();
+        this.lowauthInitService = lowauthInitService();
+        window.authService = this.authService;
+    },
     getUserInfo(times = 1) {
         if (!userInfoPromise) {
             userInfoPromise = request(times).then((userInfo) => {
@@ -66,7 +72,7 @@ export default {
     getUserResources(DomainName) {
         if (!userResourcesPromise) {
             if (window.appInfo.hasAuth) {
-                userResourcesPromise = lowauth.GetUserResources({
+                userResourcesPromise = this.lowauthInitService.GetUserResources({
                     headers: getBaseHeaders(),
                     query: {
                         userId: Vue.prototype.$global.userInfo.UserId,
@@ -89,7 +95,7 @@ export default {
                     userResourcesPromise = undefined;
                 });
             } else {
-                userResourcesPromise = auth.GetUserResources({
+                userResourcesPromise = this.authService.GetUserResources({
                     headers: getBaseHeaders(),
                     query: {
                         DomainName,
@@ -116,7 +122,7 @@ export default {
         let logoutUrl = '';
         const basePath = getBasePath();
         if (window.appInfo.hasUserCenter) {
-            const res = await lowauth.getAppLoginTypes({
+            const res = await this.lowauthInitService.getAppLoginTypes({
                 query: {
                     Action: 'GetTenantLoginTypes',
                     Version: '2020-06-01',
@@ -128,7 +134,7 @@ export default {
                 logoutUrl = `${KeycloakConfig?.config?.logoutUrl}?redirect_uri=${window.location.protocol}//${window.location.host}${basePath}/login`;
             }
         } else {
-            const res = await auth.getNuimsTenantLoginTypes({
+            const res = await this.authService.getNuimsTenantLoginTypes({
                 query: {
                     Action: 'GetTenantLoginTypes',
                     Version: '2020-06-01',
@@ -153,7 +159,7 @@ export default {
                 window.location.href = logoutUrl;
                 await sleep(1000);
             } else {
-                return lowauth.Logout({
+                return this.lowauthInitService.Logout({
                     headers: getBaseHeaders(),
                 }).then(() => {
                     // 用户中心，去除认证和用户名信息
@@ -168,7 +174,7 @@ export default {
                 window.location.href = logoutUrl;
                 await sleep(1000);
             } else {
-                return auth.Logout({
+                return this.authService.Logout({
                     headers: getBaseHeaders(),
                 }).then(() => {
                     cookie.erase('authorization');
@@ -178,19 +184,19 @@ export default {
         }
     },
     loginH5(data) {
-        return auth.LoginH5({
+        return this.authService.LoginH5({
             headers: getBaseHeaders(),
             ...data,
         });
     },
     getNuims(query) {
-        return auth.GetNuims({
+        return this.authService.GetNuims({
             headers: getBaseHeaders(),
             query,
         });
     },
     getConfig() {
-        return auth.GetConfig({
+        return this.authService.GetConfig({
             headers: getBaseHeaders(),
         });
     },
@@ -219,5 +225,5 @@ export default {
 };
 
 export const runAhead = function (domainName) {
-    auth.init(domainName);
+    authInitService().init(domainName);
 };
