@@ -14,8 +14,7 @@ import SFreesassTransfer from '@/components/s-freesass-transfer';
 import auth from '@/apis/auth';
 const newDomain = location.host.split('.').includes('163');
 const serviceMap = {
-    // generateSfToken: 'http://sfsso.community1.lcap.qz.163yun.com/api/generateSfToken',
-    checkSfToken: 'http://sfsso.community1.lcap.qz.163yun.com/api/checkSfToken',
+    checkSfToken: `${location.protocol}//sfsso.community1.lcap.qz.163yun.com/api/checkSfToken`,
     checkSfTokenNew: `${location.protocol}//sfsso-community1.app.codewave.163.com/api/checkSfToken`,
 };
 export default {
