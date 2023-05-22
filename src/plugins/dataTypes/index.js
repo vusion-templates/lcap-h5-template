@@ -1,13 +1,17 @@
 // import generate from '@babel/generator';
 import { Decimal } from 'decimal.js';
 
-import configuration from '@/apis/configuration';
+import { initService as configurationInitService } from '@/apis/configuration';
 import cookie from '@/utils/cookie';
 import storage from '@/utils/storage/localStorage';
 import authService from '../auth/authService';
 import { initApplicationConstructor, genSortedTypeKey, genInitData, isInstanceOf } from './tools';
 import { navigateToUserInfoPage } from '../common/wx';
 import { getBasePath } from '@/utils/encodeUrl';
+import CryptoJS from 'crypto-js';
+
+window.CryptoJS = CryptoJS
+const aesKey = ';Z#^$;8+yhO!AhGo';
 
 export default {
     install(Vue, options = {}) {
@@ -90,6 +94,24 @@ export default {
             // 相等
             isEqual(x, y) {
                 return x == y;
+            },
+            encryptByAES({ string: message }, key = aesKey) {
+                const keyHex = CryptoJS.enc.Utf8.parse(key); //
+                const messageHex = CryptoJS.enc.Utf8.parse(message);
+                const encrypted = CryptoJS.AES.encrypt(messageHex, keyHex, {
+                    mode: CryptoJS.mode.ECB,
+                    padding: CryptoJS.pad.Pkcs7,
+                });
+                return encrypted.toString();
+            },
+            decryptByAES({ string: messageBase64 }, key = aesKey) {
+                const keyHex = CryptoJS.enc.Utf8.parse(key);
+                const decrypt = CryptoJS.AES.decrypt(messageBase64, keyHex, {
+                    mode: CryptoJS.mode.ECB,
+                    padding: CryptoJS.pad.Pkcs7,
+                });
+                const decryptedStr = decrypt.toString(CryptoJS.enc.Utf8);
+                return decryptedStr.toString();
             },
             requestFullscreen() {
                 return document.body.requestFullscreen();
@@ -200,6 +222,7 @@ export default {
                 if (configKey.startsWith('extensions.')) {
                     query.group = `${configKeys[0]}.${configKeys[1]}.${groupName}`;
                 }
+                const configuration = configurationInitService();
                 const res = await configuration.getCustomConfig({
                     path: { configKey: finalConfigKey },
                     query,

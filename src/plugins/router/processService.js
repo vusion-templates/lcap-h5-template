@@ -1,4 +1,4 @@
-import processService from '@/apis/process';
+import { initService as processInitService } from '@/apis/process';
 import $auth from '../auth/index';
 
 let assignee;
@@ -7,7 +7,7 @@ export default {
         const userInfo = await $auth.getUserInfo() || {};
         assignee = userInfo.UserId;
         const { query } = param;
-        const res = await processService.getTasks({
+        const res = await processInitService().getTasks({
             path: {
                 domainName: window.appInfo && window.appInfo.domainName,
             },
@@ -20,7 +20,7 @@ export default {
     },
     async claimTask(param = {}) {
         const { path = {} } = param;
-        const res = await processService.claimTask({
+        const res = await processInitService().claimTask({
             path: {
                 ...path,
                 domainName: window.appInfo && window.appInfo.domainName,
@@ -33,7 +33,7 @@ export default {
     },
     async getDestinationUrl(param = {}) {
         const { path: { id } } = param;
-        const res = await processService.getDestinationUrl({
+        const res = await processInitService().getDestinationUrl({
             path: {
                 id,
                 domainName: window.appInfo && window.appInfo.domainName,
