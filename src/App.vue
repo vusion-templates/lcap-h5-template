@@ -3,7 +3,7 @@
         <s-freesass-banner v-if="isFreeSass"></s-freesass-banner>
         <router-view></router-view>
          <s-freesass-login @afterShufanLogin="afterShufanLogin" ref="freeSassLogin"></s-freesass-login>
-        <s-freesass-transfer v-if="isFreeSass&&loginFinished" ref="freesassTransfer"></s-freesass-transfer>
+        <s-freesass-transfer v-if="isPersionSass&&loginFinished" ref="freesassTransfer"></s-freesass-transfer>
     </div>
 </template>
 
@@ -14,7 +14,6 @@ import SFreesassTransfer from '@/components/s-freesass-transfer';
 import auth from '@/apis/auth';
 const newDomain = location.host.split('.').includes('163');
 const serviceMap = {
-    // generateSfToken: 'http://sfsso.community1.lcap.qz.163yun.com/api/generateSfToken',
     checkSfToken: `${location.protocol}//sfsso.community1.lcap.qz.163yun.com/api/checkSfToken`,
     checkSfTokenNew: `${location.protocol}//sfsso-community1.app.codewave.163.com/api/checkSfToken`,
 };
@@ -32,6 +31,9 @@ export default {
             if (newDomain) { str = 'app.codewave.163'; }
             const neteaseStrList = str.split('.');
             return neteaseStrList.some((it) => location.host.includes(it));
+        },
+        isPersionSass() {
+            return +window.appInfo?.tenantType === 1;
         },
         isFreeSass() {
             return +window.appInfo?.tenantType === 1 && +window.appInfo?.tenantLevel === 0;
