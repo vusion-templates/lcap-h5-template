@@ -17,7 +17,7 @@ import string from '@/filters/string';
 
 import { dateFormatter } from './Formatters';
 
-import { toString, fromString } from '../dataTypes/tools';
+import { toString, fromString, toastAndThrowError } from '../dataTypes/tools';
 
 let enumsMap = {};
 
@@ -48,13 +48,13 @@ function uniqueByKey(array, key) {
 
 function isArrayOutBounds(arr, index) {
     if (!Array.isArray(arr))
-        throw new Error('传入内容不是数组');
+        throw toastAndThrowError('传入内容不是数组');
     if (typeof index !== 'number' || isNaN(index)) {
-        throw new Error('传入下标不是数字');
+        throw toastAndThrowError('传入下标不是数字');
     }
     // 传入要找的下标，大于数组长度
     if ((index + 1) > arr.length) {
-        throw new Error(`列表访问越界，访问下标 ${index}，列表长度 ${arr.length}`);
+        throw toastAndThrowError(`列表访问越界，访问下标 ${index}，列表长度 ${arr.length}`);
     }
     return true;
 }
