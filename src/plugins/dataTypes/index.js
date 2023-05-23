@@ -1,7 +1,7 @@
 // import generate from '@babel/generator';
 import { Decimal } from 'decimal.js';
 
-import configuration from '@/apis/configuration';
+import { initService as configurationInitService } from '@/apis/configuration';
 import cookie from '@/utils/cookie';
 import storage from '@/utils/storage/localStorage';
 import authService from '../auth/authService';
@@ -222,6 +222,7 @@ export default {
                 if (configKey.startsWith('extensions.')) {
                     query.group = `${configKeys[0]}.${configKeys[1]}.${groupName}`;
                 }
+                const configuration = configurationInitService();
                 const res = await configuration.getCustomConfig({
                     path: { configKey: finalConfigKey },
                     query,
