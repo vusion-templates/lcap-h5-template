@@ -30,6 +30,7 @@ function shortResponse(response, params, requestInfo) {
 
 const httpError = {
     reject(err, params, requestInfo) {
+        console.log(err, params, requestInfo, 2222)
         const { url, config = {} } = requestInfo;
         const { method, body = {}, headers = {} } = url;
         // 处理code
