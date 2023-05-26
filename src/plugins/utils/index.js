@@ -68,7 +68,10 @@ export const utils = {
             if (typeNamespace?.startsWith('extensions')) {
                 enumName = typeNamespace + '.' + enumName;
             }
-            return enumsMap[enumName](value);
+            if (enumsMap[enumName]) {
+                return enumsMap[enumName][value];
+            }
+            return '';
         }
         return '';
     },
