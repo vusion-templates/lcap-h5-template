@@ -5,7 +5,6 @@ import { initService as configurationInitService } from '@/apis/configuration';
 import cookie from '@/utils/cookie';
 import storage from '@/utils/storage/localStorage';
 import authService from '../auth/authService';
-import io from '@/apis/io';
 import { initApplicationConstructor, genSortedTypeKey, genInitData, isInstanceOf } from './tools';
 import { navigateToUserInfoPage } from '../common/wx';
 import { getBasePath } from '@/utils/encodeUrl';
@@ -212,24 +211,6 @@ export default {
                 }).catch(() => {
                     // on cancel
                 });
-            },
-            async downloadFile(url, fileName) {
-                await io.downloadFiles({
-                    body: {
-                        urls: [url],
-                        fileName,
-                    },
-                }).then((res) => Promise.resolve(res))
-                    .catch((err) => Promise.resolve(err));
-            },
-            async downloadFiles(urls, fileName) {
-                await io.downloadFiles({
-                    body: {
-                        urls,
-                        fileName,
-                    },
-                }).then((res) => Promise.resolve(res))
-                    .catch((err) => Promise.resolve(err));
             },
             async getCustomConfig(configKey = '') {
                 const configKeys = configKey.split('.');
