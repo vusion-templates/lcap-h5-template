@@ -22,7 +22,7 @@ const formatContentType = function (contentType, data) {
  * 支持 query 参数
  */
 function download(url) {
-    const { path, method, body = {}, headers = {}, query = {} } = url;
+    const { path, method, body = {}, headers = {}, query = {}, timeout } = url;
 
     return axios({
         url: path,
@@ -30,10 +30,21 @@ function download(url) {
         params: query,
         data: formatContentType(headers['Content-Type'], body),
         responseType: 'blob',
+        timeout,
     }).then((res) => {
         // 包含 content-disposition， 从中解析名字，不包含 content-disposition 的获取请求地址的后缀
-        const effectiveFileName = res.request.getAllResponseHeaders().includes('content-disposition') ? getFilenameFromContentDispositionHeader(res.request.getResponseHeader('content-disposition')) : res.request.responseURL.split('/').pop();
+        let effectiveFileName = res.request.getAllResponseHeaders().includes('content-disposition') ? getFilenameFromContentDispositionHeader(res.request.getResponseHeader('content-disposition')) : res.request.responseURL.split('/').pop();
+        effectiveFileName = decodeURIComponent(effectiveFileName);
         const { data, status, statusText } = res;
+        // 如果没有size长度
+        if (data && data.size === 0) {
+            return Promise.resolve({
+                data: {
+                    code: status,
+                    msg: statusText,
+                },
+            });
+        }
         const downloadUrl = window.URL.createObjectURL(new Blob([data]));
         const link = document.createElement('a');
         link.href = downloadUrl;
