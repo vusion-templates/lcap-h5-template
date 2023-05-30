@@ -20,14 +20,14 @@ const getBaseHeaders = () => {
 const request = function (times) {
     let userInfoPromise;
     if (window.appInfo.hasUserCenter) {
-        userInfoPromise = this.lowauthInitService.GetUser({
+        userInfoPromise = lowauthInitService().GetUser({
             headers: getBaseHeaders(),
             config: {
                 noErrorTip: true,
             },
         });
     } else {
-        userInfoPromise = this.authService.GetUser({
+        userInfoPromise = authInitService().GetUser({
             headers: getBaseHeaders(),
             config: {
                 noErrorTip: true,
