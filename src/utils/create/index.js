@@ -110,8 +110,7 @@ addConfigs(service);
 // 调整请求路径
 const adjustPathWithSysPrefixPath = (apiSchemaList) => {
     const newApiSchemaMap = {};
-    const sysPrefixPath = window.appInfo?.sysPrefixPath;
-    if (sysPrefixPath && apiSchemaList) {
+    if (apiSchemaList) {
         for (const key in apiSchemaList) {
             if (!newApiSchemaMap[key]) {
                 const { url } = apiSchemaList[key] || {};
@@ -123,7 +122,8 @@ const adjustPathWithSysPrefixPath = (apiSchemaList) => {
             }
             const newApiSchema = newApiSchemaMap[key];
             const path = newApiSchema?.url?.path;
-            if (path && path.startsWith('/')) {
+            const sysPrefixPath = window.appInfo?.sysPrefixPath;
+            if (path && path.startsWith('/') && sysPrefixPath) {
                 newApiSchema.url.path = sysPrefixPath + path;
             }
         }
