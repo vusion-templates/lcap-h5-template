@@ -18,6 +18,7 @@ import string from '@/filters/string';
 import { dateFormatter } from './Formatters';
 
 import { toString, fromString, toastAndThrowError } from '../dataTypes/tools';
+import Decimal from 'decimal.js';
 
 let enumsMap = {};
 
@@ -785,6 +786,19 @@ export const utils = {
      */
     CreateListPage(list, total) {
         return { list, total };
+    },
+    /**
+     * @param {number} value 内容
+     * @param {string} mode 方式
+     * @returns {number} 返回值
+     */
+    Round(value, mode) {
+        const modeMap = {
+            TowardsZero: Decimal.ROUND_UP,
+            TowardsInfinity: Decimal.ROUND_DOWN,
+            HalfUp: Decimal.ROUND_HALF_UP,
+        };
+        return new Decimal(value).toFixed(0, modeMap[mode]);
     },
 };
 
