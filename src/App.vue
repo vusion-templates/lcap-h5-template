@@ -3,7 +3,7 @@
         <s-freesass-banner v-if="isFreeSass"></s-freesass-banner>
         <router-view></router-view>
          <s-freesass-login @afterShufanLogin="afterShufanLogin" ref="freeSassLogin"></s-freesass-login>
-        <s-freesass-transfer v-if="isPersionSass&&loginFinished" ref="freesassTransfer"></s-freesass-transfer>
+        <s-freesass-transfer v-if="isPersonSass&&loginFinished" ref="freesassTransfer"></s-freesass-transfer>
     </div>
 </template>
 
@@ -17,7 +17,6 @@ const serviceMap = {
     checkSfToken: `${location.protocol}//sfsso.community1.lcap.qz.163yun.com/api/checkSfToken`,
     checkSfTokenNew: `${location.protocol}//sfsso-community1.app.codewave.163.com/api/checkSfToken`,
 };
-
 export default {
     components: { SFreesassLogin, SFreesassBanner,SFreesassTransfer },
     data() {
@@ -27,22 +26,22 @@ export default {
     },
     computed: {
         isSharePage() {
-          let str = 'lcap.qz.163yun';
+             let str = 'lcap.qz.163yun';
             if (newDomain) { str = 'app.codewave.163'; }
             const neteaseStrList = str.split('.');
             return neteaseStrList.some((it) => location.host.includes(it));
         },
-        isPersionSass() {
-            return +window.appInfo?.tenantType === 1;
+        isPersonSass() {
+            return +window.appInfo?.tenantType === 1 ;
         },
         isFreeSass() {
             return +window.appInfo?.tenantType === 1 && +window.appInfo?.tenantLevel === 0;
         },
     },
     async mounted() {
-        if (this.isSharePage && this.isFreeSass) {
+        if (this.isSharePage && +window.appInfo?.tenantType === 1) {
             try {
-               let url = serviceMap.checkSfToken;
+                  let url = serviceMap.checkSfToken;
                 if (newDomain) { url = serviceMap.checkSfTokenNew; }
                 // 校验接口
                 const res = await fetch(url, {
