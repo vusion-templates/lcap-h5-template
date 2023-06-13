@@ -29,7 +29,7 @@ export function filterAuthResources(resources) {
     const validPaths = resources.reduce((map, item) => {
         map.set(item.resourceValue, 1);
         return map;
-    }, new Map().set(ROOT_PATH, 1));
+    }, new Map([[ROOT_PATH,1],['/m',1]])); // 需注意，移动端路由起始都是"/m"
 
     const isValidPath = (path) => {
         let parentPath = getParentPath(path);
