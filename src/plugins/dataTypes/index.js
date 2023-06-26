@@ -10,7 +10,7 @@ import { navigateToUserInfoPage } from '../common/wx';
 import { getBasePath } from '@/utils/encodeUrl';
 import CryptoJS from 'crypto-js';
 
-window.CryptoJS = CryptoJS
+window.CryptoJS = CryptoJS;
 const aesKey = ';Z#^$;8+yhO!AhGo';
 
 export default {
@@ -240,15 +240,15 @@ export default {
 
         Vue.prototype.$isInstanceOf = isInstanceOf;
 
-        const enumsMap = options.enumsMap || {};
-        function createEnum(items) {
-            const Enum = (key) => items[key];
-            Object.assign(Enum, items);
-            return Enum;
-        }
-        Object.keys(enumsMap).forEach((enumKey) => {
-            enumsMap[enumKey] = createEnum(enumsMap[enumKey] || {});
-        });
+        // const enumsMap = options.enumsMap || {};
+        // function createEnum(items) {
+        //     const Enum = (key) => items[key];
+        //     Object.assign(Enum, items); // 如果items里含有{name:'**'}，赋值会报错，页面白屏，所以这里屏蔽
+        //     return Enum;
+        // }
+        // Object.keys(enumsMap).forEach((enumKey) => {
+        //     enumsMap[enumKey] = createEnum(enumsMap[enumKey] || {});
+        // });
 
         function isLooseEqualFn(obj1, obj2, cache = new Map()) {
             // 检查对象是否相同
@@ -293,11 +293,12 @@ export default {
         // 判断两个对象是否相等，不需要引用完全一致
         Vue.prototype.$isLooseEqualFn = isLooseEqualFn;
 
+        const enumsMap = options.enumsMap || {};
         Vue.prototype.$enums = (key, value) => {
             if (!key || !value)
                 return '';
             if (enumsMap[key]) {
-                return enumsMap[key](value);
+                return enumsMap[key][value];
             } else {
                 return '';
             }
