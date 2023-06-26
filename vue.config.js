@@ -57,6 +57,17 @@ const vueConfig = {
                     args[0].template = path.resolve('./demo.html');
                     return args;
                 });
+
+            // 开发模式下删除 html 插件
+            if (isDevelopment) {
+                config.plugins.delete('html');
+                // 使所有产物打包到一个文件
+                config.output.filename('bundle.js');
+                // 启用 source map
+                config.devtool('eval-source-map');
+            }
+
+
         } else {
             webpackHtml.chain(config, isDevelopment);
             webpackDll.chain(config, publicPathPrefix, isDevelopment);

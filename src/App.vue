@@ -2,8 +2,8 @@
     <div>
         <s-freesass-banner v-if="isFreeSass"></s-freesass-banner>
         <router-view></router-view>
-         <s-freesass-login @afterShufanLogin="afterShufanLogin" ref="freeSassLogin"></s-freesass-login>
-        <s-freesass-transfer v-if="isPersonSass&&loginFinished" ref="freesassTransfer"></s-freesass-transfer>
+        <s-freesass-login @afterShufanLogin="afterShufanLogin" ref="freeSassLogin"></s-freesass-login>
+        <s-freesass-transfer v-if="isPersonSass && loginFinished" ref="freesassTransfer"></s-freesass-transfer>
     </div>
 </template>
 
@@ -17,8 +17,27 @@ const serviceMap = {
     checkSfToken: `${location.protocol}//sfsso.community1.lcap.qz.163yun.com/api/checkSfToken`,
     checkSfTokenNew: `${location.protocol}//sfsso-community1.app.codewave.163.com/api/checkSfToken`,
 };
+
+const localStorageMixin = {
+  created() {
+    console.log('localStorageMixin created', this);
+    // 检查和覆写初始化的 data 值
+    // 假设 data 中有一个属性叫做 'value'
+    if (typeof this.value === 'undefined' || this.value === null) {
+      this.value = 'default value';
+    }
+  },
+  beforeDestroy() {
+    console.log('localStorageMixin beforeDestroy', this);
+    // 将改变的数据保存到 localStorage 中
+    // 假设我们要保存 'value' 属性
+    localStorage.setItem('value', JSON.stringify(this.value));
+  },
+};
+
 export default {
-    components: { SFreesassLogin, SFreesassBanner,SFreesassTransfer },
+    mixins: [localStorageMixin],
+    components: { SFreesassLogin, SFreesassBanner, SFreesassTransfer },
     data() {
         return {
             loginFinished: false,
@@ -26,22 +45,24 @@ export default {
     },
     computed: {
         isSharePage() {
-             let str = 'lcap.qz.163yun';
+            let str = 'lcap.qz.163yun';
             if (newDomain) { str = 'app.codewave.163'; }
             const neteaseStrList = str.split('.');
             return neteaseStrList.some((it) => location.host.includes(it));
         },
         isPersonSass() {
-            return +window.appInfo?.tenantType === 1 ;
+            return +window.appInfo?.tenantType === 1;
         },
         isFreeSass() {
             return +window.appInfo?.tenantType === 1 && +window.appInfo?.tenantLevel === 0;
         },
     },
     async mounted() {
+        console.log('🚀 appInfo: ', window.appInfo);
+        // alert('🚀 appInfo: ' + JSON.stringify(window.appInfo));
         if (this.isSharePage && +window.appInfo?.tenantType === 1) {
             try {
-                  let url = serviceMap.checkSfToken;
+                let url = serviceMap.checkSfToken;
                 if (newDomain) { url = serviceMap.checkSfTokenNew; }
                 // 校验接口
                 const res = await fetch(url, {
@@ -62,7 +83,7 @@ export default {
             }
         }
     },
-     methods: {
+    methods: {
         afterShufanLogin() {
             this.loginFinished = true;
         },

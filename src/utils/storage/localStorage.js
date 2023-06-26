@@ -23,11 +23,25 @@ const isLocalStorageAvailable = () => {
 const storage = isLocalStorageAvailable() ? window.localStorage : null;
 
 const storageObj = !storage ? noSupport : {
-    set(key, value) {
-        storage.setItem(key, value);
+    set(key, value, enableStringify = false) {
+        try {
+            storage.setItem(key, enableStringify ? JSON.stringify(value) : value);
+        } catch (error) {
+            console.error('JSON stringify error:', error);
+        }
     },
-    get(key) {
-        return storage.getItem(key);
+    get(key, enableParseJson = false) {
+        const value = storage.getItem(key);
+        if (enableParseJson) {
+            try {
+                return JSON.parse(value);
+            } catch (error) {
+                console.error('JSON parsing error:', error);
+                return null;
+            }
+        } else {
+            return value;
+        }
     },
     remove(key) {
         return storage.removeItem(key);

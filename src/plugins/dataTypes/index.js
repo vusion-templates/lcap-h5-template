@@ -30,8 +30,10 @@ export default {
         const frontendVariables = {};
         if (Array.isArray(options && options.frontendVariables)) {
             options.frontendVariables.forEach((frontendVariable) => {
-                const { name, typeAnnotation, defaultValue } = frontendVariable;
-                frontendVariables[name] = genInitFromSchema(genSortedTypeKey(typeAnnotation), defaultValue);
+                const { name, typeAnnotation, defaultValue, localCache } = frontendVariable;
+                // 全局变量如果启用了本地存储则优先读取其值
+                const actualDefaultValue = localCache ? storage.get(name, true) : defaultValue;
+                frontendVariables[name] = genInitFromSchema(genSortedTypeKey(typeAnnotation), actualDefaultValue);
             });
         }
 

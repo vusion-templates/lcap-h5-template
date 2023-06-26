@@ -15,6 +15,7 @@ import App from './App.vue';
 
 import '@/assets/css/index.css';
 
+
 /* 👇CloudUI中入口逻辑 */
 Vue.prototype.$env = Vue.prototype.$env || {};
 Vue.prototype.$env.VUE_APP_DESIGNER
