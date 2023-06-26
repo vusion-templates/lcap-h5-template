@@ -11,32 +11,14 @@
 import SFreesassLogin from '@/components/s-freesass-login.vue';
 import SFreesassBanner from '@/components/s-freesass-banner.vue';
 import SFreesassTransfer from '@/components/s-freesass-transfer';
-import auth from '@/apis/auth';
 const newDomain = location.host.split('.').includes('163');
 const serviceMap = {
     checkSfToken: `${location.protocol}//sfsso.community1.lcap.qz.163yun.com/api/checkSfToken`,
     checkSfTokenNew: `${location.protocol}//sfsso-community1.app.codewave.163.com/api/checkSfToken`,
 };
 
-const localStorageMixin = {
-  created() {
-    console.log('localStorageMixin created', this);
-    // 检查和覆写初始化的 data 值
-    // 假设 data 中有一个属性叫做 'value'
-    if (typeof this.value === 'undefined' || this.value === null) {
-      this.value = 'default value';
-    }
-  },
-  beforeDestroy() {
-    console.log('localStorageMixin beforeDestroy', this);
-    // 将改变的数据保存到 localStorage 中
-    // 假设我们要保存 'value' 属性
-    localStorage.setItem('value', JSON.stringify(this.value));
-  },
-};
 
 export default {
-    mixins: [localStorageMixin],
     components: { SFreesassLogin, SFreesassBanner, SFreesassTransfer },
     data() {
         return {
