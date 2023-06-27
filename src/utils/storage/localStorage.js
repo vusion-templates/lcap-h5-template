@@ -23,16 +23,25 @@ const isLocalStorageAvailable = () => {
 const storage = isLocalStorageAvailable() ? window.localStorage : null;
 
 const storageObj = !storage ? noSupport : {
-    set(key, value, enableStringify = false) {
+    set(key, value, stringify = false) {
         try {
-            storage.setItem(key, enableStringify ? JSON.stringify(value) : value);
+            storage.setItem(key, stringify ? JSON.stringify(value) : value);
         } catch (error) {
-            console.error('JSON stringify error:', error);
+            if (error.name === 'QuotaExceededError') {
+                if (confirm('本地缓存已满，可能导致部分功能无法正常使用，请清理后继续。清空缓存？')) {
+                    storage.clear();
+                    alert('已清空缓存，请尝试再次操作。');
+                } else {
+                    alert('知道了');
+                }
+            } else {
+                console.error('An error occurred:', error);
+            }
         }
     },
-    get(key, enableParseJson = false) {
+    get(key, parseJson = false) {
         const value = storage.getItem(key);
-        if (enableParseJson) {
+        if (parseJson) {
             try {
                 return JSON.parse(value);
             } catch (error) {
