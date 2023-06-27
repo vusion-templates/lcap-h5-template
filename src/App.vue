@@ -31,24 +31,16 @@ const localCacheVariableMixin = {
     beforeMount() {
         this.actionLocalCacheVariable(ACTION_LOCAL_CACHE_VARIABLE_TYPE.GET);
     },
-    // 当 Vue 实例挂载完毕后，添加一个 "visibilitychange" 事件的监听器
     mounted() {
         document.addEventListener("visibilitychange", this.handleVisibilityChange);
     },
-
-    // 在 Vue 实例销毁前，移除之前添加的 "visibilitychange" 事件的监听器
     beforeDestroy() {
         this.actionLocalCacheVariable(ACTION_LOCAL_CACHE_VARIABLE_TYPE.UPDATE);
         document.removeEventListener("visibilitychange", this.handleVisibilityChange);
     },
-
     methods: {
-        // 当 "visibilitychange" 事件触发时，会调用此方法
         handleVisibilityChange() {
-            // document.hidden 属性为 true 表示页面处于不可见状态
-            // this.update 是你的 Vue 实例的一个方法，需要在实例中定义
             if (document.hidden && typeof this.actionLocalCacheVariable === 'function') {
-                // 当页面不可见时，调用 Vue 实例的 update 方法
                 this.actionLocalCacheVariable(ACTION_LOCAL_CACHE_VARIABLE_TYPE.UPDATE);
             }
         },
@@ -69,7 +61,7 @@ const localCacheVariableMixin = {
                         }
 
                         break;
-                    // 将 frontendVariables 中的数据同步到 localCache
+                    // 将 frontendVariables 中的数据同步到 localCache 触发时机 应用销毁前 & 应用切换到后台
                     case ACTION_LOCAL_CACHE_VARIABLE_TYPE.UPDATE:
                         const currentValue = frontendVariables[localCacheVariableKey];
 
