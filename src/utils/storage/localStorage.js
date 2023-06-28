@@ -30,10 +30,7 @@ const storageObj = !storage ? noSupport : {
             if (error.name === 'QuotaExceededError') {
                 if (confirm('本地缓存已满，可能导致部分功能无法正常使用，请清理后继续。清空缓存？')) {
                     storage.clear();
-                    alert('已清空缓存，请尝试再次操作。');
-                } else {
-                    alert('知道了');
-                }
+                } 
             } else {
                 console.error('An error occurred:', error);
             }
