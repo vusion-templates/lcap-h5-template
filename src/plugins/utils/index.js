@@ -265,7 +265,8 @@ export const utils = {
     ListFind(arr, by) {
         if (Array.isArray(arr)) {
             if (typeof by === 'function') {
-                return arr.find(by) || null;
+                const value = arr.find(by);
+                return (typeof value === 'undefined') ? null : value;
             }
         }
     },
@@ -278,7 +279,7 @@ export const utils = {
     ListFindIndex(arr, callback) {
         if (Array.isArray(arr)) {
             if (typeof callback === 'function') {
-                return arr.findIndex(callback) || null;
+                return arr.findIndex(callback);
             }
         }
     },
