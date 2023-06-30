@@ -1,5 +1,5 @@
 import { format, formatISO } from 'date-fns';
-import { UToast } from 'cloud-ui.vusion';
+import { VanToast as Toast } from '@lcap/mobile-ui';
 
 function tryJSONParse(str) {
     let result;
@@ -496,7 +496,7 @@ export const toString = (variable, typeKey, tabSize = 0) => {
             const maxLen = 8;
             if (count >= maxLen) {
                 // 去掉+是为了跟后端保持统一
-                str = variable?.toExponential?.().replace?.('e+', 'e');
+                str = (+variable)?.toExponential?.().replace?.('e+', 'e');
             }
         }
         // 日期处理
@@ -580,7 +580,7 @@ export const toString = (variable, typeKey, tabSize = 0) => {
                         const arr = moreThanMax ? keys : keys.slice(0, maxLen);
                         const keyTypeKey = genSortedTypeKey(typeArguments?.[0]);
                         const itemTypeKey = genSortedTypeKey(typeArguments?.[1]);
-                        const arrStr = arr.map((key) => `${indent(tabSize + 1)}${toString(key, keyTypeKey, tabSize + 1)} -> ${toString(variable[key], itemTypeKey, tabSize + 1)}`).join('\n');
+                        const arrStr = arr.map((key) => `${indent(tabSize + 1)}${toString(key, keyTypeKey, tabSize + 1)} -> ${toString(variable[key], itemTypeKey, tabSize + 1)}`).join(',\n');
                         str = moreThanMax ? `{\n${arrStr}\n...\n}` : `{\n${arrStr}\n}`;
                     }
                 } else {
@@ -734,6 +734,9 @@ export const fromString = (variable, typeKey) => {
 };
 export function toastAndThrowError(err) {
     // 全局提示toast
-    UToast?.error(err);
+    Toast?.({
+        message: err,
+        position: 'top',
+    });
     throw new Error(err);
 }

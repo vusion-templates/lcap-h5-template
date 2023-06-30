@@ -18,6 +18,7 @@ import string from '@/filters/string';
 import { dateFormatter } from './Formatters';
 
 import { toString, fromString, toastAndThrowError } from '../dataTypes/tools';
+import Decimal from 'decimal.js';
 
 let enumsMap = {};
 
@@ -268,7 +269,8 @@ export const utils = {
     ListFind(arr, by) {
         if (Array.isArray(arr)) {
             if (typeof by === 'function') {
-                return arr.find(by) || null;
+                const value = arr.find(by);
+                return (typeof value === 'undefined') ? null : value;
             }
         }
     },
@@ -281,7 +283,7 @@ export const utils = {
     ListFindIndex(arr, callback) {
         if (Array.isArray(arr)) {
             if (typeof callback === 'function') {
-                return arr.findIndex(callback) || null;
+                return arr.findIndex(callback);
             }
         }
     },
@@ -785,6 +787,19 @@ export const utils = {
      */
     CreateListPage(list, total) {
         return { list, total };
+    },
+    /**
+     * @param {number} value 内容
+     * @param {string} mode 方式
+     * @returns {number} 返回值
+     */
+    Round(value, mode) {
+        const modeMap = {
+            TowardsZero: Decimal.ROUND_DOWN,
+            TowardsInfinity: Decimal.ROUND_UP,
+            HalfUp: Decimal.ROUND_HALF_UP,
+        };
+        return new Decimal(value).toFixed(0, modeMap[mode]);
     },
 };
 
