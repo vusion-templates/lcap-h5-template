@@ -1,7 +1,6 @@
 import Service from 'request-pre';
 import axios from 'axios';
 import { stringify } from 'qs';
-import addConfigs from './add.configs';
 import { getFilenameFromContentDispositionHeader } from './tools';
 import paramsSerializer from './paramsSerializer';
 import cookie from '@/utils/cookie';
