@@ -26,6 +26,7 @@ export default {
          * @param {*} schema 是前端用的 refSchema
          */
         Vue.prototype.$genInitFromSchema = genInitFromSchema;
+        window.$genInitFromSchema = genInitFromSchema;
 
         const frontendVariables = {};
         if (Array.isArray(options && options.frontendVariables)) {
@@ -237,6 +238,7 @@ export default {
         });
 
         Vue.prototype.$global = $global;
+        window.$global = $global;
 
         Vue.prototype.$isInstanceOf = isInstanceOf;
 
