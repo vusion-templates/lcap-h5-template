@@ -1,5 +1,5 @@
 import { format, formatISO } from 'date-fns';
-import { UToast } from 'cloud-ui.vusion';
+import { VanToast as Toast } from '@lcap/mobile-ui';
 
 function tryJSONParse(str) {
     let result;
@@ -503,10 +503,36 @@ export const toString = (variable, typeKey, tabSize = 0) => {
         if (typeKey === 'nasl.core.Date') {
             str = format(new Date(variable), 'yyyy-MM-dd');
         } else if (typeKey === 'nasl.core.Time') {
-            if (/^\d{2}:\d{2}:\d{2}$/.test(variable)) // 纯时间 12:30:00
-                str = format(new Date('2022-01-01 ' + variable), 'HH:mm:ss');
-            else
+            const timeRegex = /^([01]?\d|2[0-3])(?::([0-5]?\d)(?::([0-5]?\d))?)?$/;
+            // 纯时间 12:30:00
+            if (timeRegex.test(variable)) {
+                const match = variable.match(timeRegex);
+                const varArr = [];
+                const formatArr = [];
+                [
+                    {
+                        index: 1,
+                        format: 'HH',
+                    },
+                    {
+                        index: 2,
+                        format: 'mm',
+                    },
+                    {
+                        index: 3,
+                        format: 'ss',
+                    },
+                ].forEach(({ index, format }) => {
+                    const varItem = match[index];
+                    if (varItem) {
+                        formatArr.push(format);
+                    }
+                    varArr.push(varItem || '00');
+                });
+                str = format(new Date('2022-01-01 ' + varArr.join(':')), formatArr.join(':'));
+            } else {
                 str = format(new Date(variable), 'HH:mm:ss');
+            }
         } else if (typeKey === 'nasl.core.DateTime') {
             str = format(new Date(variable), 'yyyy-MM-dd HH:mm:ss');
         }
@@ -580,7 +606,7 @@ export const toString = (variable, typeKey, tabSize = 0) => {
                         const arr = moreThanMax ? keys : keys.slice(0, maxLen);
                         const keyTypeKey = genSortedTypeKey(typeArguments?.[0]);
                         const itemTypeKey = genSortedTypeKey(typeArguments?.[1]);
-                        const arrStr = arr.map((key) => `${indent(tabSize + 1)}${toString(key, keyTypeKey, tabSize + 1)} -> ${toString(variable[key], itemTypeKey, tabSize + 1)}`).join('\n');
+                        const arrStr = arr.map((key) => `${indent(tabSize + 1)}${toString(key, keyTypeKey, tabSize + 1)} -> ${toString(variable[key], itemTypeKey, tabSize + 1)}`).join(',\n');
                         str = moreThanMax ? `{\n${arrStr}\n...\n}` : `{\n${arrStr}\n}`;
                     }
                 } else {
@@ -734,6 +760,9 @@ export const fromString = (variable, typeKey) => {
 };
 export function toastAndThrowError(err) {
     // 全局提示toast
-    UToast?.error(err);
+    Toast?.({
+        message: err,
+        position: 'top',
+    });
     throw new Error(err);
 }

@@ -25,7 +25,7 @@
     "deploy:pre": "lcap deploy ./public --platform http://defaulttenant.lcap.hadri.163yun.com",
     "deploy:online": "lcap deploy ./public --platform http://netease-template.lcap.163yun.com",
     "postinstall": "node node_modules/vusion-install/index.js",
-    "prepublishOnly": "cp .gitignore _.gitignore && npm run build:designer && npm run deploy:online",
+    "prepublishOnly": "cp .gitignore _.gitignore && npm run build:designer",
     "postpublish": "rm _.gitignore",
     "deploy:dev2": "node ./bin/upload.js"
   },
