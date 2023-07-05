@@ -42,6 +42,7 @@ describe("Local Cache Variable Mixin", () => {
     });
 
     it("应用挂载读取", () => {
+
         expect(storage.get).toHaveBeenCalledWith('searchHistory', true);
         wrapper.vm.$global.frontendVariables.searchHistory = ['test'];
 

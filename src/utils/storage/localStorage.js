@@ -28,6 +28,7 @@ const storageObj = !storage ? noSupport : {
             storage.setItem(key, stringify ? JSON.stringify(value) : value);
         } catch (error) {
             if (error.name === 'QuotaExceededError') {
+                // eslint-disable-next-line no-alert
                 if (confirm('本地缓存已满，可能导致部分功能无法正常使用，请清理后继续。清空缓存？')) {
                     storage.clear();
                 } 
