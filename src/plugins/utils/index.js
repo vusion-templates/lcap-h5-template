@@ -810,42 +810,30 @@ export const utils = {
         const hasValue = (value, typeKey) => {
             const typeDefinition = typeDefinitionMap[typeKey] || {};
 
-            // 空类型
             if (['nasl.core.Null'].includes(value) || value === undefined || value === null) {
                 return false;
-            }
-            // 字符串大类
-            else if (isDefString(typeKey) || typeof value === 'string') {
-                return value.trim() != "";
-            }
-            // 数字大类
-            else if (isDefNumber(typeKey) || typeof value === 'number') {
+            } else if (isDefString(typeKey) || typeof value === 'string') {
+                return value.trim() !== '';
+            } else if (isDefNumber(typeKey) || typeof value === 'number') {
                 return !isNaN(value);
-            }
-            // List
-            else if (isDefList(typeDefinition) || Array.isArray(value)) {
+            } else if (isDefList(typeDefinition) || Array.isArray(value)) {
                 return value && value.length > 0;
-            }
-            // Map
-            else if (isDefMap(typeDefinition)) {
+            } else if (isDefMap(typeDefinition)) {
                 return Object.keys(value).length > 0;
-            }
-            // structure/entity
-            else {
+            } else { // structure/entity
                 return !Object.keys(value).every((key) => {
-                  let v = value[key as keyof typeof value];
-                  return v === null || v === undefined;
-                })
+                    const v = value[key];
+                    return v === null || v === undefined;
+                });
             }
-        }
-
+        };
 
         let isValid = true;
 
-        for (let i = 0; i < values.length; i+=1) {
+        for (let i = 0; i < values.length; i += 1) {
             const { value, type } = values[i];
 
-            if(!hasValue(value, type)) {
+            if (!hasValue(value, type)) {
                 isValid = false;
                 break;
             }
