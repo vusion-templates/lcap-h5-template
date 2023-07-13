@@ -130,7 +130,6 @@ const init = (appConfig, platformConfig, routes, metaData) => {
                     router, routes, authResourcePaths, appConfig, beforeRouter,
                     to, from, next, parsePath, getBasePath, filterAuthResources, findNoAuthView, filterRoutes,
                 };
-                console.log('自定义beforeRouter: ', event);
                 await beforeRouter(event);
             }
         } catch (err) { }
@@ -138,8 +137,6 @@ const init = (appConfig, platformConfig, routes, metaData) => {
     };
     beforeRouter && router.beforeEach(getAuthGuard(router, routes, authResourcePaths, appConfig, window.beforeRouter));
 
-    // router.beforeEach(userInfoGuard);
-    // router.beforeEach(getAuthGuard(router, routes, authResourcePaths, appConfig, baseResourcePaths));
     router.beforeEach(getTitleGuard(appConfig));
 
     const app = new Vue({
