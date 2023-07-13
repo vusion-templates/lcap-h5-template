@@ -1,6 +1,7 @@
 import Vue from 'vue';
 import { installOptions, installFilters, install } from '@vusion/utils';
 import * as Vant from '@lcap/mobile-ui';
+import { VanToast as Toast } from '@lcap/mobile-ui';
 
 import MEmitter from 'cloud-ui.vusion/src/components/m-emitter.vue';
 import MPubSub from 'cloud-ui.vusion/src/components/m-pub-sub.vue';
@@ -96,6 +97,12 @@ const init = (appConfig, platformConfig, routes, metaData) => {
             console.error(err);
         }
     };
+    if (window?.rendered) {
+        if (!window?.$toast) {
+            window.$toast = { show: (message) => Toast({ message, position: top }) };
+        }
+        window.rendered();
+    }
     const baseResourcePaths = platformConfig.baseResourcePaths || [];
     const authResourcePaths = platformConfig.authResourcePaths || [];
     const baseRoutes = filterRoutes(routes, null, (route, ancestorPaths) => {
@@ -113,7 +120,6 @@ const init = (appConfig, platformConfig, routes, metaData) => {
     const fnName = 'beforeRouter';
     if (fnName && metaData.frontendEvents[fnName]) {
         evalWrap.bind(window)(metaData, fnName);
-        console.log(fnName, window[fnName]);
         Vue.prototype[fnName] = window[fnName];
     }
     const beforeRouter = Vue.prototype.beforeRouter;
@@ -146,7 +152,6 @@ const init = (appConfig, platformConfig, routes, metaData) => {
             const fnName = fnList[index];
             if (fnName && metaData.frontendEvents[fnName]) {
                 evalWrap.bind(app)(metaData, fnName);
-                console.log(fnName, window[fnName]);
                 Vue.prototype[fnName] = window[fnName];
             }
         }
