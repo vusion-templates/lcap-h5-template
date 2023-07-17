@@ -1,6 +1,7 @@
 import Vue from 'vue';
 import { installOptions, installFilters, install } from '@vusion/utils';
 import * as Vant from '@lcap/mobile-ui';
+// eslint-disable-next-line no-duplicate-imports
 import { VanToast as Toast } from '@lcap/mobile-ui';
 
 import MEmitter from 'cloud-ui.vusion/src/components/m-emitter.vue';
@@ -9,7 +10,7 @@ import { MField } from 'cloud-ui.vusion/src/components/m-field.vue';
 
 import filters from '@/filters';
 import { AuthPlugin, DataTypesPlugin, LogicsPlugin, RouterPlugin, ServicesPlugin, UtilsPlugin } from '@/plugins';
-import { userInfoGuard, getAuthGuard, getTitleGuard, initRouter } from '@/router';
+import { getTitleGuard, initRouter } from '@/router';
 import { filterRoutes, parsePath } from '@/utils/route';
 import { getBasePath } from '@/utils/encodeUrl';
 import { filterAuthResources, findNoAuthView } from '@/router/guards/auth';
@@ -99,6 +100,7 @@ const init = (appConfig, platformConfig, routes, metaData) => {
     };
     if (window?.rendered) {
         if (!window?.$toast) {
+            // eslint-disable-next-line new-cap
             window.$toast = { show: (message) => Toast({ message, position: top }) };
         }
         window.rendered();
