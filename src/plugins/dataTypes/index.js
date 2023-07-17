@@ -28,6 +28,7 @@ export default {
          * @param {*} schema 是前端用的 refSchema
          */
         Vue.prototype.$genInitFromSchema = genInitFromSchema;
+        window.$genInitFromSchema = genInitFromSchema;
 
         const frontendVariables = {};
         const localCacheVariableSet = new Set(); // 本地存储的全局变量集合
@@ -246,6 +247,7 @@ export default {
         // localCacheVariableSet 只是读写并不需要加入到响应式中故 把这个变量挂载到 Vue 的原型上
         Vue.prototype.$localCacheVariableSet = localCacheVariableSet; 
         Vue.prototype.$global = $global;
+        window.$global = $global;
 
         Vue.prototype.$isInstanceOf = isInstanceOf;
 
