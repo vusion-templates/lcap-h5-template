@@ -57,6 +57,7 @@ const vueConfig = {
                     args[0].template = path.resolve('./demo.html');
                     return args;
                 });
+
         } else {
             webpackHtml.chain(config, isDevelopment);
             webpackDll.chain(config, publicPathPrefix, isDevelopment);

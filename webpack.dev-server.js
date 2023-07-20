@@ -32,7 +32,7 @@ module.exports = function (port) {
         host,
         port,
         progress: !process.env.SERVER_DEVELOP,
-        open: true,
+        open: false,
         disableHostCheck: true,
         contentBase: path.join(__dirname),
         watchContentBase: false, // dev slow on Windows
