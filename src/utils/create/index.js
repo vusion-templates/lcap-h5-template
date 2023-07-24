@@ -70,6 +70,8 @@ const requester = function (requestInfo) {
     headers.DomainName = window.appInfo?.domainName;
     if (window.appInfo?.frontendName)
         headers['LCAP-FRONTEND'] = window.appInfo?.frontendName;
+    // 时区信息，默认是user
+    headers.TimeZone = window.appInfo?.appTimeZone || 'user';
 
     if (config.download) {
         return download(url);
@@ -113,11 +115,12 @@ const adjustPathWithSysPrefixPath = (apiSchemaList) => {
     if (apiSchemaList) {
         for (const key in apiSchemaList) {
             if (!newApiSchemaMap[key]) {
-                const { url } = apiSchemaList[key] || {};
+                const { url, ...others } = apiSchemaList[key] || {};
                 newApiSchemaMap[key] = {
                     url: {
                         ...url,
                     },
+                    ...others,
                 };
             }
             const newApiSchema = newApiSchemaMap[key];
