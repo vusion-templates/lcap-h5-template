@@ -2,8 +2,8 @@
     <div>
         <s-freesass-banner v-if="isFreeSass"></s-freesass-banner>
         <router-view></router-view>
-         <s-freesass-login @afterShufanLogin="afterShufanLogin" ref="freeSassLogin"></s-freesass-login>
-        <s-freesass-transfer v-if="isPersonSass&&loginFinished" ref="freesassTransfer"></s-freesass-transfer>
+        <s-freesass-login @afterShufanLogin="afterShufanLogin" ref="freeSassLogin"></s-freesass-login>
+        <s-freesass-transfer v-if="isPersonSass && loginFinished" ref="freesassTransfer"></s-freesass-transfer>
     </div>
 </template>
 
@@ -11,14 +11,19 @@
 import SFreesassLogin from '@/components/s-freesass-login.vue';
 import SFreesassBanner from '@/components/s-freesass-banner.vue';
 import SFreesassTransfer from '@/components/s-freesass-transfer';
-import auth from '@/apis/auth';
+import { localCacheVariableMixin } from '@/mixins/localCacheVariableMixin';
+
 const newDomain = location.host.split('.').includes('163');
 const serviceMap = {
     checkSfToken: `${location.protocol}//sfsso.community1.lcap.qz.163yun.com/api/checkSfToken`,
     checkSfTokenNew: `${location.protocol}//sfsso-community1.app.codewave.163.com/api/checkSfToken`,
 };
+
+
+
 export default {
-    components: { SFreesassLogin, SFreesassBanner,SFreesassTransfer },
+    mixins: [localCacheVariableMixin],
+    components: { SFreesassLogin, SFreesassBanner, SFreesassTransfer },
     data() {
         return {
             loginFinished: false,
@@ -26,22 +31,23 @@ export default {
     },
     computed: {
         isSharePage() {
-             let str = 'lcap.qz.163yun';
+            let str = 'lcap.qz.163yun';
             if (newDomain) { str = 'app.codewave.163'; }
             const neteaseStrList = str.split('.');
             return neteaseStrList.some((it) => location.host.includes(it));
         },
         isPersonSass() {
-            return +window.appInfo?.tenantType === 1 ;
+            return +window.appInfo?.tenantType === 1;
         },
         isFreeSass() {
             return +window.appInfo?.tenantType === 1 && +window.appInfo?.tenantLevel === 0;
         },
     },
     async mounted() {
+        // alert('🚀 appInfo: ' + JSON.stringify(window.appInfo));
         if (this.isSharePage && +window.appInfo?.tenantType === 1) {
             try {
-                  let url = serviceMap.checkSfToken;
+                let url = serviceMap.checkSfToken;
                 if (newDomain) { url = serviceMap.checkSfTokenNew; }
                 // 校验接口
                 const res = await fetch(url, {
@@ -62,7 +68,7 @@ export default {
             }
         }
     },
-     methods: {
+    methods: {
         afterShufanLogin() {
             this.loginFinished = true;
         },
