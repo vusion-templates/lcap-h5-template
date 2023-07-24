@@ -19,6 +19,7 @@ import { dateFormatter } from './Formatters';
 
 import { toString, fromString, toastAndThrowError, isDefString, isDefNumber, isDefList, isDefMap, typeDefinitionMap } from '../dataTypes/tools';
 import Decimal from 'decimal.js';
+import { findAsync, mapAsync, filterAsync, findIndexAsync, sortAsync } from './helper';
 
 let enumsMap = {};
 
@@ -201,6 +202,13 @@ export const utils = {
             return null;
         }
     },
+    async ListTransformAsync(arr, trans) {
+        if (Array.isArray(arr)) {
+            return await mapAsync(arr, (elem) => trans(elem));
+        } else {
+            return null;
+        }
+    },
     ListSum(arr) {
         if (Array.isArray(arr) && arr.length > 0) {
             return arr.reduce((prev, cur) => prev + cur, 0);
@@ -266,10 +274,42 @@ export const utils = {
             }
         }
     },
+    async ListSortAsync(arr, callback, sort) {
+        const sortRule = (valueA, valueB) => {
+            if (Number.isNaN(valueA) || Number.isNaN(valueB) || typeof valueA === 'undefined' || typeof valueB === 'undefined' || valueA === null || valueB === null) {
+                return 1;
+            } else {
+                if (valueA >= valueB) {
+                    if (sort) {
+                        return 1;
+                    }
+                    return -1;
+                } else {
+                    if (sort) {
+                        return -1;
+                    }
+                    return 1;
+                }
+            }
+        };
+        if (Array.isArray(arr)) {
+            if (typeof callback === 'function') {
+                return await sortAsync(arr, sortRule)(callback);
+            }
+        }
+    },
     ListFind(arr, by) {
         if (Array.isArray(arr)) {
             if (typeof by === 'function') {
                 const value = arr.find(by);
+                return (typeof value === 'undefined') ? null : value;
+            }
+        }
+    },
+    async ListFindAsync(arr, by) {
+        if (Array.isArray(arr)) {
+            if (typeof by === 'function') {
+                const value = await findAsync(arr, by);
                 return (typeof value === 'undefined') ? null : value;
             }
         }
@@ -280,10 +320,23 @@ export const utils = {
         }
         return arr.filter(by);
     },
+    async ListFilterAsync(arr, by) {
+        if (!Array.isArray(arr) || typeof by !== 'function') {
+            return null;
+        }
+        return await filterAsync(arr, by);
+    },
     ListFindIndex(arr, callback) {
         if (Array.isArray(arr)) {
             if (typeof callback === 'function') {
                 return arr.findIndex(callback);
+            }
+        }
+    },
+    async ListFindIndexAsync(arr, callback) {
+        if (Array.isArray(arr)) {
+            if (typeof callback === 'function') {
+                return await findIndexAsync(arr, callback);
             }
         }
     },
@@ -313,6 +366,26 @@ export const utils = {
         }
         return res;
     },
+    async ListDistinctByAsync(arr, getVal) {
+        // getVal : <A,B> . A => B 给一个 A 类型的数据，返回 A 类型中被用户选中的 field 的 value
+        if (!Array.isArray(arr) || typeof getVal !== 'function') {
+            return null;
+        }
+        if (arr.length === 0) {
+            return arr;
+        }
+
+        const res = [];
+        const vis = new Set();
+        for (const item of arr) {
+            const hash = await getVal(item);
+            if (!vis.has(hash)) {
+                vis.add(hash);
+                res.push(item);
+            }
+        }
+        return res;
+    },
     ListGroupBy(arr, getVal) {
         // getVal : <A,B> . A => B 给一个 A 类型的数据，返回 A 类型中被用户选中的 field 的 value
         if (!arr || typeof getVal !== 'function') {
@@ -331,6 +404,27 @@ export const utils = {
                 res[val] = [e];
             }
         });
+        return res;
+    },
+    async ListGroupByAsync(arr, getVal) {
+        // getVal : <A,B> . A => B 给一个 A 类型的数据，返回 A 类型中被用户选中的 field 的 value
+        if (!arr || typeof getVal !== 'function') {
+            return null;
+        }
+        if (arr.length === 0) {
+            return arr;
+        }
+        const res = {};
+        for (let i = 0; i < arr.length; i++) {
+            const e = arr[i];
+            const val = await getVal(e);
+            if (Array.isArray(res[val])) {
+                // res.get(val) 是一个 array
+                res[val].push(e);
+            } else {
+                res[val] = [e];
+            }
+        }
         return res;
     },
     MapGet(map, key) {
@@ -388,6 +482,18 @@ export const utils = {
         }
         return res;
     },
+    async MapFilterAsync(map, by) {
+        if (!isObject(map) || typeof by !== 'function') {
+            return null;
+        }
+        const res = {};
+        for (const [k, v] of Object.entries(map)) {
+            if (await by(k, v)) {
+                res[k] = v;
+            }
+        }
+        return res;
+    },
     MapTransform(map, toKey, toValue) {
         if (!isObject(map) || typeof toKey !== 'function' || typeof toValue !== 'function') {
             return null;
@@ -395,6 +501,16 @@ export const utils = {
         const res = {};
         for (const [k, v] of Object.entries(map)) {
             res[toKey(k, v)] = toValue(k, v);
+        }
+        return res;
+    },
+    async MapTransformAsync(map, toKey, toValue) {
+        if (!isObject(map) || typeof toKey !== 'function' || typeof toValue !== 'function') {
+            return null;
+        }
+        const res = {};
+        for (const [k, v] of Object.entries(map)) {
+            res[await toKey(k, v)] = await toValue(k, v);
         }
         return res;
     },
@@ -410,6 +526,20 @@ export const utils = {
             }
         }
 
+        return res;
+    },
+    async ListToMapAsync(arr, toKey, toValue) {
+        if (!Array.isArray(arr) || typeof toKey !== 'function' || typeof toValue !== 'function') {
+            return null;
+        }
+        const res = {};
+        for (let i = arr.length - 1; i >= 0; i--) {
+            const e = arr[i];
+            const key = await toKey(e);
+            if (key !== undefined) {
+                res[key] = await toValue(e);
+            }
+        }
         return res;
     },
     ListReverse(arr) {
@@ -442,24 +572,10 @@ export const utils = {
             }
         }
     },
-    ListFind(arr, callback) {
-        if (Array.isArray(arr)) {
-            if (typeof callback === 'function') {
-                return arr.find(callback);
-            }
-        }
-    },
     ListFindAll(arr, callback) {
         if (Array.isArray(arr)) {
             if (typeof callback === 'function') {
                 return arr.filter(callback);
-            }
-        }
-    },
-    ListFindIndex(arr, callback) {
-        if (Array.isArray(arr)) {
-            if (typeof callback === 'function') {
-                return arr.findIndex(callback);
             }
         }
     },
