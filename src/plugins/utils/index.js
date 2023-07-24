@@ -11,7 +11,17 @@ import {
     differenceInHours,
     differenceInMinutes,
     differenceInSeconds,
+    formatISO,
+    parseISO,
+    getWeek,
+    startOfWeek,
+    startOfQuarter,
+    getDayOfYear,
+    getWeekOfMonth,
+    getMonth,
+    getQuarter,
 } from 'date-fns';
+import { utcToZonedTime } from 'date-fns-tz';
 import Vue from 'vue';
 import string from '@/filters/string';
 
@@ -19,9 +29,13 @@ import { dateFormatter } from './Formatters';
 
 import { toString, fromString, toastAndThrowError, isDefString, isDefNumber, isDefList, isDefMap, typeDefinitionMap } from '../dataTypes/tools';
 import Decimal from 'decimal.js';
+import { getAppTimezone, isValidTimezoneIANAString } from './timezone';
 import { findAsync, mapAsync, filterAsync, findIndexAsync, sortAsync } from './helper';
 
 let enumsMap = {};
+
+const appTimezone = getAppTimezone();
+console.log('appTimezone: ', appTimezone); // 便于排查问题
 
 function toValue(date, converter) {
     if (!date)
@@ -628,13 +642,15 @@ export const utils = {
         }
     },
     CurrDate() {
-        return new Date().toJSON().replace(/T.+?Z/, '');
+        const date = parseISO(this.ConvertTimezone(new Date(), appTimezone));
+        return format(date, 'yyy-MM-dd');
     },
     CurrTime() {
-        return new Date().toTimeString().split(' ')[0];
+        const date = parseISO(this.ConvertTimezone(new Date(), appTimezone));
+        return format(date, 'HH:mm:ss');
     },
     CurrDateTime() {
-        return new Date().toJSON();
+        return this.ConvertTimezone(new Date(), appTimezone);
     },
     AddDays(date = new Date(), amount = 1, converter = 'json') {
         return toValue(addDays(new Date(fixIOSDateString(date)), amount), converter);
@@ -645,6 +661,78 @@ export const utils = {
     },
     SubDays(date = new Date(), amount = 1, converter = 'json') {
         return toValue(subDays(new Date(fixIOSDateString(date)), amount), converter);
+    },
+    GetDateCount(dateString, metric) {
+        const date = parseISO(this.ConvertTimezone(new Date(dateString), appTimezone));
+
+        const [metric1, metric2] = metric.split('-');
+        // 获取当年的最后一天的所在周会返回1，需要额外判断一下
+        function getCurrentWeek(value) {
+            let count = getWeek(value, { weekStartsOn: 1 });
+            if (value.getMonth() + 1 === 12 && count === 1) {
+                count = getWeek(addDays(value, -7), { weekStartsOn: 1 }) + 1;
+            }
+            return count;
+        }
+        switch (metric1) {
+            case 'day':
+                switch (metric2) {
+                    case 'week': return differenceInDays(date, startOfWeek(date, { weekStartsOn: 1 })) + 1;
+                    case 'month': return getDate(date);
+                    case 'quarter': return differenceInDays(date, startOfQuarter(date)) + 1;
+                    case 'year': return getDayOfYear(date);
+                }
+            case 'week':
+                switch (metric2) {
+                    case 'month': return getWeekOfMonth(date);
+                    case 'quarter': return getCurrentWeek(date) - getWeek(startOfQuarter(date)) + 1;
+                    case 'year': return getCurrentWeek(date);
+                }
+            case 'month':
+                switch (metric2) {
+                    case 'quarter': return getMonth(date) + 1 - (getQuarter(date) - 1) * 3;
+                    case 'year': return getMonth(date) + 1;
+                }
+            case 'quarter':
+                return getQuarter(date);
+            default:
+                return null;
+        }
+    },
+    AlterDateTime(dateString, option, count, unit) {
+        const date = new Date(dateString);
+        const amount = option === 'Increase' ? count : -count;
+        switch (unit) {
+            case 'second': return addSeconds(date, amount);
+            case 'minute': return addMinutes(date, amount);
+            case 'hour': return addHours(date, amount);
+            case 'day': return addDays(date, amount);
+            case 'week': return addWeeks(date, amount);
+            case 'month': return addMonths(date, amount);
+            case 'quarter': return addQuarters(date, amount);
+            case 'year': return addYears(date, amount);
+        }
+    },
+    GetSpecificDaysOfWeek(startDateString, endDateString, arr) {
+        if (!startDateString)
+            toastAndThrowError(`内置函数GetSpecificDaysOfWeek入参错误：startDate不能为空`);
+        if (!endDateString)
+            toastAndThrowError(`内置函数GetSpecificDaysOfWeek入参错误：endDate不能为空`);
+        if (!Array.isArray(arr)) {
+            toastAndThrowError(`内置函数GetSpecificDaysOfWeek入参错误：参数“指定”非合法数组`);
+        }
+
+        const startDate = utcToZonedTime(parseISO(startDateString), appTimezone);
+        const endDate = utcToZonedTime(parseISO(endDateString), appTimezone);
+        const fns = [isMonday, isTuesday, isWednesday, isThursday, isFriday, isSaturday, isSunday];
+        const datesInRange = eachDayOfInterval({ start: startDate, end: endDate });
+        const isDays = fns.filter((_, index) => arr.includes((index + 1)));
+        const filteredDates = datesInRange.filter((day) => isDays.some((fn) => fn(day)));
+        if (typeof startDateString === 'object' || startDateString.includes('T')) {
+            return filteredDates.map((date) => format(date, 'yyyy-MM-dd HH:mm:ss'));
+        } else {
+            return filteredDates.map((date) => format(date, 'yyyy-MM-dd'));
+        }
     },
     FormatDate(value, formatter) {
         if (!value)
@@ -775,7 +863,11 @@ export const utils = {
      * @param {dateTime2} 时间
      * @param {calcType} 计算类型：年(y)、季度(q)、月(M)、星期(w)、天数(d)、小时数(h)、分钟数(m)、秒数(s)
     */
-    DateDiff(dateTime1, dateTime2, calcType) {
+    DateDiff(dateTime1, dateTime2, calcType, isAbs = true) {
+        if (!dateTime1)
+            toastAndThrowError(`内置函数DateDiff入参错误：dateTime1不能为空`);
+        if (!dateTime2)
+            toastAndThrowError(`内置函数DateDiff入参错误：dateTime2不能为空`);
         if (!dateTime1 || !dateTime2)
             return;
         // Time
@@ -799,7 +891,22 @@ export const utils = {
         if (!map[calcType])
             return;
         const method = map[calcType];
-        return Math.abs(method(new Date(fixIOSDateString(dateTime2)), new Date(fixIOSDateString(dateTime1))));
+        const diffRes = method(new Date(fixIOSDateString(dateTime2)), new Date(fixIOSDateString(dateTime1)));
+        return isAbs ? Math.abs(diffRes) : diffRes;
+    },
+    // 时区转换
+    ConvertTimezone(dateTime, timezone) {
+        if (!dateTime) {
+            toastAndThrowError(`内置函数ConvertTimezone入参错误：指定日期为空`);
+        }
+        if (!isValid(new Date(dateTime))) {
+            toastAndThrowError(`内置函数ConvertTimezone入参错误：指定日期不是合法日期类型`);
+        }
+        if (!isValidTimezoneIANAString(timezone)) {
+            toastAndThrowError(`内置函数ConvertTimezone入参错误：传入时区${timezone}不是合法时区字符`);
+        }
+
+        return formatISO(utcToZonedTime(dateTime, timezone));
     },
     /**
      * 字符串查找
