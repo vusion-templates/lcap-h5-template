@@ -34,9 +34,6 @@ import { findAsync, mapAsync, filterAsync, findIndexAsync, sortAsync } from './h
 
 let enumsMap = {};
 
-const appTimezone = getAppTimezone();
-console.log('appTimezone: ', appTimezone); // 便于排查问题
-
 function toValue(date, converter) {
     if (!date)
         return date;
@@ -642,15 +639,15 @@ export const utils = {
         }
     },
     CurrDate() {
-        const date = parseISO(this.ConvertTimezone(new Date(), appTimezone));
+        const date = parseISO(this.ConvertTimezone(new Date(), getAppTimezone()));
         return format(date, 'yyy-MM-dd');
     },
     CurrTime() {
-        const date = parseISO(this.ConvertTimezone(new Date(), appTimezone));
+        const date = parseISO(this.ConvertTimezone(new Date(), getAppTimezone()));
         return format(date, 'HH:mm:ss');
     },
     CurrDateTime() {
-        return this.ConvertTimezone(new Date(), appTimezone);
+        return this.ConvertTimezone(new Date(), getAppTimezone());
     },
     AddDays(date = new Date(), amount = 1, converter = 'json') {
         return toValue(addDays(new Date(fixIOSDateString(date)), amount), converter);
@@ -663,7 +660,7 @@ export const utils = {
         return toValue(subDays(new Date(fixIOSDateString(date)), amount), converter);
     },
     GetDateCount(dateString, metric) {
-        const date = parseISO(this.ConvertTimezone(new Date(dateString), appTimezone));
+        const date = parseISO(this.ConvertTimezone(new Date(dateString), getAppTimezone()));
 
         const [metric1, metric2] = metric.split('-');
         // 获取当年的最后一天的所在周会返回1，需要额外判断一下
@@ -722,8 +719,8 @@ export const utils = {
             toastAndThrowError(`内置函数GetSpecificDaysOfWeek入参错误：参数“指定”非合法数组`);
         }
 
-        const startDate = utcToZonedTime(parseISO(startDateString), appTimezone);
-        const endDate = utcToZonedTime(parseISO(endDateString), appTimezone);
+        const startDate = utcToZonedTime(parseISO(startDateString), getAppTimezone());
+        const endDate = utcToZonedTime(parseISO(endDateString), getAppTimezone());
         const fns = [isMonday, isTuesday, isWednesday, isThursday, isFriday, isSaturday, isSunday];
         const datesInRange = eachDayOfInterval({ start: startDate, end: endDate });
         const isDays = fns.filter((_, index) => arr.includes((index + 1)));
