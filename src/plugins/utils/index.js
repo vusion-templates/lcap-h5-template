@@ -34,9 +34,6 @@ import { findAsync, mapAsync, filterAsync, findIndexAsync, sortAsync } from './h
 
 let enumsMap = {};
 
-const getAppTimezone() = getAppTimezone();
-console.log('getAppTimezone(): ', getAppTimezone()); // 便于排查问题
-
 function toValue(date, converter) {
     if (!date)
         return date;
