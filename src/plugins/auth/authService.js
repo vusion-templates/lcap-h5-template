@@ -60,6 +60,8 @@ export default {
         if (!userInfoPromise) {
             userInfoPromise = request(times).then((userInfo) => {
                 const $global = Vue.prototype.$global = Vue.prototype.$global || {};
+                const frontendVariables = Vue.prototype.$global.frontendVariables || {};
+                frontendVariables.userInfo = userInfo;
                 $global.userInfo = userInfo;
                 return userInfo;
             }).catch((e) => {

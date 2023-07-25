@@ -7,7 +7,7 @@ import { getBasePath } from '@/utils/encodeUrl';
  * 是否有无权限页面
  * @param {*} routes
  */
-function findNoAuthView(routes) {
+export function findNoAuthView(routes) {
     if (Array.isArray(routes)) {
         return routes.find((route) => route?.path === `${getBasePath()}/noAuth`);
     }
@@ -53,7 +53,7 @@ export const getAuthGuard = (router, routes, authResourcePaths, appConfig, baseR
         return false;
     });
 
-        function concatResourcesRoutes(resources, baseRoutes) {
+    function concatResourcesRoutes(resources, baseRoutes) {
         return resources.concat(baseRoutes.map((route) => ({
             resourceValue: route,
             // 如果后续需要区分路由类型，这里也需要补充 resourceType

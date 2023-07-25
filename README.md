@@ -4,6 +4,8 @@
 
 ## 文档
 
+[制品 template 库开发 & 调试文档](https://docs.popo.netease.com/lingxi/a41dc35b20d44dd3b6b6dbdc45a584c3)
+
 [文档](https://vusion-templates.github.io/cloud-admin-site/)
 
 [demo](https://vusion-templates.github.io/cloud-admin/)
