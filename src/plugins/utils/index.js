@@ -20,7 +20,7 @@ import {
     getWeekOfMonth,
     getMonth,
     getQuarter,
-    isMonday, isTuesday, isWednesday, isThursday, isFriday, isSaturday, isSunday,
+    isMonday, isTuesday, isWednesday, isThursday, isFriday, isSaturday, isSunday, eachDayOfInterval,
 } from 'date-fns';
 import { utcToZonedTime } from 'date-fns-tz';
 import Vue from 'vue';
