@@ -20,6 +20,7 @@ import {
     getWeekOfMonth,
     getMonth,
     getQuarter,
+    isMonday, isTuesday, isWednesday, isThursday, isFriday, isSaturday, isSunday, eachDayOfInterval,
 } from 'date-fns';
 import { utcToZonedTime } from 'date-fns-tz';
 import Vue from 'vue';
@@ -640,7 +641,7 @@ export const utils = {
     },
     CurrDate() {
         const date = parseISO(this.ConvertTimezone(new Date(), getAppTimezone()));
-        return format(date, 'yyy-MM-dd');
+        return format(date, 'yyyy-MM-dd');
     },
     CurrTime() {
         const date = parseISO(this.ConvertTimezone(new Date(), getAppTimezone()));
