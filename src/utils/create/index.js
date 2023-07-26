@@ -18,8 +18,11 @@ const parseCookie = (str) =>
             return acc;
         }, {});
 const foramtCookie = (cookieStr) => {
-    const obj = parseCookie(cookieStr);
     const result = {};
+    if (document.cookie.length <= 0) {
+        return result;
+    }
+    const obj = parseCookie(cookieStr);
     Object.keys(obj).forEach((key) => {
         result[key] = {
             name: key,
@@ -32,6 +35,7 @@ const foramtCookie = (cookieStr) => {
             maxAge: '',
         };
     });
+    return result
 };
 const formatContentType = function (contentType, data) {
     const map = {
