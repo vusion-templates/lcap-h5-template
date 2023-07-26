@@ -11,16 +11,9 @@ import {
     differenceInHours,
     differenceInMinutes,
     differenceInSeconds,
-    formatISO,
-    parseISO,
-    getWeek,
-    startOfWeek,
-    startOfQuarter,
-    getDayOfYear,
-    getWeekOfMonth,
-    getMonth,
-    getQuarter,
-    isMonday, isTuesday, isWednesday, isThursday, isFriday, isSaturday, isSunday, eachDayOfInterval,
+    getDayOfYear, getWeekOfMonth, getQuarter, startOfWeek, getMonth, getWeek, getDate, startOfQuarter,
+    addSeconds, addMinutes, addHours, addQuarters, addYears, addWeeks, formatISO,
+    eachDayOfInterval, isMonday, isTuesday, isWednesday, isThursday, isFriday, isSaturday, isSunday, parseISO,
 } from 'date-fns';
 import { utcToZonedTime } from 'date-fns-tz';
 import Vue from 'vue';
