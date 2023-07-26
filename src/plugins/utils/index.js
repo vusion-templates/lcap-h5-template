@@ -740,7 +740,8 @@ export const utils = {
     FormatDateTime(value, formatter) {
         if (!value)
             return '-';
-        return dateFormatter.format(value, formatter);
+        const date = this.ConvertTimezone(value, getAppTimezone());    
+        return dateFormatter.format(date, formatter);
     },
     Clone(obj) {
         return cloneDeep(obj);
