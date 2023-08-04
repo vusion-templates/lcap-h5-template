@@ -1,6 +1,5 @@
 <template>
     <div>
-        <s-freesass-banner v-if="isFreeSass"></s-freesass-banner>
         <router-view></router-view>
         <s-freesass-login @afterShufanLogin="afterShufanLogin" ref="freeSassLogin"></s-freesass-login>
         <s-freesass-transfer v-if="isPersonSass && loginFinished" ref="freesassTransfer"></s-freesass-transfer>
@@ -9,7 +8,6 @@
 
 <script>
 import SFreesassLogin from '@/components/s-freesass-login.vue';
-import SFreesassBanner from '@/components/s-freesass-banner.vue';
 import SFreesassTransfer from '@/components/s-freesass-transfer';
 import { localCacheVariableMixin } from '@/mixins/localCacheVariableMixin';
 
@@ -18,8 +16,6 @@ const serviceMap = {
     checkSfToken: `${location.protocol}//sfsso.community1.lcap.qz.163yun.com/api/checkSfToken`,
     checkSfTokenNew: `${location.protocol}//sfsso-community1.app.codewave.163.com/api/checkSfToken`,
 };
-
-
 
 export default {
     mixins: [localCacheVariableMixin],
@@ -32,15 +28,14 @@ export default {
     computed: {
         isSharePage() {
             let str = 'lcap.qz.163yun';
-            if (newDomain) { str = 'app.codewave.163'; }
+            if (newDomain) {
+                str = 'app.codewave.163';
+            }
             const neteaseStrList = str.split('.');
             return neteaseStrList.some((it) => location.host.includes(it));
         },
         isPersonSass() {
             return +window.appInfo?.tenantType === 1;
-        },
-        isFreeSass() {
-            return +window.appInfo?.tenantType === 1 && +window.appInfo?.tenantLevel === 0;
         },
     },
     async mounted() {
@@ -48,7 +43,9 @@ export default {
         if (this.isSharePage && +window.appInfo?.tenantType === 1) {
             try {
                 let url = serviceMap.checkSfToken;
-                if (newDomain) { url = serviceMap.checkSfTokenNew; }
+                if (newDomain) {
+                    url = serviceMap.checkSfTokenNew;
+                }
                 // 校验接口
                 const res = await fetch(url, {
                     method: 'POST',
@@ -74,5 +71,4 @@ export default {
         },
     },
 };
-
 </script>
