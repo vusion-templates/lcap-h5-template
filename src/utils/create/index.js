@@ -212,7 +212,6 @@ export const createLogicService = function createLogicService(apiSchemaList, ser
                     return Promise.reject();
                 }
                 const status = 'success'
-                console.log('自定义接口请求后事件 success: ', response);
                 const { config } = requestInfo;
                 const serviceType = config?.serviceType;
                 if (serviceType && serviceType === 'external') {
@@ -230,7 +229,6 @@ export const createLogicService = function createLogicService(apiSchemaList, ser
         });
         service.postConfig.set('postRequestError', {
             reject(response, params, requestInfo) {
-                console.log('自定义接口请求后事件 fail: ', response);
                 response.Code = response.code || response.status;
                 const status = 'error';
                 const err = response;
