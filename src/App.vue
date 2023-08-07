@@ -19,7 +19,7 @@ const serviceMap = {
 
 export default {
     mixins: [localCacheVariableMixin],
-    components: { SFreesassLogin, SFreesassBanner, SFreesassTransfer },
+    components: { SFreesassLogin, SFreesassTransfer },
     data() {
         return {
             loginFinished: false,
