@@ -10,7 +10,8 @@ export const isMiniApp = () => window.__wxjs_environment === 'miniprogram';
 export const navigateTo = ({ url }) => {
     if (!isMiniApp)
         return;
-    const detailUrl = encodeURIComponent(`${window.appInfo.env === 'dev' ? getUrl(window.appInfo.devDnsAddr) : getUrl(window.appInfo.dnsAddr)}${url}`);
+    const origin = location.origin;
+    const detailUrl = encodeURIComponent(`${origin}${url}`);
     const miniUrl = `/pages/index/index?detailUrl=${detailUrl}`;
     window.wx.miniProgram.navigateTo({ url: miniUrl });
 };
