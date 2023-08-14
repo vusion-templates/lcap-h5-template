@@ -13,7 +13,7 @@
                     ref="iframe2"
                     frameborder="0"
                     style="width:100%;height:100%;"
-                    src="//id.163yun.com/sdk-login?cmsKey=SdkLoginPage&i18nEnable=true&locale=zh_CN&h=shufanqzlcap&t=shufanqzlcap&fromnsf=lcapAppShare"></iframe>
+                    src="//id.sf.163.com/sdk-login?cmsKey=SdkLoginPage&i18nEnable=true&locale=zh_CN&h=shufanqzlcap&t=shufanqzlcap&fromlcap=lcapAppShare"></iframe>
             </div>
             <div :class="$style.content">
                 <div style="width:14px;height:14px;margin-top:3px;">
