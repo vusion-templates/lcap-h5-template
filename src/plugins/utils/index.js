@@ -15,7 +15,7 @@ import {
     addSeconds, addMinutes, addHours, addQuarters, addYears, addWeeks, formatISO,
     eachDayOfInterval, isMonday, isTuesday, isWednesday, isThursday, isFriday, isSaturday, isSunday, parseISO,
 } from 'date-fns';
-import { utcToZonedTime, formatInTimeZone , format as formatTZ } from 'date-fns-tz';
+import { utcToZonedTime, formatInTimeZone, format as formatTZ } from 'date-fns-tz';
 import Vue from 'vue';
 import string from '@/filters/string';
 
@@ -371,11 +371,14 @@ export const utils = {
         }
         return res;
     },
-    async ListDistinctByAsync(arr, getVal) {
+    async ListDistinctByAsync(arr, listGetVal) {
         // getVal : <A,B> . A => B 给一个 A 类型的数据，返回 A 类型中被用户选中的 field 的 value
-        if (!Array.isArray(arr) || typeof getVal !== 'function') {
+        // listGetVal: getVal 这样的函数组成的 list
+
+        if (!Array.isArray(arr)) {
             return null;
         }
+        // item => List[item.userName, item.id]
         if (arr.length === 0) {
             return arr;
         }
@@ -383,7 +386,10 @@ export const utils = {
         const res = [];
         const vis = new Set();
         for (const item of arr) {
-            const hash = await getVal(item);
+            // eslint-disable-next-line no-return-await
+            const hashArr = listGetVal.map(async (fn) => await fn(item));
+            // eslint-disable-next-line no-await-in-loop
+            const hash = (await Promise.all(hashArr)).join('');
             if (!vis.has(hash)) {
                 vis.add(hash);
                 res.push(item);
@@ -719,7 +725,7 @@ export const utils = {
         if (startDate > endDate) {
             return [];
         }
-        
+
         const fns = [isMonday, isTuesday, isWednesday, isThursday, isFriday, isSaturday, isSunday];
         const datesInRange = eachDayOfInterval({ start: startDate, end: endDate });
         const isDays = fns.filter((_, index) => arr.includes((index + 1)));
@@ -738,7 +744,7 @@ export const utils = {
     FormatDateTime(value, formatter) {
         if (!value)
             return '-';
-        const date = this.ConvertTimezone(value, getAppTimezone());    
+        const date = this.ConvertTimezone(value, getAppTimezone());
         return dateFormatter.format(date, formatter);
     },
     Clone(obj) {
