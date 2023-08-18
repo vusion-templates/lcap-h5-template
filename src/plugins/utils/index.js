@@ -214,40 +214,47 @@ export const utils = {
             return null;
         }
     },
-    ListSum(arr) {
-        if (Array.isArray(arr) && arr.length > 0) {
-            return arr.reduce((prev, cur) => prev + cur, 0);
-        } else {
+    ListSum: (arr) => {
+        if (!Array.isArray(arr)) {
             return null;
         }
+        const nullRemoved = utils.ListFilter(arr, (elem) => elem != null && elem != undefined);
+        return 0 == nullRemoved.length ? null :
+                nullRemoved.reduce((prev, cur) =>
+                    // decimal 可解决 0.1 + 0.2 的精度问题，下同
+                    new Decimal(cur + '').plus(prev), new Decimal('0')).toNumber();
     },
-    ListProduct(arr) {
-        if (Array.isArray(arr) && arr.length > 0) {
-            return arr.reduce((prev, cur) => prev * cur, 1);
-        } else {
+    ListProduct: (arr) => {
+        if (!Array.isArray(arr)) {
             return null;
         }
+        const nullRemoved = utils.ListFilter(arr, (elem) => elem != null && elem != undefined);
+        return 0 == nullRemoved.length ? null :
+                nullRemoved.reduce((prev, cur) =>
+                    new Decimal(cur + '').mul(prev), new Decimal('1')).toNumber();
     },
-    ListAverage(arr) {
-        if (!Array.isArray(arr) || arr.length === 0) {
+    ListAverage: (arr) => {
+        if (!Array.isArray(arr)) {
             return null;
-        } else {
-            return this.ListSum(arr) / arr.length;
         }
+        const nullRemoved = utils.ListFilter(arr, (elem) => elem != null && elem != undefined);
+        return 0 == nullRemoved.length ? null : utils.ListSum(nullRemoved) / nullRemoved.length;
     },
-    ListMax(arr) {
-        if (!Array.isArray(arr) || arr.length === 0) {
+    ListMax: (arr) => {
+        if (!Array.isArray(arr)) {
             return null;
-        } else {
-            return arr.reduce((prev, cur) => prev >= cur ? prev : cur, arr[0]);
         }
+        const nullRemoved = utils.ListFilter(arr, (elem) => elem != null && elem != undefined);
+        return 0 == nullRemoved.length ? null :
+                nullRemoved.reduce((prev, cur) => prev >= cur ? prev : cur, nullRemoved[0]);
     },
-    ListMin(arr) {
-        if (!Array.isArray(arr) || arr.length === 0) {
+    ListMin: (arr) => {
+        if (!Array.isArray(arr)) {
             return null;
-        } else {
-            return arr.reduce((prev, cur) => prev <= cur ? prev : cur, arr[0]);
         }
+        const nullRemoved = utils.ListFilter(arr, (elem) => elem != null && elem != undefined);
+        return 0 == nullRemoved.length ? null :
+                nullRemoved.reduce((prev, cur) => prev <= cur ? prev : cur, nullRemoved[0]);
     },
     ListReverse(arr) {
         if (Array.isArray(arr)) {
@@ -639,15 +646,15 @@ export const utils = {
         }
     },
     CurrDate() {
-        const date = parseISO(this.ConvertTimezone(new Date(), getAppTimezone()));
+        const date = parseISO(utils.ConvertTimezone(new Date(), getAppTimezone()));
         return formatTZ(date, 'yyyy-MM-dd', { timeZone: getAppTimezone() });
     },
     CurrTime() {
-        const date = parseISO(this.ConvertTimezone(new Date(), getAppTimezone()));
+        const date = parseISO(utils.ConvertTimezone(new Date(), getAppTimezone()));
         return formatTZ(date, 'HH:mm:ss', { timeZone: getAppTimezone() });
     },
     CurrDateTime() {
-        return this.ConvertTimezone(new Date(), getAppTimezone());
+        return utils.ConvertTimezone(new Date(), getAppTimezone());
     },
     AddDays(date = new Date(), amount = 1, converter = 'json') {
         return toValue(addDays(new Date(fixIOSDateString(date)), amount), converter);
@@ -660,7 +667,7 @@ export const utils = {
         return toValue(subDays(new Date(fixIOSDateString(date)), amount), converter);
     },
     GetDateCount(dateString, metric) {
-        const date = parseISO(this.ConvertTimezone(new Date(dateString), getAppTimezone()));
+        const date = parseISO(utils.ConvertTimezone(new Date(dateString), getAppTimezone()));
 
         const [metric1, metric2] = metric.split('-');
         // 获取当年的最后一天的所在周会返回1，需要额外判断一下
@@ -744,7 +751,7 @@ export const utils = {
     FormatDateTime(value, formatter) {
         if (!value)
             return '-';
-        const date = this.ConvertTimezone(value, getAppTimezone());
+        const date = utils.ConvertTimezone(value, getAppTimezone());
         return dateFormatter.format(date, formatter);
     },
     Clone(obj) {
