@@ -70,6 +70,7 @@ export default {
         return userInfoPromise;
     },
     getUserResources(DomainName) {
+        const pageResourceType = 'page';
         if (!userResourcesPromise) {
             if (window.appInfo.hasAuth) {
                 userResourcesPromise = this.lowauthInitService.GetUserResources({
@@ -86,7 +87,7 @@ export default {
                     // 初始化权限项
                     this._map = new Map();
                     if (Array.isArray(result)) {
-                        resources = result.filter((resource) => resource?.resourceType === 'ui');
+                        resources = result.filter((resource) => resource?.resourceType === pageResourceType || resource?.resourceType === 'ui');
                         resources.forEach((resource) => this._map.set(resource.resourceValue, resource));
                     }
                     return resources;
@@ -103,8 +104,13 @@ export default {
                     config: {
                         noErrorTip: true,
                     },
-                }).then((result) => {
-                    const resources = result.Data.items.filter((resource) => resource.ResourceType === 'ui');
+                }).then((res) => {
+                    const resources = res.Data.items.reduce((acc, { ResourceType, ResourceValue, ...item }) => {
+                        if (ResourceType === pageResourceType || ResourceType === 'ui') {
+                            acc.push({ ...item, ResourceType, ResourceValue, resourceType: ResourceType, resourceValue: ResourceValue }); // 兼容大小写写法，留存大写，避免影响其他隐藏逻辑
+                        }
+                        return acc;
+                    }, []);
 
                     // 初始化权限项
                     this._map = new Map();
