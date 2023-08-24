@@ -9,6 +9,7 @@ import { initApplicationConstructor, genSortedTypeKey, genInitData, isInstanceOf
 import { navigateToUserInfoPage } from '../common/wx';
 import { getBasePath } from '@/utils/encodeUrl';
 import CryptoJS from 'crypto-js';
+import { porcessPorts } from '../router/processService';
 
 window.CryptoJS = CryptoJS;
 const aesKey = ';Z#^$;8+yhO!AhGo';
@@ -236,7 +237,9 @@ export default {
                 return res;
             },
         };
-        
+        Object.keys(porcessPorts).forEach((service) => {
+            $global[service] = porcessPorts[service];
+        });
         new Vue({
             data: {
                 $global,
