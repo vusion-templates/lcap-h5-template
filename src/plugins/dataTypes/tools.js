@@ -730,7 +730,7 @@ function isValidDate(dateString, reg) {
 
 export const fromString = (variable, typeKey) => {
     const typeDefinition = typeDefinitionMap[typeKey];
-    const isPrimitive = isDefPrimitive(typeKey, isPrimitive);
+    const isPrimitive = isDefPrimitive(typeKey);
     const { typeName } = typeDefinition || {};
     // 日期
     if (typeName === 'DateTime' && isValidDate(variable, DateTimeReg)) {
