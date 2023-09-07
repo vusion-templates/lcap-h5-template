@@ -4,7 +4,7 @@
 
             <div style="font-style: normal;font-weight: 500;font-size: 16px;color: #333333; padding: 16px; border-bottom: 1px solid #E5E5E5;;">登录/注册</div>
 
-            <div :class="$style.title">轻舟低代码，人人皆可开发软件应用</div>
+            <div :class="$style.title">CodeWave智能开发平台，人人皆可开发软件应用</div>
             <div :class="$style.iframeWrap" style="width:100%;height:360px;">
                 <van-loading v-show="!loaded" type="spinner"></van-loading>
                 <iframe
