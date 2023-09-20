@@ -60,6 +60,8 @@ export default {
         if (!userInfoPromise) {
             userInfoPromise = request(times).then((userInfo) => {
                 const $global = Vue.prototype.$global = Vue.prototype.$global || {};
+                const frontendVariables = Vue.prototype.$global.frontendVariables || {};
+                frontendVariables.userInfo = userInfo;
                 $global.userInfo = userInfo;
                 return userInfo;
             }).catch((e) => {
@@ -96,6 +98,7 @@ export default {
                     userResourcesPromise = undefined;
                 });
             } else {
+                // 这个是非下沉应用，调用的是Nuims的接口，此处需非常注意Resource大小写情况，开发时需关注相关测试用例是否覆盖
                 userResourcesPromise = this.authService.GetUserResources({
                     headers: getBaseHeaders(),
                     query: {

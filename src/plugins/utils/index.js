@@ -11,17 +11,11 @@ import {
     differenceInHours,
     differenceInMinutes,
     differenceInSeconds,
-    formatISO,
-    parseISO,
-    getWeek,
-    startOfWeek,
-    startOfQuarter,
-    getDayOfYear,
-    getWeekOfMonth,
-    getMonth,
-    getQuarter,
+    getDayOfYear, getWeekOfMonth, getQuarter, startOfWeek, getMonth, getWeek, getDate, startOfQuarter,
+    addSeconds, addMinutes, addHours, addQuarters, addYears, addWeeks, formatISO,
+    eachDayOfInterval, isMonday, isTuesday, isWednesday, isThursday, isFriday, isSaturday, isSunday, parseISO,
 } from 'date-fns';
-import { utcToZonedTime } from 'date-fns-tz';
+import { utcToZonedTime, formatInTimeZone, format as formatTZ } from 'date-fns-tz';
 import Vue from 'vue';
 import string from '@/filters/string';
 
@@ -33,9 +27,6 @@ import { getAppTimezone, isValidTimezoneIANAString } from './timezone';
 import { findAsync, mapAsync, filterAsync, findIndexAsync, sortAsync } from './helper';
 
 let enumsMap = {};
-
-const appTimezone = getAppTimezone();
-console.log('appTimezone: ', appTimezone); // 便于排查问题
 
 function toValue(date, converter) {
     if (!date)
@@ -223,40 +214,48 @@ export const utils = {
             return null;
         }
     },
-    ListSum(arr) {
-        if (Array.isArray(arr) && arr.length > 0) {
-            return arr.reduce((prev, cur) => prev + cur, 0);
-        } else {
+    ListSum: (arr) => {
+        if (!Array.isArray(arr)) {
             return null;
         }
+        const nullRemoved = utils.ListFilter(arr, (elem) => elem != null && elem != undefined);
+        return 0 == nullRemoved.length ? null :
+                nullRemoved.reduce((prev, cur) =>
+                    // decimal 可解决 0.1 + 0.2 的精度问题，下同
+                    new Decimal(cur + '').plus(prev), new Decimal('0')).toNumber();
     },
-    ListProduct(arr) {
-        if (Array.isArray(arr) && arr.length > 0) {
-            return arr.reduce((prev, cur) => prev * cur, 1);
-        } else {
+    ListProduct: (arr) => {
+        if (!Array.isArray(arr)) {
             return null;
         }
+        const nullRemoved = utils.ListFilter(arr, (elem) => elem != null && elem != undefined);
+        return 0 == nullRemoved.length ? null :
+                nullRemoved.reduce((prev, cur) =>
+                    new Decimal(cur + '').mul(prev), new Decimal('1')).toNumber();
     },
-    ListAverage(arr) {
-        if (!Array.isArray(arr) || arr.length === 0) {
+    ListAverage: (arr) => {
+        if (!Array.isArray(arr)) {
             return null;
-        } else {
-            return this.ListSum(arr) / arr.length;
         }
+        const nullRemoved = utils.ListFilter(arr, (elem) => elem != null && elem != undefined);
+        return 0 == nullRemoved.length ? null :
+                new Decimal(utils.ListSum(nullRemoved)).div(nullRemoved.length).toNumber();
     },
-    ListMax(arr) {
-        if (!Array.isArray(arr) || arr.length === 0) {
+    ListMax: (arr) => {
+        if (!Array.isArray(arr)) {
             return null;
-        } else {
-            return arr.reduce((prev, cur) => prev >= cur ? prev : cur, arr[0]);
         }
+        const nullRemoved = utils.ListFilter(arr, (elem) => elem != null && elem != undefined);
+        return 0 == nullRemoved.length ? null :
+                nullRemoved.reduce((prev, cur) => prev >= cur ? prev : cur, nullRemoved[0]);
     },
-    ListMin(arr) {
-        if (!Array.isArray(arr) || arr.length === 0) {
+    ListMin: (arr) => {
+        if (!Array.isArray(arr)) {
             return null;
-        } else {
-            return arr.reduce((prev, cur) => prev <= cur ? prev : cur, arr[0]);
         }
+        const nullRemoved = utils.ListFilter(arr, (elem) => elem != null && elem != undefined);
+        return 0 == nullRemoved.length ? null :
+                nullRemoved.reduce((prev, cur) => prev <= cur ? prev : cur, nullRemoved[0]);
     },
     ListReverse(arr) {
         if (Array.isArray(arr)) {
@@ -380,11 +379,14 @@ export const utils = {
         }
         return res;
     },
-    async ListDistinctByAsync(arr, getVal) {
+    async ListDistinctByAsync(arr, listGetVal) {
         // getVal : <A,B> . A => B 给一个 A 类型的数据，返回 A 类型中被用户选中的 field 的 value
-        if (!Array.isArray(arr) || typeof getVal !== 'function') {
+        // listGetVal: getVal 这样的函数组成的 list
+
+        if (!Array.isArray(arr)) {
             return null;
         }
+        // item => List[item.userName, item.id]
         if (arr.length === 0) {
             return arr;
         }
@@ -392,7 +394,10 @@ export const utils = {
         const res = [];
         const vis = new Set();
         for (const item of arr) {
-            const hash = await getVal(item);
+            // eslint-disable-next-line no-return-await
+            const hashArr = listGetVal.map(async (fn) => await fn(item));
+            // eslint-disable-next-line no-await-in-loop
+            const hash = (await Promise.all(hashArr)).join('');
             if (!vis.has(hash)) {
                 vis.add(hash);
                 res.push(item);
@@ -642,15 +647,15 @@ export const utils = {
         }
     },
     CurrDate() {
-        const date = parseISO(this.ConvertTimezone(new Date(), appTimezone));
-        return format(date, 'yyy-MM-dd');
+        const date = parseISO(utils.ConvertTimezone(new Date(), getAppTimezone()));
+        return formatTZ(date, 'yyyy-MM-dd', { timeZone: getAppTimezone() });
     },
     CurrTime() {
-        const date = parseISO(this.ConvertTimezone(new Date(), appTimezone));
-        return format(date, 'HH:mm:ss');
+        const date = parseISO(utils.ConvertTimezone(new Date(), getAppTimezone()));
+        return formatTZ(date, 'HH:mm:ss', { timeZone: getAppTimezone() });
     },
     CurrDateTime() {
-        return this.ConvertTimezone(new Date(), appTimezone);
+        return utils.ConvertTimezone(new Date(), getAppTimezone());
     },
     AddDays(date = new Date(), amount = 1, converter = 'json') {
         return toValue(addDays(new Date(fixIOSDateString(date)), amount), converter);
@@ -663,7 +668,7 @@ export const utils = {
         return toValue(subDays(new Date(fixIOSDateString(date)), amount), converter);
     },
     GetDateCount(dateString, metric) {
-        const date = parseISO(this.ConvertTimezone(new Date(dateString), appTimezone));
+        const date = parseISO(utils.ConvertTimezone(new Date(dateString), getAppTimezone()));
 
         const [metric1, metric2] = metric.split('-');
         // 获取当年的最后一天的所在周会返回1，需要额外判断一下
@@ -702,15 +707,21 @@ export const utils = {
     AlterDateTime(dateString, option, count, unit) {
         const date = new Date(dateString);
         const amount = option === 'Increase' ? count : -count;
+        let addDate;
         switch (unit) {
-            case 'second': return addSeconds(date, amount);
-            case 'minute': return addMinutes(date, amount);
-            case 'hour': return addHours(date, amount);
-            case 'day': return addDays(date, amount);
-            case 'week': return addWeeks(date, amount);
-            case 'month': return addMonths(date, amount);
-            case 'quarter': return addQuarters(date, amount);
-            case 'year': return addYears(date, amount);
+            case 'second': addDate = addSeconds(date, amount); break;
+            case 'minute': addDate = addMinutes(date, amount); break;
+            case 'hour': addDate = addHours(date, amount); break;
+            case 'day': addDate = addDays(date, amount); break;
+            case 'week': addDate = addWeeks(date, amount); break;
+            case 'month': addDate = addMonths(date, amount); break;
+            case 'quarter': addDate = addQuarters(date, amount); break;
+            case 'year': addDate = addYears(date, amount); break;
+        }
+        if (typeof dateString === 'object' || dateString.includes('T')) {
+            return format(addDate, 'yyyy-MM-dd HH:mm:ss');
+        } else {
+            return format(addDate, 'yyyy-MM-dd');
         }
     },
     GetSpecificDaysOfWeek(startDateString, endDateString, arr) {
@@ -722,8 +733,13 @@ export const utils = {
             toastAndThrowError(`内置函数GetSpecificDaysOfWeek入参错误：参数“指定”非合法数组`);
         }
 
-        const startDate = utcToZonedTime(parseISO(startDateString), appTimezone);
-        const endDate = utcToZonedTime(parseISO(endDateString), appTimezone);
+        const startDate = utcToZonedTime(parseISO(startDateString), getAppTimezone());
+        const endDate = utcToZonedTime(parseISO(endDateString), getAppTimezone());
+
+        if (startDate > endDate) {
+            return [];
+        }
+
         const fns = [isMonday, isTuesday, isWednesday, isThursday, isFriday, isSaturday, isSunday];
         const datesInRange = eachDayOfInterval({ start: startDate, end: endDate });
         const isDays = fns.filter((_, index) => arr.includes((index + 1)));
@@ -742,7 +758,8 @@ export const utils = {
     FormatDateTime(value, formatter) {
         if (!value)
             return '-';
-        return dateFormatter.format(value, formatter);
+        const date = utils.ConvertTimezone(value, getAppTimezone());
+        return dateFormatter.format(date, formatter);
     },
     Clone(obj) {
         return cloneDeep(obj);
@@ -906,7 +923,8 @@ export const utils = {
             toastAndThrowError(`内置函数ConvertTimezone入参错误：传入时区${timezone}不是合法时区字符`);
         }
 
-        return formatISO(utcToZonedTime(dateTime, timezone));
+        const result = formatInTimeZone(dateTime, timezone, "yyyy-MM-dd'T'HH:mm:ssxxx");
+        return result;
     },
     /**
      * 字符串查找
@@ -1037,14 +1055,20 @@ export const utils = {
                 return false;
             } else if (['nasl.core.Boolean'].includes(value) || value === true || value === false) {
                 return true;
-            } else if (isDefString(typeKey) || typeof value === 'string') {
+            } else if (isDefString(typeKey)) {
                 return value.trim() !== '';
-            } else if (isDefNumber(typeKey) || typeof value === 'number') {
+            } else if (isDefNumber(typeKey)) {
                 return !isNaN(value);
-            } else if (isDefList(typeDefinition) || Array.isArray(value)) {
+            } else if (isDefList(typeDefinition)) {
                 return value && value.length > 0;
             } else if (isDefMap(typeDefinition)) {
                 return Object.keys(value).length > 0;
+            } else if (typeof value === 'string') {
+                return value.trim() !== '';
+            } else if (typeof value === 'number') {
+                return !isNaN(value);
+            } else if (Array.isArray(value)) {
+                return value && value.length > 0;
             } else { // structure/entity
                 return !Object.keys(value).every((key) => {
                     const v = value[key];
@@ -1072,6 +1096,7 @@ export default {
     install(Vue, options) {
         utils.Vue = Vue;
         Vue.prototype.$utils = utils;
+        window.$utils = utils;
         enumsMap = options.enumsMap;
     },
 };

@@ -143,7 +143,7 @@ function genConstructor(typeKey, definition) {
                     }
                 }
                 if (Object.prototype.toString.call(parsedValue) === '[object String]') {
-                    parsedValue = `'${parsedValue}'`;
+                    parsedValue = `\`${parsedValue.replace(/['"`\\]/g, (m) => `\\${m}`)}\``;
                 }
                 const needGenInitFromSchema = typeAnnotation && !['primitive', 'union'].includes(typeAnnotation.typeKind);
                 const sortedTypeKey = genSortedTypeKey(typeAnnotation);
@@ -375,6 +375,10 @@ const isTypeMatch = (typeKey, value) => {
  * @returns
  */
 export const genInitData = (typeKey, defaultValue, parentLevel) => {
+    // 已经实例化过的值，直接返回
+    if (isInstanceOf(defaultValue, typeKey)) {
+        return defaultValue;
+    }
     let level = 1;
     if (parentLevel !== undefined) {
         level = parentLevel + 1;
@@ -386,7 +390,7 @@ export const genInitData = (typeKey, defaultValue, parentLevel) => {
         parsedValue = defaultValue ?? undefined;
     }
     const typeDefinition = typeDefinitionMap[typeKey];
-    const { concept, typeKind, typeNamespace, typeName, typeArguments } = typeDefinition || {};
+    const { concept, typeKind, typeNamespace, typeName, typeArguments, properties } = typeDefinition || {};
     if (
         defaultValueType === '[object String]'
         && (
@@ -441,6 +445,9 @@ export const genInitData = (typeKey, defaultValue, parentLevel) => {
                 && !['primitive', 'union'].includes(typeKind)
                 && concept !== 'Enum'
             ) {
+                if (concept === 'Structure' && Object.prototype.toString.call(parsedValue) === '[object Object]') {
+                    parsedValue = jsonNameReflection(properties, parsedValue);
+                }
                 const instance = new TypeConstructor({
                     defaultValue: parsedValue,
                     level,
@@ -723,7 +730,7 @@ function isValidDate(dateString, reg) {
 
 export const fromString = (variable, typeKey) => {
     const typeDefinition = typeDefinitionMap[typeKey];
-    const isPrimitive = isDefPrimitive(typeKey, isPrimitive);
+    const isPrimitive = isDefPrimitive(typeKey);
     const { typeName } = typeDefinition || {};
     // 日期
     if (typeName === 'DateTime' && isValidDate(variable, DateTimeReg)) {
@@ -746,7 +753,10 @@ export const fromString = (variable, typeKey) => {
             Long: 9223372036854775807,
         };
         const numberVar = +variable;
-        if ((numberVar > 0 && numberVar < maxMap[typeName]) || (numberVar < 0 && numberVar > -maxMap[typeName])) {
+        if (
+            numberVar < maxMap[typeName]
+            && numberVar > -maxMap[typeName]
+        ) {
             return numberVar;
         }
     }
@@ -765,4 +775,16 @@ export function toastAndThrowError(err) {
         position: 'top',
     });
     throw new Error(err);
+}
+
+function jsonNameReflection(properties, parsedValue) {
+    if (!Array.isArray(properties))
+        return parsedValue;
+    properties.forEach(({ jsonName, name }) => {
+        if (jsonName === name || jsonName === undefined || jsonName === null || jsonName === '')
+            return;
+        parsedValue[name] = parsedValue[jsonName];
+        delete parsedValue[jsonName];
+    });
+    return parsedValue;
 }

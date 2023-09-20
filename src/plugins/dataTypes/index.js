@@ -9,9 +9,12 @@ import { initApplicationConstructor, genSortedTypeKey, genInitData, isInstanceOf
 import { navigateToUserInfoPage } from '../common/wx';
 import { getBasePath } from '@/utils/encodeUrl';
 import CryptoJS from 'crypto-js';
+import { porcessPorts } from '../router/processService';
 
 window.CryptoJS = CryptoJS;
 const aesKey = ';Z#^$;8+yhO!AhGo';
+
+
 
 export default {
     install(Vue, options = {}) {
@@ -26,11 +29,15 @@ export default {
          * @param {*} schema 是前端用的 refSchema
          */
         Vue.prototype.$genInitFromSchema = genInitFromSchema;
+        window.$genInitFromSchema = genInitFromSchema;
 
         const frontendVariables = {};
+        const localCacheVariableSet = new Set(); // 本地存储的全局变量集合
+
         if (Array.isArray(options && options.frontendVariables)) {
             options.frontendVariables.forEach((frontendVariable) => {
-                const { name, typeAnnotation, defaultValue } = frontendVariable;
+                const { name, typeAnnotation, defaultValue, localCache } = frontendVariable;
+                localCache && localCacheVariableSet.add(name); // 本地存储的全局变量集合
                 frontendVariables[name] = genInitFromSchema(genSortedTypeKey(typeAnnotation), defaultValue);
             });
         }
@@ -230,13 +237,20 @@ export default {
                 return res;
             },
         };
+        Object.keys(porcessPorts).forEach((service) => {
+            $global[service] = porcessPorts[service];
+        });
         new Vue({
             data: {
                 $global,
             },
         });
 
+
+        // localCacheVariableSet 只是读写并不需要加入到响应式中故 把这个变量挂载到 Vue 的原型上
+        Vue.prototype.$localCacheVariableSet = localCacheVariableSet; 
         Vue.prototype.$global = $global;
+        window.$global = $global;
 
         Vue.prototype.$isInstanceOf = isInstanceOf;
 
