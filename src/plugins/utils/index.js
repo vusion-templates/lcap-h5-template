@@ -599,11 +599,6 @@ export const utils = {
             }
         }
     },
-    ListSlice(arr, start, end) {
-        if (Array.isArray(arr)) {
-            return arr.slice(start, end);
-        }
-    },
     ListDistinct(arr) {
         if (Array.isArray(arr)) {
             const map = new Map();
