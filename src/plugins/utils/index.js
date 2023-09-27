@@ -110,7 +110,10 @@ export const utils = {
         }
     },
     Split(str, separator) {
-        return str && str.split(separator);
+        if (Object.prototype.toString.call(str) === '[object String]') {
+            return str.split(seperator);
+        }
+        return [];
     },
     Join(arr, separator) {
         if (Array.isArray(arr)) {
