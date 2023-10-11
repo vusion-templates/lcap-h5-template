@@ -6,15 +6,13 @@ import cookie from '@/utils/cookie';
 import storage from '@/utils/storage/localStorage';
 import authService from '../auth/authService';
 import { initApplicationConstructor, genSortedTypeKey, genInitData, isInstanceOf } from './tools';
-import { navigateToUserInfoPage } from '../common/wx';
+import { navigateToUserInfoPage, navigateToUserPhonePage } from '../common/wx';
 import { getBasePath } from '@/utils/encodeUrl';
 import CryptoJS from 'crypto-js';
 import { porcessPorts } from '../router/processService';
 
 window.CryptoJS = CryptoJS;
 const aesKey = ';Z#^$;8+yhO!AhGo';
-
-
 
 export default {
     install(Vue, options = {}) {
@@ -177,10 +175,15 @@ export default {
             getWeChatNickName() {
                 return localStorage.getItem('_wx_nickname');
             },
+            getWeChatPhone() {
+                return localStorage.getItem('_wx_phone');
+            },
             navigateToUserInfo() {
                 navigateToUserInfoPage();
             },
-
+            navigateToUserPhone() {
+                navigateToUserPhonePage();
+            },
             getDistance(s1, s2) {
                 function deg2rad(deg) {
                     return deg * (Math.PI / 180);
@@ -246,9 +249,8 @@ export default {
             },
         });
 
-
         // localCacheVariableSet 只是读写并不需要加入到响应式中故 把这个变量挂载到 Vue 的原型上
-        Vue.prototype.$localCacheVariableSet = localCacheVariableSet; 
+        Vue.prototype.$localCacheVariableSet = localCacheVariableSet;
         Vue.prototype.$global = $global;
         window.$global = $global;
 
