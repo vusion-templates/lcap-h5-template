@@ -11,7 +11,7 @@ export function initRouter(routes) {
     });
 
     router.afterEach((to, from) => {
-        const saveList = ['_wx_openid', '_wx_headimg', '_wx_nickname'];
+        const saveList = ['_wx_openid', '_wx_headimg', '_wx_nickname', '_wx_phone'];
         if (to.query)
             for (const i in to.query) {
                 if (saveList.includes(i)) {
