@@ -6,7 +6,7 @@ import cookie from '@/utils/cookie';
 import storage from '@/utils/storage/localStorage';
 import authService from '../auth/authService';
 import { initApplicationConstructor, genSortedTypeKey, genInitData, isInstanceOf } from './tools';
-import { navigateToUserInfoPage } from '../common/wx';
+import { navigateToUserInfoPage, navigateToUserPhonePage } from '../common/wx';
 import { getBasePath } from '@/utils/encodeUrl';
 import CryptoJS from 'crypto-js';
 import { porcessPorts } from '../router/processService';
@@ -37,7 +37,7 @@ export default {
             // 用户信息
             userInfo: {},
             // 国际化信息
-            i18nInfo: i18nInfo,
+            i18nInfo,
             // 前端全局变量
             frontendVariables,
             // 加
@@ -170,10 +170,15 @@ export default {
             getWeChatNickName() {
                 return localStorage.getItem('_wx_nickname');
             },
+            getWeChatPhone() {
+                return localStorage.getItem('_wx_phone');
+            },
             navigateToUserInfo() {
                 navigateToUserInfoPage();
             },
-
+            navigateToUserPhone() {
+                navigateToUserPhonePage();
+            },
             getDistance(s1, s2) {
                 function deg2rad(deg) {
                     return deg * (Math.PI / 180);
