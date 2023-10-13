@@ -14,8 +14,6 @@ import { porcessPorts } from '../router/processService';
 window.CryptoJS = CryptoJS;
 const aesKey = ';Z#^$;8+yhO!AhGo';
 
-
-
 export default {
     install(Vue, options = {}) {
         const dataTypesMap = options.dataTypesMap || {}; // TODO 统一为  dataTypesMap
@@ -246,9 +244,8 @@ export default {
             },
         });
 
-
         // localCacheVariableSet 只是读写并不需要加入到响应式中故 把这个变量挂载到 Vue 的原型上
-        Vue.prototype.$localCacheVariableSet = localCacheVariableSet; 
+        Vue.prototype.$localCacheVariableSet = localCacheVariableSet;
         Vue.prototype.$global = $global;
         window.$global = $global;
 
@@ -319,9 +316,14 @@ export default {
         };
 
         // 实体的 updateBy 和 deleteBy 需要提前处理请求参数
-        function parseRequestDataType(root, prop, event, current) {
-            // eslint-disable-next-line no-eval
-            const value = eval(root[prop]);
+        function parseRequestDataType(root, _prop) {
+            let value;
+            try {
+                // eslint-disable-next-line no-eval
+                value = eval(root[_prop]);
+            } catch (err) {
+                value = root.value;
+            }
             const type = typeof value;
             // console.log('type:', type, value)
             if (type === 'number') {
@@ -352,7 +354,7 @@ export default {
         }
 
         // 实体的 updateBy 和 deleteBy 需要提前处理请求参数
-        function resolveRequestData(root, event, current) {
+        function resolveRequestData(root) {
             if (!root)
                 return;
             // console.log(root.concept)
@@ -369,14 +371,14 @@ export default {
             } else if (root.concept === 'BooleanLiteral') {
                 root.value = root.value === 'true';
             } else if (root.concept === 'Identifier') {
-                parseRequestDataType.call(this, root, 'expression', event, current);
+                parseRequestDataType.call(this, root, 'expression');
             } else if (root.concept === 'MemberExpression') {
                 if (root.expression) {
-                    parseRequestDataType.call(this, root, 'expression', event, current);
+                    parseRequestDataType.call(this, root, 'expression');
                 }
             }
-            resolveRequestData.call(this, root.left, event, current);
-            resolveRequestData.call(this, root.right, event, current);
+            resolveRequestData.call(this, root.left);
+            resolveRequestData.call(this, root.right);
             return root;
         }
 
