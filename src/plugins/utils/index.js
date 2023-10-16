@@ -109,15 +109,15 @@ export const utils = {
             return Object.keys(enumeration).map((key) => ({ text: enumeration[key], value: key }));
         }
     },
-    Split(str, separator) {
+    Split(str, seperator) {
         if (Object.prototype.toString.call(str) === '[object String]') {
             return str.split(seperator);
         }
         return [];
     },
-    Join(arr, separator) {
+    Join(arr, seperator) {
         if (Array.isArray(arr)) {
-            return arr.join(separator);
+            return arr.join(seperator);
         }
     },
     Concat(...arr) {
