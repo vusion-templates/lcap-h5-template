@@ -4,7 +4,6 @@ import { stringify } from 'qs';
 import { getFilenameFromContentDispositionHeader } from './tools';
 import paramsSerializer from './paramsSerializer';
 import cookie from '@/utils/cookie';
-import { getAppTimezone } from '@/plugins/utils/timezone';
 import { VanToast as Toast } from '@lcap/mobile-ui';
 import { addConfigs, shortResponse, } from './add.configs';
 
@@ -101,8 +100,8 @@ const requester = function (requestInfo) {
     headers.DomainName = window.appInfo?.domainName;
     if (window.appInfo?.frontendName)
         headers['LCAP-FRONTEND'] = window.appInfo?.frontendName;
-    // 时区信息，默认是user
-    headers.TimeZone = getAppTimezone();
+    // 用户本地时区信息，传递给后端
+    headers.TimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
 
     if (config.download) {
         return download(url);
