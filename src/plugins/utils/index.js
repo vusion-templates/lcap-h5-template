@@ -14,10 +14,12 @@ import {
     getDayOfYear, getWeekOfMonth, getQuarter, startOfWeek, getMonth, getWeek, getDate, startOfQuarter,
     addSeconds, addMinutes, addHours, addQuarters, addYears, addWeeks, formatISO,
     eachDayOfInterval, isMonday, isTuesday, isWednesday, isThursday, isFriday, isSaturday, isSunday, parseISO,
+    format as dateFnsFormat,
 } from 'date-fns';
-import { utcToZonedTime, formatInTimeZone, format as formatTZ } from 'date-fns-tz';
+import { formatInTimeZone } from 'date-fns-tz';
+const moment = require('moment');
+const momentTZ = require('moment-timezone');
 import Vue from 'vue';
-import string from '@/filters/string';
 
 import { dateFormatter } from './Formatters';
 
@@ -28,14 +30,24 @@ import { findAsync, mapAsync, filterAsync, findIndexAsync, sortAsync } from './h
 
 let enumsMap = {};
 
-function toValue(date, converter) {
+function naslDateToLocalDate(date) {
+    const localTZ = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    const localDate = momentTZ.tz(date, 'YYYY-MM-DD', localTZ);
+    return new Date(localDate.format('YYYY-MM-DD HH:mm:ss'));
+}
+
+function convertJSDateInTargetTimeZone(date, tz) {
+    return new Date(momentTZ.tz(date, getAppTimezone(tz)).format('YYYY-MM-DD HH:mm:ss.SSS'));
+}
+
+function toValue(date, typeKey) {
     if (!date)
         return date;
-    if (converter === 'format')
-        return this.format(date, 'YYYY-MM-DD'); // value 的真实格式
-    else if (converter === 'json')
-        return date.toJSON();
-    else if (converter === 'timestamp')
+    if (typeKey === 'format')
+        return moment(date).format('YYYY-MM-DD'); // value 的真实格式
+    else if (typeKey === 'json')
+        return this.JsonSerialize(date);
+    else if (typeKey === 'timestamp')
         return date.getTime();
     else
         return date;
@@ -107,6 +119,37 @@ export const utils = {
             return [];
         else {
             return Object.keys(enumeration).map((key) => ({ text: enumeration[key], value: key }));
+        }
+    },
+    JsonSerialize(v, tz) {
+        // 目前入参 v 的类型是 nasl.DateTime、nasl.Date、nasl.Time 时，都是 js 原生 string 类型
+        // 只能使用 regex 粗略判断一下
+        if (this.isInputValidNaslDateTime(v)) {
+            // v3.3 老应用升级的场景，UTC 零时区，零时区展示上用 'Z'，后向兼容
+            // v3.4 新应用，使用默认时区时选项，tz 为空
+            if (!tz) {
+                const d = momentTZ.tz(v, 'UTC').format('YYYY-MM-DDTHH:mm:ss.SSS') + 'Z';
+                return JSON.stringify(d);
+            }
+            // 新应用，设置为零时区，零时区展示上用 'Z'，后向兼容.
+            if (tz === 'UTC') {
+                // TODO: 想用 "+00:00" 展示零时区
+                const d = momentTZ.tz(v, 'UTC').format('YYYY-MM-DDTHH:mm:ss.SSS') + 'Z';
+                return JSON.stringify(d);
+            }
+            // 新应用，设置为其他时区
+            if (tz) {
+                const d = momentTZ.tz(v, getAppTimezone(tz)).format('YYYY-MM-DDTHH:mm:ss.SSSZ');
+                return JSON.stringify(d);
+            }
+        } else if (typeof v === 'string' && /^\d{2}:\d{2}:\d{2}$/.test(v)) {
+            // test if the input v is a pure time-format string in the form of hh:mm:ss
+            return JSON.stringify(v);
+        } else if (typeof v === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(v)) {
+            // test if the input v is a pure date-format string in the form of yyyy-MM-dd
+            return JSON.stringify(v);
+        } else {
+            return JSON.stringify(v);
         }
     },
     Split(str, seperator) {
@@ -221,8 +264,8 @@ export const utils = {
         if (!Array.isArray(arr)) {
             return null;
         }
-        const nullRemoved = utils.ListFilter(arr, (elem) => elem != null && elem != undefined);
-        return 0 == nullRemoved.length ? null :
+        const nullRemoved = utils.ListFilter(arr, (elem) => elem !== null && elem !== undefined);
+        return nullRemoved.length === 0 ? null :
                 nullRemoved.reduce((prev, cur) =>
                     // decimal 可解决 0.1 + 0.2 的精度问题，下同
                     new Decimal(cur + '').plus(prev), new Decimal('0')).toNumber();
@@ -231,8 +274,8 @@ export const utils = {
         if (!Array.isArray(arr)) {
             return null;
         }
-        const nullRemoved = utils.ListFilter(arr, (elem) => elem != null && elem != undefined);
-        return 0 == nullRemoved.length ? null :
+        const nullRemoved = utils.ListFilter(arr, (elem) => elem !== null && elem !== undefined);
+        return nullRemoved.length === 0 ? null :
                 nullRemoved.reduce((prev, cur) =>
                     new Decimal(cur + '').mul(prev), new Decimal('1')).toNumber();
     },
@@ -240,24 +283,24 @@ export const utils = {
         if (!Array.isArray(arr)) {
             return null;
         }
-        const nullRemoved = utils.ListFilter(arr, (elem) => elem != null && elem != undefined);
-        return 0 == nullRemoved.length ? null :
+        const nullRemoved = utils.ListFilter(arr, (elem) => elem !== null && elem !== undefined);
+        return nullRemoved.length === 0 ? null :
                 new Decimal(utils.ListSum(nullRemoved)).div(nullRemoved.length).toNumber();
     },
     ListMax: (arr) => {
         if (!Array.isArray(arr)) {
             return null;
         }
-        const nullRemoved = utils.ListFilter(arr, (elem) => elem != null && elem != undefined);
-        return 0 == nullRemoved.length ? null :
+        const nullRemoved = utils.ListFilter(arr, (elem) => elem !== null && elem !== undefined);
+        return nullRemoved.length === 0 ? null :
                 nullRemoved.reduce((prev, cur) => prev >= cur ? prev : cur, nullRemoved[0]);
     },
     ListMin: (arr) => {
         if (!Array.isArray(arr)) {
             return null;
         }
-        const nullRemoved = utils.ListFilter(arr, (elem) => elem != null && elem != undefined);
-        return 0 == nullRemoved.length ? null :
+        const nullRemoved = utils.ListFilter(arr, (elem) => elem !== null && elem !== undefined);
+        return nullRemoved.length === 0 ? null :
                 nullRemoved.reduce((prev, cur) => prev <= cur ? prev : cur, nullRemoved[0]);
     },
     ListReverse(arr) {
@@ -645,16 +688,23 @@ export const utils = {
             return { list: [], total: 0 };
         }
     },
-    CurrDate() {
-        const date = parseISO(utils.ConvertTimezone(new Date(), getAppTimezone()));
-        return formatTZ(date, 'yyyy-MM-dd', { timeZone: getAppTimezone() });
+    CurrDate(tz) {
+        if (!tz) {
+            return this.CurrDate('global');
+        }
+        const localDate = convertJSDateInTargetTimeZone(new Date(), tz);
+        return moment(localDate).format('YYYY-MM-DD');
     },
-    CurrTime() {
-        const date = parseISO(utils.ConvertTimezone(new Date(), getAppTimezone()));
-        return formatTZ(date, 'HH:mm:ss', { timeZone: getAppTimezone() });
+    CurrTime(tz) {
+        if (!tz) {
+            return this.CurrTime('global');
+        }
+        const localDate = convertJSDateInTargetTimeZone(new Date(), tz);
+        return moment(localDate).format('HH:mm:ss');
     },
-    CurrDateTime() {
-        return utils.ConvertTimezone(new Date(), getAppTimezone());
+    CurrDateTime(tz) {
+        // 函数签名用的是 Date 原生对象不是 string，所以先这样就行
+        return new Date();
     },
     AddDays(date = new Date(), amount = 1, converter = 'json') {
         return toValue(addDays(new Date(fixIOSDateString(date)), amount), converter);
@@ -666,8 +716,19 @@ export const utils = {
     SubDays(date = new Date(), amount = 1, converter = 'json') {
         return toValue(subDays(new Date(fixIOSDateString(date)), amount), converter);
     },
-    GetDateCount(dateString, metric) {
-        const date = parseISO(utils.ConvertTimezone(new Date(dateString), getAppTimezone()));
+    GetDateCount(dateStr, metric, tz) {
+        let date;
+        if (this.isInputValidNaslDateTime(dateStr) && !tz) {
+            // v3.3 老应用升级的场景，使用全局配置（全局配置一般默认是‘用户时区’）
+            // v3.4 新应用，使用默认时区时选项，tz 为空
+            date = convertJSDateInTargetTimeZone(dateStr, getAppTimezone('global'));
+        } else if (this.isInputValidNaslDateTime(dateStr) && tz) {
+            // v3.4 新应用，指定了默认值之外的时区选项，必然有时区参数 tz
+            date = convertJSDateInTargetTimeZone(dateStr, tz);
+        } else {
+            // 针对 nasl.Date 类型
+            date = naslDateToLocalDate(dateStr);
+        }
 
         const [metric1, metric2] = metric.split('-');
         // 获取当年的最后一天的所在周会返回1，需要额外判断一下
@@ -723,30 +784,49 @@ export const utils = {
             return format(addDate, 'yyyy-MM-dd');
         }
     },
-    GetSpecificDaysOfWeek(startDateString, endDateString, arr) {
-        if (!startDateString)
+    isInputValidNaslDateTime(inp) {
+        return inp instanceof Date
+            || /^(\d{4}-\d{2}-\d{2})T(\d{2}:\d{2}:\d{2})/.test(inp)
+            || /^(\d{4}-\d{2}-\d{2}) (\d{2}:\d{2}:\d{2})/.test(inp);
+    },
+    GetSpecificDaysOfWeek(startdatetr, enddatetr, arr, tz) {
+        if (!startdatetr)
             toastAndThrowError(`内置函数GetSpecificDaysOfWeek入参错误：startDate不能为空`);
-        if (!endDateString)
+        if (!enddatetr)
             toastAndThrowError(`内置函数GetSpecificDaysOfWeek入参错误：endDate不能为空`);
         if (!Array.isArray(arr)) {
             toastAndThrowError(`内置函数GetSpecificDaysOfWeek入参错误：参数“指定”非合法数组`);
         }
 
-        const startDate = utcToZonedTime(parseISO(startDateString), getAppTimezone());
-        const endDate = utcToZonedTime(parseISO(endDateString), getAppTimezone());
+        let startDate;
+        let endDate;
+        if (this.isInputValidNaslDateTime(startdatetr) && !tz) {
+            // v3.3 老应用升级的场景，使用全局配置（全局配置一般默认是‘用户时区’）
+            // v3.4 新应用，使用默认时区时选项，tz 为空
+            startDate = convertJSDateInTargetTimeZone(startdatetr, getAppTimezone('global'));
+            endDate = convertJSDateInTargetTimeZone(enddatetr, getAppTimezone('global'));
+        } else if (this.isInputValidNaslDateTime(startdatetr) && tz) {
+            // v3.4 新应用，指定了默认值之外的时区选项，必然有时区参数 tz
+            startDate = convertJSDateInTargetTimeZone(startdatetr, getAppTimezone(tz));
+            endDate = convertJSDateInTargetTimeZone(enddatetr, getAppTimezone(tz));
+        } else {
+            // 针对 nasl.Date 类型
+            startDate = naslDateToLocalDate(startdatetr);
+            endDate = naslDateToLocalDate(enddatetr);
+        }
 
         if (startDate > endDate) {
             return [];
         }
 
         const fns = [isMonday, isTuesday, isWednesday, isThursday, isFriday, isSaturday, isSunday];
-        const datesInRange = eachDayOfInterval({ start: startDate, end: endDate });
+        const dateInRange = eachDayOfInterval({ start: startDate, end: endDate });
         const isDays = fns.filter((_, index) => arr.includes((index + 1)));
-        const filteredDates = datesInRange.filter((day) => isDays.some((fn) => fn(day)));
-        if (typeof startDateString === 'object' || startDateString.includes('T')) {
-            return filteredDates.map((date) => format(date, 'yyyy-MM-dd HH:mm:ss'));
+        const filtereddate = dateInRange.filter((day) => isDays.some((fn) => fn(day)));
+        if (typeof startdatetr === 'object' || startdatetr.includes('T')) {
+            return filtereddate.map((date) => moment(date).format('YYYY-MM-DD HH:mm:ss'));
         } else {
-            return filteredDates.map((date) => format(date, 'yyyy-MM-dd'));
+            return filtereddate.map((date) => moment(date).format('YYYY-MM-DD'));
         }
     },
     FormatDate(value, formatter) {
@@ -754,11 +834,15 @@ export const utils = {
             return '-';
         return dateFormatter.format(value, formatter);
     },
-    FormatDateTime(value, formatter) {
-        if (!value)
+    FormatDateTime(value, formatter, tz) {
+        if (!value) {
             return '-';
-        const date = utils.ConvertTimezone(value, getAppTimezone());
-        return dateFormatter.format(date, formatter);
+        }
+        if (!tz) {
+            return this.FormatDateTime(value, formatter, 'global');
+        }
+        const date = convertJSDateInTargetTimeZone(value, tz);
+        return dateFnsFormat(date, formatter);
     },
     Clone(obj) {
         return cloneDeep(obj);
@@ -840,8 +924,15 @@ export const utils = {
 
         return value;
     },
-    ToString(value, typeKey) {
-        return toString(value, typeKey);
+    ToString(typeKey, value, tz) {
+        // v3.3 老应用升级的场景，使用全局配置（全局配置一般默认是‘用户时区’）
+        // v3.4 新应用，使用默认时区时选项，tz 为空
+        if (typeKey === 'nasl.core.DateTime' && !tz) {
+            return toString(typeKey, value, 'global');
+        } else {
+            // v3.4 新应用，指定了默认值之外的时区选项，必然有时区参数 tz
+            return toString(typeKey, value, getAppTimezone(tz));
+        }
     },
     FromString(value, typeKey) {
         return fromString(value, typeKey);
@@ -911,18 +1002,18 @@ export const utils = {
         return isAbs ? Math.abs(diffRes) : diffRes;
     },
     // 时区转换
-    ConvertTimezone(dateTime, timezone) {
+    ConvertTimezone(dateTime, tz) {
         if (!dateTime) {
             toastAndThrowError(`内置函数ConvertTimezone入参错误：指定日期为空`);
         }
         if (!isValid(new Date(dateTime))) {
             toastAndThrowError(`内置函数ConvertTimezone入参错误：指定日期不是合法日期类型`);
         }
-        if (!isValidTimezoneIANAString(timezone)) {
-            toastAndThrowError(`内置函数ConvertTimezone入参错误：传入时区${timezone}不是合法时区字符`);
+        if (!isValidTimezoneIANAString(tz)) {
+            toastAndThrowError(`内置函数ConvertTimezone入参错误：传入时区${tz}不是合法时区字符`);
         }
 
-        const result = formatInTimeZone(dateTime, timezone, "yyyy-MM-dd'T'HH:mm:ssxxx");
+        const result = formatInTimeZone(dateTime, tz, "yyyy-MM-dd'T'HH:mm:ssxxx");
         return result;
     },
     /**
