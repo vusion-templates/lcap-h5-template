@@ -13,8 +13,7 @@ import {
     differenceInSeconds,
     getDayOfYear, getWeekOfMonth, getQuarter, startOfWeek, getMonth, getWeek, getDate, startOfQuarter,
     addSeconds, addMinutes, addHours, addQuarters, addYears, addWeeks, formatISO,
-    eachDayOfInterval, isMonday, isTuesday, isWednesday, isThursday, isFriday, isSaturday, isSunday, parseISO,
-    format as dateFnsFormat,
+    eachDayOfInterval, isMonday, isTuesday, isWednesday, isThursday, isFriday, isSaturday, isSunday
 } from 'date-fns';
 import { formatInTimeZone } from 'date-fns-tz';
 const moment = require('moment');
@@ -663,7 +662,9 @@ export const utils = {
     // 随着 PageOf 失效，可删除
     ListSliceToPageOf(arr, page, size) {
         if (Array.isArray(arr) && page) {
-            const content = arr.slice((page - 1) * size, size);
+            const start = (page - 1) * size;
+            const end = start + size;
+            const content = arr.slice(start, end);
             const total = arr.length;
             const totalPages = Math.ceil(total / size);
             return {
@@ -681,7 +682,9 @@ export const utils = {
     },
     SliceToListPage(arr, page, size) {
         if (Array.isArray(arr) && page) {
-            const list = arr.slice((page - 1) * size, size);
+            const start = (page - 1) * size;
+            const end = start + size;
+            const list = arr.slice(start, end);
             const total = arr.length;
             return { list, total };
         } else {
@@ -830,9 +833,10 @@ export const utils = {
         }
     },
     FormatDate(value, formatter) {
-        if (!value)
+        if (!value) {
             return '-';
-        return dateFormatter.format(value, formatter);
+        }
+        return dateFormatter.format(naslDateToLocalDate(value), formatter);
     },
     FormatDateTime(value, formatter, tz) {
         if (!value) {
@@ -842,7 +846,7 @@ export const utils = {
             return this.FormatDateTime(value, formatter, 'global');
         }
         const date = convertJSDateInTargetTimeZone(value, tz);
-        return dateFnsFormat(date, formatter);
+        return dateFormatter.format(date, formatter);
     },
     Clone(obj) {
         return cloneDeep(obj);
