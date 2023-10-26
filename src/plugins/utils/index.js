@@ -13,7 +13,7 @@ import {
     differenceInSeconds,
     getDayOfYear, getWeekOfMonth, getQuarter, startOfWeek, getMonth, getWeek, getDate, startOfQuarter,
     addSeconds, addMinutes, addHours, addQuarters, addYears, addWeeks, formatISO,
-    eachDayOfInterval, isMonday, isTuesday, isWednesday, isThursday, isFriday, isSaturday, isSunday
+    eachDayOfInterval, isMonday, isTuesday, isWednesday, isThursday, isFriday, isSaturday, isSunday,
 } from 'date-fns';
 import { formatInTimeZone } from 'date-fns-tz';
 const moment = require('moment');
@@ -264,43 +264,39 @@ export const utils = {
             return null;
         }
         const nullRemoved = utils.ListFilter(arr, (elem) => elem !== null && elem !== undefined);
-        return nullRemoved.length === 0 ? null :
-                nullRemoved.reduce((prev, cur) =>
-                    // decimal 可解决 0.1 + 0.2 的精度问题，下同
-                    new Decimal(cur + '').plus(prev), new Decimal('0')).toNumber();
+        return nullRemoved.length === 0 ? null
+            : nullRemoved.reduce((prev, cur) =>
+                // decimal 可解决 0.1 + 0.2 的精度问题，下同
+                new Decimal(cur + '').plus(prev), new Decimal('0')).toNumber();
     },
     ListProduct: (arr) => {
         if (!Array.isArray(arr)) {
             return null;
         }
         const nullRemoved = utils.ListFilter(arr, (elem) => elem !== null && elem !== undefined);
-        return nullRemoved.length === 0 ? null :
-                nullRemoved.reduce((prev, cur) =>
-                    new Decimal(cur + '').mul(prev), new Decimal('1')).toNumber();
+        return nullRemoved.length === 0 ? null : nullRemoved.reduce((prev, cur) =>
+            new Decimal(cur + '').mul(prev), new Decimal('1')).toNumber();
     },
     ListAverage: (arr) => {
         if (!Array.isArray(arr)) {
             return null;
         }
         const nullRemoved = utils.ListFilter(arr, (elem) => elem !== null && elem !== undefined);
-        return nullRemoved.length === 0 ? null :
-                new Decimal(utils.ListSum(nullRemoved)).div(nullRemoved.length).toNumber();
+        return nullRemoved.length === 0 ? null : new Decimal(utils.ListSum(nullRemoved)).div(nullRemoved.length).toNumber();
     },
     ListMax: (arr) => {
         if (!Array.isArray(arr)) {
             return null;
         }
         const nullRemoved = utils.ListFilter(arr, (elem) => elem !== null && elem !== undefined);
-        return nullRemoved.length === 0 ? null :
-                nullRemoved.reduce((prev, cur) => prev >= cur ? prev : cur, nullRemoved[0]);
+        return nullRemoved.length === 0 ? null : nullRemoved.reduce((prev, cur) => prev >= cur ? prev : cur, nullRemoved[0]);
     },
     ListMin: (arr) => {
         if (!Array.isArray(arr)) {
             return null;
         }
         const nullRemoved = utils.ListFilter(arr, (elem) => elem !== null && elem !== undefined);
-        return nullRemoved.length === 0 ? null :
-                nullRemoved.reduce((prev, cur) => prev <= cur ? prev : cur, nullRemoved[0]);
+        return nullRemoved.length === 0 ? null : nullRemoved.reduce((prev, cur) => prev <= cur ? prev : cur, nullRemoved[0]);
     },
     ListReverse(arr) {
         if (Array.isArray(arr)) {
@@ -913,12 +909,14 @@ export const utils = {
                     return format(new Date(fixIOSDateString(value)), 'HH:mm:ss');
             } else if (typeAnnotation.typeName === 'String')
                 return String(value);
-            else if (typeAnnotation.typeName === 'Double' || typeAnnotation.typeName === 'Decimal') // 小数
-                return parseFloat(+value);
-            else if (typeAnnotation.typeName === 'Integer' || typeAnnotation.typeName === 'Long')
+            else if (typeAnnotation.typeName === 'Double' || typeAnnotation.typeName === 'Decimal') { // 小数 或者精确小数
+                // return parseFloat(+value);
+                return new window.NaslDecimal(value);
+            } else if (typeAnnotation.typeName === 'Integer' || typeAnnotation.typeName === 'Long') {
                 // 日期时间格式特殊处理; 整数： format 'int' ; 长整数: format: 'long'
-                return /^\d{4}-\d{2}-\d{2}(.*)+/.test(value) ? new Date(fixIOSDateString(value)).getTime() : Math.round(+value);
-            else if (typeAnnotation.typeName === 'Boolean') // 布尔值
+                // return /^\d{4}-\d{2}-\d{2}(.*)+/.test(value) ? new Date(value).getTime() : Math.round(+value);
+                return /^\d{4}-\d{2}-\d{2}(.*)+/.test(value) ? new Date(value).getTime() : new window.NaslLong(value);
+            } else if (typeAnnotation.typeName === 'Boolean') // 布尔值
                 return !!value;
         }
 
@@ -950,7 +948,12 @@ export const utils = {
         if (isNaN(parseFloat(value)) || isNaN(parseInt(digits)))
             return;
         if (digits !== undefined) {
-            value = Number(value).toFixed(parseInt(digits));
+            // value = Number(value).toFixed(parseInt(digits));
+            if (value instanceof window.NaslDecimal || value instanceof window.NaslLong) {
+                value = value.value.toFixed(parseInt(digits)); // 修改后得还是naslDecimal __str 变更
+            } else {
+                value = Number(value).toFixed(parseInt(digits)); // value  之前是个字符串
+            }
         }
         if (showGroup) {
             const temp = ('' + value).split('.');
@@ -1130,6 +1133,9 @@ export const utils = {
             TowardsInfinity: Decimal.ROUND_UP,
             HalfUp: Decimal.ROUND_HALF_UP,
         };
+        if (value instanceof window.NaslDecimal || value instanceof window.NaslLong) {
+            value = value.__str || value.value;
+        }
         return new Decimal(value).toFixed(0, modeMap[mode]);
     },
     /**

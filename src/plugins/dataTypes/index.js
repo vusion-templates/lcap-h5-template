@@ -47,7 +47,11 @@ export default {
             frontendVariables,
             // 加
             add(x, y) {
-                if (typeof (x) !== 'number' || typeof (y) !== 'number') {
+                if (x instanceof window.NaslDecimal || x instanceof window.NaslLong) {
+                    // 支持高精度和number/string相加 不限制被加数
+                    return x.add(y);
+                }
+                if (typeof x !== 'number' || typeof y !== 'number') {
                     return x + y;
                 }
                 if (!x) {
@@ -62,6 +66,9 @@ export default {
             },
             // 减
             minus(x, y) {
+                if (x instanceof window.NaslDecimal || x instanceof window.NaslLong) {
+                    return x.minus(y);
+                }
                 if (!x) {
                     x = 0;
                 }
@@ -74,6 +81,9 @@ export default {
             },
             // 乘
             multiply(x, y) {
+                if (x instanceof window.NaslDecimal || x instanceof window.NaslLong) {
+                    return x.multiply(y);
+                }
                 if (!x) {
                     x = 0;
                 }
@@ -86,6 +96,9 @@ export default {
             },
             // 除
             divide(x, y) {
+                if (x instanceof window.NaslDecimal || x instanceof window.NaslLong) {
+                    return x.divide(y);
+                }
                 if (!x) {
                     x = 0;
                 }
@@ -98,7 +111,109 @@ export default {
             },
             // 相等
             isEqual(x, y) {
-                return x == y;
+                if (x instanceof window.NaslDecimal || x instanceof window.NaslLong) {
+                    return x.equals(y);
+                }
+                if (!x || !y) {
+                    return false;
+                } else {
+                    // eslint-disable-next-line eqeqeq
+                    return x == y;
+                }
+            },
+            // // 不相等
+            isNotEqual(x, y) {
+                if (x instanceof window.NaslDecimal || x instanceof window.NaslLong) {
+                    return !x.equals(y);
+                }
+            },
+            // 大于
+            greaterThan(x, y) {
+                if (x instanceof window.NaslDecimal || x instanceof window.NaslLong) {
+                    return !x.gt(y);
+                }
+
+                return x > y;
+            },
+            // 大于等于
+            greaterThanOrEqual(x, y) {
+                if (x instanceof window.NaslDecimal || x instanceof window.NaslLong) {
+                    return !x.gte(y);
+                }
+
+                return x >= y;
+            },
+            // 小于
+            lessThan(x, y) {
+                if (x instanceof window.NaslDecimal || x instanceof window.NaslLong) {
+                    return !x.lt(y);
+                }
+
+                return x < y;
+            },
+            // 小于等于
+            lessThanOrEqual(x, y) {
+                if (x instanceof window.NaslDecimal || x instanceof window.NaslLong) {
+                    return !x.lte(y);
+                }
+
+                return x <= y;
+            },
+            // // 与
+            // isAnd(x, y) {
+            //    const actualX = getActualValue(x);
+            //    const actualY = getActualValue(y);
+            //    return actualX && actualY;
+            // },
+            // // 或
+            // isOr(x, y) {
+            //    const actualX = getActualValue(x);
+            //    const actualY = getActualValue(y);
+            //    return actualX || actualY;
+            // },
+            // // 非
+            // isNot(val) {
+            //    const actualVal = getActualValue(val);
+            //    return !actualVal;
+            // },
+            requestFullscreen() {
+                return document.body.requestFullscreen();
+            },
+            exitFullscreen() {
+                return document.exitFullscreen();
+            },
+            /**
+             * 比较键盘事件
+             * @param {KeyboardEvent} event
+             * @param {String[]} target
+             */
+            compareKeyboardInput(event, target) {
+                // 将target转event
+                const targetEvent = { altKey: false, ctrlKey: false, metaKey: false, shiftKey: false, code: '' };
+                target.forEach((item) => {
+                    if (item === 'Alt') {
+                        targetEvent.altKey = true;
+                    } else if (item === 'Meta') {
+                        targetEvent.metaKey = true;
+                    } else if (item === 'Control') {
+                        targetEvent.ctrlKey = true;
+                    } else if (item === 'Shift') {
+                        targetEvent.shiftKey = true;
+                    } else {
+                        targetEvent.code = item;
+                    }
+                });
+
+                let isMatch = true;
+                for (const key in targetEvent) {
+                    if (Object.hasOwnProperty.call(targetEvent, key)) {
+                        if (targetEvent[key] !== event[key]) {
+                            isMatch = false;
+                        }
+                    }
+                }
+
+                return isMatch;
             },
             encryptByAES({ string: message }, key = aesKey) {
                 const keyHex = CryptoJS.enc.Utf8.parse(key); //
