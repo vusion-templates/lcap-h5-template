@@ -14,29 +14,27 @@ import { getTitleGuard, initRouter } from '@/router';
 import { filterRoutes, parsePath } from '@/utils/route';
 import { getBasePath } from '@/utils/encodeUrl';
 import { filterAuthResources, findNoAuthView } from '@/router/guards/auth';
+import VueI18n from 'vue-i18n';
 
 import App from './App.vue';
 
 import '@/assets/css/index.css';
 const fnList = ['afterRouter'];
-const evalWrap = function (metaData, fnName) {
+const evalWrap = function(metaData, fnName) {
     // eslint-disable-next-line no-eval
     metaData && fnName && metaData?.frontendEvents[fnName] && eval(metaData.frontendEvents[fnName]);
 };
 /* 👇CloudUI中入口逻辑 */
 Vue.prototype.$env = Vue.prototype.$env || {};
-Vue.prototype.$env.VUE_APP_DESIGNER
-    = String(process.env.VUE_APP_DESIGNER) === 'true';
-Vue.prototype.$at2 = function (obj, propertyPath) {
-    if (propertyPath === '' && !this.$env.VUE_APP_DESIGNER)
-        return obj;
+Vue.prototype.$env.VUE_APP_DESIGNER = String(process.env.VUE_APP_DESIGNER) === 'true';
+Vue.prototype.$at2 = function(obj, propertyPath) {
+    if (propertyPath === '' && !this.$env.VUE_APP_DESIGNER) return obj;
     return this.$at(obj, propertyPath);
 };
 
 function getAsyncPublicPath() {
     const script = document.querySelector('script[src*="cloud-ui.vusion"]');
-    if (!script)
-        return;
+    if (!script) return;
 
     const src = script.src;
     const publicPath = src.replace(/\/[^/]+$/, '/');
@@ -74,8 +72,7 @@ const init = (appConfig, platformConfig, routes, metaData) => {
 
     installFilters(Vue, filters);
 
-
-        // 处理当前语言
+    // 处理当前语言
     let locale;
     if (appConfig.i18nInfo) {
         locale = localStorage.i18nLocale || appConfig.i18nInfo.locale || 'zh-CN';
@@ -84,12 +81,12 @@ const init = (appConfig, platformConfig, routes, metaData) => {
         // 设置当前语言名称
         appConfig.i18nInfo.localeName = appConfig.i18nInfo?.I18nList?.find((item) => item.id === locale)?.name;
         // 设置当前语言的翻译信息
-        window.Vue.prototype.$vantLang = locale
+        window.Vue.prototype.$vantLang = locale;
 
         window.Vue.prototype.$vantMessages = {
             ...window.Vue.prototype.$vantMessages,
-            ...i18nInfo.i18nMessages
-        }}
+            ...i18nInfo.i18nMessages,
+        };
     }
     Vue.use(LogicsPlugin, metaData);
     Vue.use(RouterPlugin);
@@ -147,20 +144,38 @@ const init = (appConfig, platformConfig, routes, metaData) => {
             if (beforeRouter) {
                 const event = {
                     baseResourcePaths,
-                    router, routes, authResourcePaths, appConfig, beforeRouter,
-                    to, from, next, parsePath, getBasePath, filterAuthResources, findNoAuthView, filterRoutes,
+                    router,
+                    routes,
+                    authResourcePaths,
+                    appConfig,
+                    beforeRouter,
+                    to,
+                    from,
+                    next,
+                    parsePath,
+                    getBasePath,
+                    filterAuthResources,
+                    findNoAuthView,
+                    filterRoutes,
                 };
                 await beforeRouter(event);
             }
-        } catch (err) { }
+        } catch (err) {}
         next();
     };
     beforeRouter && router.beforeEach(getAuthGuard(router, routes, authResourcePaths, appConfig, baseResourcePaths, window.beforeRouter));
     router.beforeEach(getTitleGuard(appConfig));
 
+    const i18nInfo = appConfig.i18nInfo;
+    const i18n = new VueI18n({
+        locale: locale,
+        messages: i18nInfo.messages,
+    });
+
     const app = new Vue({
         name: 'app',
         router,
+        i18n,
         ...App,
     });
     if (metaData && metaData.frontendEvents) {
@@ -174,13 +189,14 @@ const init = (appConfig, platformConfig, routes, metaData) => {
     }
     const afterRouter = Vue.prototype.afterRouter;
 
-    afterRouter && router.afterEach(async (to, from, next) => {
-        try {
-            if (afterRouter) {
-                await afterRouter(to, from);
-            }
-        } catch (err) { }
-    });
+    afterRouter &&
+        router.afterEach(async (to, from, next) => {
+            try {
+                if (afterRouter) {
+                    await afterRouter(to, from);
+                }
+            } catch (err) {}
+        });
     app.$mount('#app');
     return app;
 };
@@ -188,4 +204,3 @@ const init = (appConfig, platformConfig, routes, metaData) => {
 export default {
     init,
 };
-
