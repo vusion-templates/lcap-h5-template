@@ -75,17 +75,18 @@ const init = (appConfig, platformConfig, routes, metaData) => {
     // 处理当前语言
     let locale;
     if (appConfig.i18nInfo) {
+        const { I18nList, i18nMessages } = appConfig?.i18nInfo || {};
         locale = localStorage.i18nLocale || appConfig.i18nInfo.locale || 'zh-CN';
         // 重置当前生效语言
         appConfig.i18nInfo.locale = locale;
         // 设置当前语言名称
-        appConfig.i18nInfo.localeName = appConfig.i18nInfo?.I18nList?.find((item) => item.id === locale)?.name;
+        appConfig.i18nInfo.localeName = I18nList?.find((item) => item.id === locale)?.name;
         // 设置当前语言的翻译信息
         window.Vue.prototype.$vantLang = locale;
 
         window.Vue.prototype.$vantMessages = {
             ...window.Vue.prototype.$vantMessages,
-            ...i18nInfo.i18nMessages,
+            ...i18nMessages || {},
         };
     }
     Vue.use(LogicsPlugin, metaData);
