@@ -77,6 +77,11 @@ const init = (appConfig, platformConfig, routes, metaData) => {
     if (appConfig.i18nInfo) {
         const { I18nList, messages } = appConfig?.i18nInfo || {};
         locale = localStorage.i18nLocale || appConfig.i18nInfo.locale || 'zh-CN';
+
+        // 如果local里没有就读主应用的默认语言
+        if (!messages[locale]) {
+            locale = appConfig.i18nInfo.locale || 'zh-CN';
+        }
         // 重置当前生效语言
         appConfig.i18nInfo.locale = locale;
         // 设置当前语言名称
