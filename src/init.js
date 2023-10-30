@@ -75,7 +75,7 @@ const init = (appConfig, platformConfig, routes, metaData) => {
     // 处理当前语言
     let locale;
     if (appConfig.i18nInfo) {
-        const { I18nList, i18nMessages } = appConfig?.i18nInfo || {};
+        const { I18nList, messages } = appConfig?.i18nInfo || {};
         locale = localStorage.i18nLocale || appConfig.i18nInfo.locale || 'zh-CN';
         // 重置当前生效语言
         appConfig.i18nInfo.locale = locale;
@@ -86,7 +86,7 @@ const init = (appConfig, platformConfig, routes, metaData) => {
 
         window.Vue.prototype.$vantMessages = {
             ...window.Vue.prototype.$vantMessages,
-            ...i18nMessages || {},
+            ...(messages || {}),
         };
     }
     Vue.use(LogicsPlugin, metaData);
