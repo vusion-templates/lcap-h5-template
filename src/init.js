@@ -76,11 +76,14 @@ const init = (appConfig, platformConfig, routes, metaData) => {
     let locale;
     if (appConfig.i18nInfo) {
         const { I18nList, messages } = appConfig?.i18nInfo || {};
-        locale = localStorage.i18nLocale || appConfig.i18nInfo.locale || 'zh-CN';
-
+        locale = localStorage.i18nLocale;
         // 如果local里没有就读主应用的默认语言
         if (!messages[locale]) {
-            locale = appConfig.i18nInfo.locale || 'zh-CN';
+            // 如果当前浏览器的设置也没有，就读取主应用的默认语言
+            locale = navigator.language || navigator.userLanguage;
+            if (!messages[locale]) {
+                locale = appConfig.i18nInfo.locale || 'zh-CN';
+            }
         }
         // 重置当前生效语言
         appConfig.i18nInfo.locale = locale;
