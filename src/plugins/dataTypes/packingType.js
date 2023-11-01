@@ -191,9 +191,8 @@ export class NaslLong {
     }
 
     set value(v) {
-        if (typeof v === 'string') {
-            // 双向绑定触发 到这里会自动再实例化
-            this.__value = new Long(v);
+        if (typeof v === 'string' || typeof v === 'number') {
+            this.__value = Long.fromString(String(v));
         } else {
             this.__value = v;
         }

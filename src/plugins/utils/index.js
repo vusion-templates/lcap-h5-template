@@ -65,6 +65,12 @@ function uniqueByKey(array, key) {
 }
 
 function isArrayOutBounds(arr, index) {
+    try {
+        index = Number(index);
+    } catch (error) {
+        console.error('error: ', error);
+    }
+
     if (!Array.isArray(arr))
         throw toastAndThrowError('传入内容不是数组');
     if (typeof index !== 'number' || isNaN(index)) {
@@ -880,6 +886,8 @@ export const utils = {
             max = min;
             min = 0;
         }
+        min = Number(min);
+        max = Number(max);
 
         if (typeof min !== 'number' || typeof max !== 'number') {
             throw new TypeError('Expected all arguments to be numbers');
