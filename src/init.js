@@ -73,7 +73,7 @@ const init = (appConfig, platformConfig, routes, metaData) => {
     installFilters(Vue, filters);
 
     // 处理当前语言
-    let locale;
+    let locale = 'zh-CN';
     if (appConfig.i18nInfo) {
         const { I18nList, messages } = appConfig?.i18nInfo || {};
         locale = localStorage.i18nLocale;
