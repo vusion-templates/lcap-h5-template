@@ -159,7 +159,7 @@ export default {
             // 大于
             greaterThan(x, y) {
                 if (x instanceof window.NaslDecimal || x instanceof window.NaslLong) {
-                    return !x.gt(y);
+                    return x.gt(y);
                 }
 
                 return x > y;
@@ -167,7 +167,7 @@ export default {
             // 大于等于
             greaterThanOrEqual(x, y) {
                 if (x instanceof window.NaslDecimal || x instanceof window.NaslLong) {
-                    return !x.gte(y);
+                    return x.gte(y);
                 }
 
                 return x >= y;
@@ -175,7 +175,7 @@ export default {
             // 小于
             lessThan(x, y) {
                 if (x instanceof window.NaslDecimal || x instanceof window.NaslLong) {
-                    return !x.lt(y);
+                    return x.lt(y);
                 }
 
                 return x < y;
@@ -183,7 +183,7 @@ export default {
             // 小于等于
             lessThanOrEqual(x, y) {
                 if (x instanceof window.NaslDecimal || x instanceof window.NaslLong) {
-                    return !x.lte(y);
+                    return x.lte(y);
                 }
 
                 return x <= y;

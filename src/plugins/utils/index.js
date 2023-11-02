@@ -905,11 +905,13 @@ export const utils = {
         return result;
     },
     Convert(value, typeAnnotation) {
+        const getDateValue = (value) => String(value).includes('-') ? value : Number(value);
         if (typeAnnotation && typeAnnotation.typeKind === 'primitive') {
-            if (typeAnnotation.typeName === 'DateTime')
-                return formatRFC3339(new Date(fixIOSDateString(value)));
-            else if (typeAnnotation.typeName === 'Date')
-                return format(new Date(fixIOSDateString(value)), 'yyyy-MM-dd');
+            if (typeAnnotation.typeName === 'DateTime') {
+                // 如果全是数字（时间戳） 就加number
+                return formatRFC3339(new Date(getDateValue(fixIOSDateString(value))));
+            } else if (typeAnnotation.typeName === 'Date')
+                return moment(new Date(fixIOSDateString(value))).format('YYYY-MM-DD');
             else if (typeAnnotation.typeName === 'Time') {
                 if (/^\d{2}:\d{2}:\d{2}$/.test(value)) // 纯时间 12:30:00
                     return format(new Date('2022/01/01 ' + value), 'HH:mm:ss');
