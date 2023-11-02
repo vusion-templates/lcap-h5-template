@@ -13,6 +13,7 @@ import { porcessPorts } from '../router/processService';
 
 window.CryptoJS = CryptoJS;
 const aesKey = ';Z#^$;8+yhO!AhGo';
+const adaptType = (value) => typeof value === 'number' ? value : Number(value);
 
 export default {
     install(Vue, options = {}) {
@@ -161,7 +162,8 @@ export default {
                 if (x instanceof window.NaslDecimal || x instanceof window.NaslLong) {
                     return x.gt(y);
                 }
-
+                x = adaptType(x);
+                y = adaptType(y);
                 return x > y;
             },
             // 大于等于
@@ -169,7 +171,8 @@ export default {
                 if (x instanceof window.NaslDecimal || x instanceof window.NaslLong) {
                     return x.gte(y);
                 }
-
+                x = adaptType(x);
+                y = adaptType(y);
                 return x >= y;
             },
             // 小于
@@ -177,7 +180,8 @@ export default {
                 if (x instanceof window.NaslDecimal || x instanceof window.NaslLong) {
                     return x.lt(y);
                 }
-
+                x = adaptType(x);
+                y = adaptType(y);
                 return x < y;
             },
             // 小于等于
@@ -185,7 +189,8 @@ export default {
                 if (x instanceof window.NaslDecimal || x instanceof window.NaslLong) {
                     return x.lte(y);
                 }
-
+                x = adaptType(x);
+                y = adaptType(y);
                 return x <= y;
             },
             // // 与
