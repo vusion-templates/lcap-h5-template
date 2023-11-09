@@ -30,7 +30,7 @@ jobs:
         run: npm install
 
       - name: Build
-        run: npm run build:designer
+        run: npm run build:designer-local
 
       # 创建一个临时目录
       - name: Create temp dir
