@@ -828,6 +828,7 @@ export const utils = {
 
         const fns = [isMonday, isTuesday, isWednesday, isThursday, isFriday, isSaturday, isSunday];
         const dateInRange = eachDayOfInterval({ start: startDate, end: endDate });
+        arr = arr.map((item) => Number(item));
         const isDays = fns.filter((_, index) => arr.includes((index + 1)));
         const filtereddate = dateInRange.filter((day) => isDays.some((fn) => fn(day)));
         if (typeof startdatetr === 'object' || startdatetr.includes('T')) {
