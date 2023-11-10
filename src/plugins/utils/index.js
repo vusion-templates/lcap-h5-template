@@ -1166,6 +1166,8 @@ export const utils = {
                 return false;
             } else if (['nasl.core.Boolean'].includes(typeKey) || value === true || value === false) {
                 return true;
+            } else if (['nasl.core.DateTime'].includes(typeKey)) {
+                return !!value;
             } else if (isDefString(typeKey)) {
                 return value.trim() !== '';
             } else if (isDefNumber(typeKey)) {
