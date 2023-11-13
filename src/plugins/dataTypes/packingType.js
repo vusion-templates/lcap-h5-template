@@ -12,7 +12,7 @@ export class NaslDecimal {
 
     constructor(v) {
         //  兼容 undefined 空 数字 字符串  包装类本身 和其他包装类互转
-        if (v === undefined || v === 'undefined' || v === 'null' || (v !== 0 && !v)) {
+        if (v === undefined || v === null || v === 'undefined' || v === 'null' || (v !== 0 && !v)) {
             v = '0';
             this.__str = undefined;
         } else if (v instanceof NaslDecimal) {
@@ -168,7 +168,7 @@ export class NaslLong {
             v = '0';
         }
         //  兼容 undefined 空 数字 2.21 字符串 ‘2.21’ 包装类本身 和其他包装类互转如NaslIneger
-        if (v === undefined || v === 'undefined' || v === 'null' || !v) {
+        if (v === undefined || v === null || v === 'undefined' || v === 'null' || (v !== 0 && !v)) {
             v = '0'; // Decimal 不支持传 空字符串
             this.__str = undefined;// 用包装类实现原生语言的空值
             // 之前的默认值是 ''  空字符串  我这要是改成空字符串是不是运算有问题
