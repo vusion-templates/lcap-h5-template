@@ -14,7 +14,7 @@ import { porcessPorts } from '../router/processService';
 window.CryptoJS = CryptoJS;
 const aesKey = ';Z#^$;8+yhO!AhGo';
 const adaptType = (value) => typeof value === 'number' ? value : Number(value);
-const isNumberStr = (str) => /^[-+]?\d+(\.\d+)?$/.test(str);
+export const isNumberStr = (str) => /^[-+]?\d+(\.\d+)?$/.test(str);
 export default {
     install(Vue, options = {}) {
         const dataTypesMap = options.dataTypesMap || {}; // TODO 统一为  dataTypesMap
@@ -58,14 +58,21 @@ export default {
                 if (y instanceof window.NaslDecimal || y instanceof window.NaslLong) {
                     y = y.toString();
                 }
+                // 前后都有问题 要么是 在前边 '0' + null = o null   要么是  在后边 undefinde+ 'xx'  = '0xx'
+                if (isNumberStr(x)) {
+                    x = Number(x);
+                }
+                if (isNumberStr(y)) {
+                    y = Number(y);
+                }
+                if (typeof x !== 'number' || typeof y !== 'number') {
+                    return x + y;
+                }
                 if (!x) {
                     x = 0;
                 }
                 if (!y) {
                     y = 0;
-                }
-                if (typeof x !== 'number' || typeof y !== 'number') {
-                    return x + y;
                 }
                 const xx = new Decimal(x + '');
                 const yy = new Decimal(y + '');
@@ -147,6 +154,13 @@ export default {
                 if (x instanceof window.NaslDecimal || x instanceof window.NaslLong) {
                     return x.equals(y);
                 }
+                // const entureNumber =()=>
+                // if (isNumberStr(x)) {
+                //     x = Number(x);
+                // }
+                // if (isNumberStr(y)) {
+                //     y = Number(y);
+                // }
                 // eslint-disable-next-line eqeqeq
                 return x == y;
             },

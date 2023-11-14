@@ -16,6 +16,7 @@ import {
     eachDayOfInterval, isMonday, isTuesday, isWednesday, isThursday, isFriday, isSaturday, isSunday,
 } from 'date-fns';
 import { formatInTimeZone } from 'date-fns-tz';
+import { isNumberStr } from '../dataTypes/index';
 const moment = require('moment');
 const momentTZ = require('moment-timezone');
 import Vue from 'vue';
@@ -201,7 +202,20 @@ export const utils = {
         }
     },
     Contains(arr, item) {
-        return typeof arr.find((ele) => isEqual(ele, item)) !== 'undefined';
+        return typeof arr.find((ele) => {
+            if (item instanceof window.NaslDecimal || item instanceof window.NaslLong) {
+                return item.equals(ele);
+            } else if (ele instanceof window.NaslDecimal || ele instanceof window.NaslLong) {
+                return ele.equals(item);
+            } else {
+                let numItem;
+                if (isNumberStr(item)) {
+                    numItem = Number(item);
+                }
+                return isEqual(ele, item) || isEqual(ele, numItem);
+            }
+        }) !== 'undefined';
+        // return typeof arr.find((ele) => isEqual(ele, item)) !== 'undefined';
     },
     Add(arr, item) {
         if (Array.isArray(arr)) {
