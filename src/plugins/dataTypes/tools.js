@@ -851,15 +851,14 @@ export const fromString = (variable, typeKey) => {
             return JSON.parse(variable);
         }
     }
-    toastAndThrowError(`${typeName}格式不正确`);
+    toastError(`${typeName}格式不正确`);
 };
-export function toastAndThrowError(err) {
+export function toastError(err) {
     // 全局提示toast
     Toast?.({
         message: err,
         position: 'top',
     });
-    throw new Error(err);
 }
 
 function jsonNameReflection(properties, parsedValue) {
