@@ -13,9 +13,10 @@ import {
     differenceInSeconds,
     getDayOfYear, getWeekOfMonth, getQuarter, startOfWeek, getMonth, getWeek, getDate, startOfQuarter,
     addSeconds, addMinutes, addHours, addQuarters, addYears, addWeeks, formatISO,
-    eachDayOfInterval, isMonday, isTuesday, isWednesday, isThursday, isFriday, isSaturday, isSunday
+    eachDayOfInterval, isMonday, isTuesday, isWednesday, isThursday, isFriday, isSaturday, isSunday,
 } from 'date-fns';
 import { formatInTimeZone } from 'date-fns-tz';
+import { isNumberStr } from '../dataTypes/index';
 const moment = require('moment');
 const momentTZ = require('moment-timezone');
 import Vue from 'vue';
@@ -65,6 +66,12 @@ function uniqueByKey(array, key) {
 }
 
 function isArrayOutBounds(arr, index) {
+    try {
+        index = Number(index);
+    } catch (error) {
+        console.error('error: ', error);
+    }
+
     if (!Array.isArray(arr))
         throw toastAndThrowError('传入内容不是数组');
     if (typeof index !== 'number' || isNaN(index)) {
@@ -195,7 +202,20 @@ export const utils = {
         }
     },
     Contains(arr, item) {
-        return typeof arr.find((ele) => isEqual(ele, item)) !== 'undefined';
+        return typeof arr.find((ele) => {
+            if (item instanceof window.NaslDecimal || item instanceof window.NaslLong) {
+                return item.equals(ele);
+            } else if (ele instanceof window.NaslDecimal || ele instanceof window.NaslLong) {
+                return ele.equals(item);
+            } else {
+                let numItem = item;
+                if (isNumberStr(item)) {
+                    numItem = Number(item);
+                }
+                return isEqual(ele, item) || isEqual(ele, numItem);
+            }
+        }) !== 'undefined';
+        // return typeof arr.find((ele) => isEqual(ele, item)) !== 'undefined';
     },
     Add(arr, item) {
         if (Array.isArray(arr)) {
@@ -215,7 +235,16 @@ export const utils = {
     },
     Remove(arr, item) {
         if (Array.isArray(arr)) {
-            const index = arr.indexOf(item);
+            let numItem;
+            if (isNumberStr(item)) {
+                numItem = Number(item);
+            }
+            let index;
+            if (numItem) {
+                index = Math.max(arr.indexOf(numItem), arr.indexOf(item));
+            } else {
+                index = arr.indexOf(item);
+            }
             ~index && arr.splice(index, 1);
         }
     },
@@ -264,43 +293,39 @@ export const utils = {
             return null;
         }
         const nullRemoved = utils.ListFilter(arr, (elem) => elem !== null && elem !== undefined);
-        return nullRemoved.length === 0 ? null :
-                nullRemoved.reduce((prev, cur) =>
-                    // decimal 可解决 0.1 + 0.2 的精度问题，下同
-                    new Decimal(cur + '').plus(prev), new Decimal('0')).toNumber();
+        return nullRemoved.length === 0 ? null
+            : nullRemoved.reduce((prev, cur) =>
+                // decimal 可解决 0.1 + 0.2 的精度问题，下同
+                new Decimal(cur + '').plus(prev), new Decimal('0')).toNumber();
     },
     ListProduct: (arr) => {
         if (!Array.isArray(arr)) {
             return null;
         }
         const nullRemoved = utils.ListFilter(arr, (elem) => elem !== null && elem !== undefined);
-        return nullRemoved.length === 0 ? null :
-                nullRemoved.reduce((prev, cur) =>
-                    new Decimal(cur + '').mul(prev), new Decimal('1')).toNumber();
+        return nullRemoved.length === 0 ? null : nullRemoved.reduce((prev, cur) =>
+            new Decimal(cur + '').mul(prev), new Decimal('1')).toNumber();
     },
     ListAverage: (arr) => {
         if (!Array.isArray(arr)) {
             return null;
         }
         const nullRemoved = utils.ListFilter(arr, (elem) => elem !== null && elem !== undefined);
-        return nullRemoved.length === 0 ? null :
-                new Decimal(utils.ListSum(nullRemoved)).div(nullRemoved.length).toNumber();
+        return nullRemoved.length === 0 ? null : new Decimal(utils.ListSum(nullRemoved)).div(nullRemoved.length).toNumber();
     },
     ListMax: (arr) => {
         if (!Array.isArray(arr)) {
             return null;
         }
         const nullRemoved = utils.ListFilter(arr, (elem) => elem !== null && elem !== undefined);
-        return nullRemoved.length === 0 ? null :
-                nullRemoved.reduce((prev, cur) => prev >= cur ? prev : cur, nullRemoved[0]);
+        return nullRemoved.length === 0 ? null : nullRemoved.reduce((prev, cur) => prev >= cur ? prev : cur, nullRemoved[0]);
     },
     ListMin: (arr) => {
         if (!Array.isArray(arr)) {
             return null;
         }
         const nullRemoved = utils.ListFilter(arr, (elem) => elem !== null && elem !== undefined);
-        return nullRemoved.length === 0 ? null :
-                nullRemoved.reduce((prev, cur) => prev <= cur ? prev : cur, nullRemoved[0]);
+        return nullRemoved.length === 0 ? null : nullRemoved.reduce((prev, cur) => prev <= cur ? prev : cur, nullRemoved[0]);
     },
     ListReverse(arr) {
         if (Array.isArray(arr)) {
@@ -405,11 +430,14 @@ export const utils = {
         }
     },
     // 不修改原 list，返回新 list
-    ListDistinctBy(arr, getVal) {
+    ListDistinctBy(arr, listGetVal) {
         // getVal : <A,B> . A => B 给一个 A 类型的数据，返回 A 类型中被用户选中的 field 的 value
-        if (!Array.isArray(arr) || typeof getVal !== 'function') {
+        // listGetVal: getVal 这样的函数组成的 list
+
+        if (!Array.isArray(arr)) {
             return null;
         }
+        // item => List[item.userName, item.id]
         if (arr.length === 0) {
             return arr;
         }
@@ -417,7 +445,10 @@ export const utils = {
         const res = [];
         const vis = new Set();
         for (const item of arr) {
-            const hash = getVal(item);
+            // eslint-disable-next-line no-return-await
+            const hashArr = listGetVal.map((fn) => fn(item));
+            // eslint-disable-next-line no-await-in-loop
+            const hash = (hashArr).join('');
             if (!vis.has(hash)) {
                 vis.add(hash);
                 res.push(item);
@@ -866,8 +897,6 @@ export const utils = {
                 if (obj.hasOwnProperty(key))
                     obj[key] = null;
             }
-        } else {
-            obj = undefined;
         }
         return obj;
     },
@@ -889,6 +918,8 @@ export const utils = {
             max = min;
             min = 0;
         }
+        min = Number(min);
+        max = Number(max);
 
         if (typeof min !== 'number' || typeof max !== 'number') {
             throw new TypeError('Expected all arguments to be numbers');
@@ -906,11 +937,13 @@ export const utils = {
         return result;
     },
     Convert(value, typeAnnotation) {
+        const getDateValue = (value) => String(value).includes('-') ? value : Number(value);
         if (typeAnnotation && typeAnnotation.typeKind === 'primitive') {
-            if (typeAnnotation.typeName === 'DateTime')
-                return formatRFC3339(new Date(fixIOSDateString(value)));
-            else if (typeAnnotation.typeName === 'Date')
-                return format(new Date(fixIOSDateString(value)), 'yyyy-MM-dd');
+            if (typeAnnotation.typeName === 'DateTime') {
+                // 如果全是数字（时间戳） 就加number
+                return formatRFC3339(new Date(getDateValue(fixIOSDateString(value))));
+            } else if (typeAnnotation.typeName === 'Date')
+                return moment(new Date(fixIOSDateString(value))).format('YYYY-MM-DD');
             else if (typeAnnotation.typeName === 'Time') {
                 if (/^\d{2}:\d{2}:\d{2}$/.test(value)) // 纯时间 12:30:00
                     return format(new Date('2022/01/01 ' + value), 'HH:mm:ss');
@@ -918,12 +951,14 @@ export const utils = {
                     return format(new Date(fixIOSDateString(value)), 'HH:mm:ss');
             } else if (typeAnnotation.typeName === 'String')
                 return String(value);
-            else if (typeAnnotation.typeName === 'Double' || typeAnnotation.typeName === 'Decimal') // 小数
-                return parseFloat(+value);
-            else if (typeAnnotation.typeName === 'Integer' || typeAnnotation.typeName === 'Long')
+            else if (typeAnnotation.typeName === 'Double' || typeAnnotation.typeName === 'Decimal') { // 小数 或者精确小数
+                // return parseFloat(+value);
+                return new window.NaslDecimal(value);
+            } else if (typeAnnotation.typeName === 'Integer' || typeAnnotation.typeName === 'Long') {
                 // 日期时间格式特殊处理; 整数： format 'int' ; 长整数: format: 'long'
-                return /^\d{4}-\d{2}-\d{2}(.*)+/.test(value) ? new Date(fixIOSDateString(value)).getTime() : Math.round(+value);
-            else if (typeAnnotation.typeName === 'Boolean') // 布尔值
+                // return /^\d{4}-\d{2}-\d{2}(.*)+/.test(value) ? new Date(value).getTime() : Math.round(+value);
+                return /^\d{4}-\d{2}-\d{2}(.*)+/.test(value) ? new Date(value).getTime() : new window.NaslLong(value);
+            } else if (typeAnnotation.typeName === 'Boolean') // 布尔值
                 return !!value;
         }
 
@@ -955,7 +990,12 @@ export const utils = {
         if (isNaN(parseFloat(value)) || isNaN(parseInt(digits)))
             return;
         if (digits !== undefined) {
-            value = Number(value).toFixed(parseInt(digits));
+            // value = Number(value).toFixed(parseInt(digits));
+            if (value instanceof window.NaslDecimal || value instanceof window.NaslLong) {
+                value = value.value.toFixed(parseInt(digits)); // 修改后得还是naslDecimal __str 变更
+            } else {
+                value = Number(value).toFixed(parseInt(digits)); // value  之前是个字符串
+            }
         }
         if (showGroup) {
             const temp = ('' + value).split('.');
@@ -1135,6 +1175,9 @@ export const utils = {
             TowardsInfinity: Decimal.ROUND_UP,
             HalfUp: Decimal.ROUND_HALF_UP,
         };
+        if (value instanceof window.NaslDecimal || value instanceof window.NaslLong) {
+            value = value.__str || value.value;
+        }
         return new Decimal(value).toFixed(0, modeMap[mode]);
     },
     /**
