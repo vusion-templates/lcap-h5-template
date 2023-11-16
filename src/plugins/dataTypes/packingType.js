@@ -41,7 +41,7 @@ export class NaslDecimal {
     }
 
     set value(v) {
-        if (typeof v === 'string') {
+        if (typeof v === 'string' || typeof v === 'number') {
             this.__value = new Decimal(v);
         } else {
             this.__value = v;
@@ -274,7 +274,7 @@ export class NaslLong {
             vStr = v.toString();
             result = operationCb((new NaslLong(v.toString()).value));
         }
-        const resultStr = result.toFixed(Math.max(getPrecision(vStr), precision || getPrecision(this.__str)));
+        const resultStr = result.toString();
 
         return new NaslLong(resultStr);
     }
