@@ -315,7 +315,13 @@ export const utils = {
         }
         const nullRemoved = utils.ListFilter(arr, (elem) => elem !== null && elem !== undefined);
         return nullRemoved.length === 0 ? null
-            : nullRemoved.reduce((prev, cur) => prev.gte(cur) ? prev : cur, nullRemoved[0]);
+            : nullRemoved.reduce((prev, cur) => {
+                if (isNaslNumber(prev)) {
+                    return prev.gte(cur) ? prev : cur;
+                } else {
+                    return prev >= cur ? prev : cur;
+                }
+            }, nullRemoved[0]);
     },
     ListMin: (arr) => {
         if (!Array.isArray(arr)) {
@@ -323,7 +329,13 @@ export const utils = {
         }
         const nullRemoved = utils.ListFilter(arr, (elem) => elem !== null && elem !== undefined);
         return nullRemoved.length === 0 ? null
-            : nullRemoved.reduce((prev, cur) => prev.lte(cur) ? prev : cur, nullRemoved[0]);
+            : nullRemoved.reduce((prev, cur) => {
+                if (isNaslNumber(prev)) {
+                    return prev.lte(cur) ? prev : cur;
+                } else {
+                    return prev <= cur ? prev : cur;
+                }
+            }, nullRemoved[0]);
     },
     ListReverse(arr) {
         if (Array.isArray(arr)) {
