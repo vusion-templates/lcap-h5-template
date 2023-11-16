@@ -16,6 +16,7 @@ import {
     eachDayOfInterval, isMonday, isTuesday, isWednesday, isThursday, isFriday, isSaturday, isSunday,
 } from 'date-fns';
 import { formatInTimeZone } from 'date-fns-tz';
+import { dateFormatter } from '@/plugins/Formatters';
 import { isNumberStr, isNaslNumber } from '../dataTypes/index';
 const moment = require('moment');
 const momentTZ = require('moment-timezone');
