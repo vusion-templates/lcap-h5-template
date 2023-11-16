@@ -20,10 +20,10 @@ import { isNumberStr } from '../dataTypes/index';
 const moment = require('moment');
 const momentTZ = require('moment-timezone');
 import Vue from 'vue';
-
-import { dateFormatter } from './Formatters';
-
-import { toString, fromString, toastAndThrowError, isDefString, isDefNumber, isDefList, isDefMap, typeDefinitionMap } from '../dataTypes/tools';
+import {
+    toString, fromString, toastAndThrowError, isDefString, isDefNumber, isDefList, isDefMap, typeDefinitionMap, rmWrapClass,
+    genInitData,
+} from '../dataTypes/tools';
 import Decimal from 'decimal.js';
 import { getAppTimezone, isValidTimezoneIANAString } from './timezone';
 import { findAsync, mapAsync, filterAsync, findIndexAsync, sortAsync } from './helper';
@@ -972,6 +972,12 @@ export const utils = {
     },
     FromString(value, typeKey) {
         return fromString(value, typeKey);
+    },
+    RmWrapClass(value) {
+        return rmWrapClass(value);
+    },
+    AddWrapClass(typeKey, value) {
+        return genInitData(typeKey, value);
     },
     /**
      * 数字格式化
