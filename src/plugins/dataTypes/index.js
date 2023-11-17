@@ -1,6 +1,3 @@
-import CryptoJS from 'crypto-js';
-import cookie from '@/utils/cookie';
-
 import { initService as configurationInitService } from '@/apis/configuration';
 import cookie from '@/utils/cookie';
 import storage from '@/utils/storage/localStorage';
