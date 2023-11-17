@@ -878,9 +878,11 @@ export const rmWrapClass = (variable) => {
     let newVariable = variable;
     const variableType = Object.prototype.toString.call(variable);
     if (Array.isArray(variable)) {
-        newVariable = variable.map((variableItem) => {
-            return rmWrapClass(variableItem);
-        });
+        for (let i = 0; i < variable.length; i++) {
+            let element = variable[i];
+            element = rmWrapClass(element);
+        }
+        // newVariable = variable.map((variableItem) => variableItem = rmWrapClass(variableItem));
     } else if (variable instanceof window.NaslLong || variable instanceof window.NaslDecimal) {
         newVariable = variable.value.toNumber();
     } else if (variableType === '[object Object]') {
@@ -892,3 +894,4 @@ export const rmWrapClass = (variable) => {
     console.log(variable, newVariable);
     return newVariable;
 };
+
