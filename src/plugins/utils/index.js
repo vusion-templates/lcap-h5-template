@@ -29,8 +29,9 @@ import { getAppTimezone, isValidTimezoneIANAString } from './timezone';
 import { NaslDecimal, NaslLong } from '../dataTypes/packingType';
 import {
     naslAdd, naslMinus, naslTimes, naslDividedBy, naslModulo, naslGreaterThan, naslGreaterThanOrEqual,
-    naslLessThan, naslLessThanOrEqual, naslEquals, naslNotEqual, isNaslNumber, isNaslDecimal, isNaslLong
+    naslLessThan, naslLessThanOrEqual, naslEquals, naslNotEqual, isNaslNumber, isNaslDecimal, isNaslLong,
 } from '../dataTypes/operations';
+import { findAsync, mapAsync, filterAsync, findIndexAsync, sortAsync } from './helper';
 
 let enumsMap = {};
 
@@ -282,16 +283,14 @@ export const utils = {
             return null;
         }
         const nullRemoved = removeNulls(arr);
-        return nullRemoved.length === 0 ? null
-            : nullRemoved.reduce((prev, cur) => naslAdd(prev, cur), 0);
+        return nullRemoved.length === 0 ? null : nullRemoved.reduce((prev, cur) => naslAdd(prev, cur), 0);
     },
     ListProduct: (arr) => {
         if (!Array.isArray(arr)) {
             return null;
         }
         const nullRemoved = removeNulls(arr);
-        return nullRemoved.length === 0 ? null
-            : nullRemoved.reduce((prev, cur) => naslTimes(prev, cur), 1);
+        return nullRemoved.length === 0 ? null : nullRemoved.reduce((prev, cur) => naslTimes(prev, cur), 1);
     },
     ListAverage: (arr) => {
         if (!Array.isArray(arr)) {
@@ -305,16 +304,14 @@ export const utils = {
             return null;
         }
         const nullRemoved = removeNulls(arr);
-        return nullRemoved.length === 0 ? null
-            : nullRemoved.reduce((prev, cur) => naslGreaterThanOrEqual(prev, cur) ? prev : cur, nullRemoved[0]);
+        return nullRemoved.length === 0 ? null : nullRemoved.reduce((prev, cur) => naslGreaterThanOrEqual(prev, cur) ? prev : cur, nullRemoved[0]);
     },
     ListMin: (arr) => {
         if (!Array.isArray(arr)) {
             return null;
         }
         const nullRemoved = removeNulls(arr);
-        return nullRemoved.length === 0 ? null
-            : nullRemoved.reduce((prev, cur) => naslLessThanOrEqual(prev, cur) ? prev : cur, nullRemoved[0]);
+        return nullRemoved.length === 0 ? null : nullRemoved.reduce((prev, cur) => naslLessThanOrEqual(prev, cur) ? prev : cur, nullRemoved[0]);
     },
     ListReverse(arr) {
         if (Array.isArray(arr)) {
@@ -679,84 +676,11 @@ export const utils = {
         }
         return res;
     },
-    ListReverse(arr) {
-        if (Array.isArray(arr)) {
-            arr.reverse();
-        }
-    },
-    ListSort(arr, callback, sort) {
-        if (Array.isArray(arr)) {
-            if (typeof callback === 'function') {
-                arr.sort((a, b) => {
-                    const valueA = callback(a);
-                    const valueB = callback(b);
-                    if (Number.isNaN(valueA) || Number.isNaN(valueB) || typeof valueA === 'undefined' || typeof valueB === 'undefined' || valueA === null || valueB === null) {
-                        return 1;
-                    } else {
-                        if (valueA >= valueB) {
-                            if (sort) {
-                                return 1;
-                            }
-                            return -1;
-                        } else {
-                            if (sort) {
-                                return -1;
-                            }
-                            return 1;
-                        }
-                    }
-                });
-            }
-        }
-    },
     ListFindAll(arr, callback) {
         if (Array.isArray(arr)) {
             if (typeof callback === 'function') {
                 return arr.filter(callback);
             }
-        }
-    },
-    ListDistinct(arr) {
-        if (Array.isArray(arr)) {
-            const map = new Map();
-            let i = 0;
-            while (i < arr.length) {
-                if (map.get(arr[i])) {
-                    arr.splice(i, 1);
-                    i--;
-                } else {
-                    map.set(arr[i], true);
-                }
-                i++;
-            }
-        }
-    },
-    // 随着 PageOf 失效，可删除
-    ListSliceToPageOf(arr, page, size) {
-        if (Array.isArray(arr) && page) {
-            const content = arr.slice((page - 1) * size, size);
-            const total = arr.length;
-            const totalPages = Math.ceil(total / size);
-            return {
-                content,
-                number: page,
-                size,
-                numberOfElements: content.length,
-                totalPages,
-                totalElements: total,
-                last: page === totalPages,
-                first: page === 1,
-                empty: total,
-            };
-        }
-    },
-    SliceToListPage(arr, page, size) {
-        if (Array.isArray(arr) && page) {
-            const list = arr.slice((page - 1) * size, size);
-            const total = arr.length;
-            return { list, total };
-        } else {
-            return { list: [], total: 0 };
         }
     },
     CurrDate(tz) {
