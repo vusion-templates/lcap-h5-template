@@ -9,6 +9,13 @@ export const isUnhandledVal = (v) => [NaN, Infinity, -Infinity, undefined].inclu
 const isUnhandledValStr = (v) => ['NaN', 'Infinity', '-Infinity', 'undefined'].includes(v);
 const isNumberStr = (str) => /^[-+]?\d+(\.\d+)?$/.test(str);
 
+function safeEval(code) {
+    // return eval(code)
+    const modifiedCode = code.replace(/^0+(?!$)/, ''); // 删除前缀0
+    // eslint-disable-next-line no-new-func
+    return new Function(`return ${modifiedCode}`)();
+}
+window.safeEval = safeEval;
 // side effects. 使用副作用修改操作数
 function operandImplicitConversion(wrapper) {
     if (isNaslNumber(wrapper.x) && typeof wrapper.y === 'number') {
@@ -55,8 +62,8 @@ const shouldRunJSBuiltinOperation = (x, y, op) => {
 };
 
 const runJSBuiltinArithOperation = (x, y, op) => {
-    let xx = isNaslNumber(x) ? eval(x.__str) : x;
-    let yy = isNaslNumber(y) ? eval(y.__str) : y;
+    const xx = isNaslNumber(x) ? safeEval(x.__str) : x;
+    const yy = isNaslNumber(y) ? safeEval(y.__str) : y;
 
     const jsBuiltInRes = opMap[op](xx, yy);
     if (isUnhandledVal(jsBuiltInRes)) {
@@ -68,9 +75,7 @@ const runJSBuiltinArithOperation = (x, y, op) => {
         if (isNaslDecimal(x) || isNaslDecimal(y)) {
             return new NaslDecimal(jsBuiltInRes);
         } else {
-            return Number.isInteger(jsBuiltInRes)
-                ? new NaslLong(jsBuiltInRes)
-                : new NaslDecimal(jsBuiltInRes);
+            return Number.isInteger(jsBuiltInRes) ? new NaslLong(jsBuiltInRes) : new NaslDecimal(jsBuiltInRes);
         }
     }
     return jsBuiltInRes;
@@ -84,8 +89,19 @@ const runJSBuiltInRelationalOperation = (x, y, op) => {
 
 const dispatchBinaryArithOperation = (x, y, op) => {
     if (isNumberStr(x) && isNumberStr(y)) {
-        x = new window.NaslDecimal(x);
-        y = new window.NaslDecimal(y);
+        if (isNaslLong(x)) {
+            x = new window.NaslLong(x);
+        } else {
+            x = new window.NaslDecimal(x);
+        }
+        if (isNaslLong(y)) {
+            y = new window.NaslLong(y);
+        } else {
+            y = new window.NaslDecimal(y);
+        }
+
+        // x = new window.NaslDecimal(x);
+        // y = new window.NaslDecimal(y);
     }
     if (shouldRunJSBuiltinOperation(x, y, op)) {
         return runJSBuiltinArithOperation(x, y, op);
