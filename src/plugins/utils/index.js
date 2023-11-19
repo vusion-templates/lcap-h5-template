@@ -29,8 +29,9 @@ import { getAppTimezone, isValidTimezoneIANAString } from './timezone';
 import { NaslDecimal, NaslLong } from '../dataTypes/packingType';
 import {
     naslAdd, naslMinus, naslTimes, naslDividedBy, naslModulo, naslGreaterThan, naslGreaterThanOrEqual,
-    naslLessThan, naslLessThanOrEqual, naslEquals, naslNotEqual, isNaslNumber, isNaslDecimal, isNaslLong
+    naslLessThan, naslLessThanOrEqual, naslEquals, naslNotEqual, isNaslNumber, isNaslDecimal, isNaslLong,
 } from '../dataTypes/operations';
+import { findAsync, mapAsync, filterAsync, findIndexAsync, sortAsync } from './helper';
 
 let enumsMap = {};
 
@@ -282,16 +283,14 @@ export const utils = {
             return null;
         }
         const nullRemoved = removeNulls(arr);
-        return nullRemoved.length === 0 ? null
-            : nullRemoved.reduce((prev, cur) => naslAdd(prev, cur), 0);
+        return nullRemoved.length === 0 ? null : nullRemoved.reduce((prev, cur) => naslAdd(prev, cur), 0);
     },
     ListProduct: (arr) => {
         if (!Array.isArray(arr)) {
             return null;
         }
         const nullRemoved = removeNulls(arr);
-        return nullRemoved.length === 0 ? null
-            : nullRemoved.reduce((prev, cur) => naslTimes(prev, cur), 1);
+        return nullRemoved.length === 0 ? null : nullRemoved.reduce((prev, cur) => naslTimes(prev, cur), 1);
     },
     ListAverage: (arr) => {
         if (!Array.isArray(arr)) {
@@ -305,16 +304,14 @@ export const utils = {
             return null;
         }
         const nullRemoved = removeNulls(arr);
-        return nullRemoved.length === 0 ? null
-            : nullRemoved.reduce((prev, cur) => naslGreaterThanOrEqual(prev, cur) ? prev : cur, nullRemoved[0]);
+        return nullRemoved.length === 0 ? null : nullRemoved.reduce((prev, cur) => naslGreaterThanOrEqual(prev, cur) ? prev : cur, nullRemoved[0]);
     },
     ListMin: (arr) => {
         if (!Array.isArray(arr)) {
             return null;
         }
         const nullRemoved = removeNulls(arr);
-        return nullRemoved.length === 0 ? null
-            : nullRemoved.reduce((prev, cur) => naslLessThanOrEqual(prev, cur) ? prev : cur, nullRemoved[0]);
+        return nullRemoved.length === 0 ? null : nullRemoved.reduce((prev, cur) => naslLessThanOrEqual(prev, cur) ? prev : cur, nullRemoved[0]);
     },
     ListReverse(arr) {
         if (Array.isArray(arr)) {
