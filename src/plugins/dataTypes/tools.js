@@ -928,7 +928,7 @@ const deepAttachAndProcess = (source, target) => {
             }
         });
     } else if (sourceType === '[object Object]' && !(source instanceof NaslLong || source instanceof NaslDecimal)) {
-        for (let prop in source) {
+        for (const prop in source) {
             if (source.hasOwnProperty(prop)) {
                 const sourceItem = source[prop];
                 target[prop] = deepAttachAndProcess(sourceItem, target[prop]);
@@ -938,7 +938,7 @@ const deepAttachAndProcess = (source, target) => {
         target = source;
     }
     return target;
-}
+};
 
 // 移除变量内部的包装类
 export const rmWrapClass = (source, target, shouldAttach) => {
@@ -982,7 +982,7 @@ export const rmWrapClass = (source, target, shouldAttach) => {
             }
         });
     } else if (source instanceof window.NaslLong || source instanceof window.NaslDecimal) {
-        target = source.value?.toNumber?.() || undefined;
+        target = source.value?.toNumber?.() ?? undefined;
     } else if (sourceType === '[object Object]') {
         if (!target) {
             target = {};
@@ -997,6 +997,5 @@ export const rmWrapClass = (source, target, shouldAttach) => {
 };
 
 // 加上变量内部的包装类
-export const addWrapClass = (typeKey, value, target) => {
-    return deepAttachAndProcess(genInitData(typeKey, value), target);
-};
+export const addWrapClass = (typeKey, value, target) => deepAttachAndProcess(genInitData(typeKey, value), target);
+
