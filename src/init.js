@@ -172,7 +172,7 @@ const init = (appConfig, platformConfig, routes, metaData) => {
         locale: locale,
         messages: i18nInfo.messages,
     });
-
+    window.$i18n = i18n;
     const app = new Vue({
         name: 'app',
         router,
@@ -214,12 +214,12 @@ function getUserLanguage(appConfig, messages = {}) {
             let baseLang = locale.substring(0, 2);
             const languageList = Object.keys(messages);
             // 查找列表中是否有与基础语言代码相同的项
-            let match = languageList.find(lang => lang.startsWith(baseLang));
+            let match = languageList.find((lang) => lang.startsWith(baseLang));
             // 如果存在前两位一样的就用这个
             if (match) {
                 locale = match;
             } else {
-            // 如果不存在，就用默认语言
+                // 如果不存在，就用默认语言
                 locale = appConfig.i18nInfo.locale || 'zh-CN';
             }
         }
