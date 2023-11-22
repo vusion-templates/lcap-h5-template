@@ -247,7 +247,9 @@ export default {
                 // 更新当前模板的语言
                 appVM.$i18n.locale = newLocale;
                 // 调用UI库更新当前语言
-                window.Vue.prototype.$vantLang = newLocale
+                window.Vue.prototype.$vantLang = newLocale;
+                // 重新加载页面
+                window.location.reload();
             },
             getI18nList() {
                 // 在ide中拼接好
