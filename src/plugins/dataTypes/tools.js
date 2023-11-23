@@ -1,11 +1,8 @@
-import { formatISO } from 'date-fns';
+import { format, formatISO } from 'date-fns';
 import { VanToast as Toast } from '@lcap/mobile-ui';
 import { getAppTimezone } from '../utils/timezone';
 const momentTZ = require('moment-timezone');
 const moment = require('moment');
-import { NaslLong, NaslDecimal } from './packingType.js';
-window.NaslLong = NaslLong;
-window.NaslDecimal = NaslDecimal;
 
 function tryJSONParse(str) {
     let result;
@@ -19,7 +16,6 @@ function tryJSONParse(str) {
 
 export const typeDefinitionMap = new Map();
 const typeMap = new Map();
-window.$typeMap = typeMap;
 
 // 生成typeKey
 export function genSortedTypeKey(typeAnnotation) {
@@ -64,15 +60,7 @@ export function genSortedTypeKey(typeAnnotation) {
     }
     return typeKeyArr.join('');
 }
-function parseNumberValue(defaultValue, typeAnnotation) {
-    const { typeKind, typeName } = typeAnnotation;
-    const isNaslNumber = typeKind === 'primitive' && ['Decimal', 'Long', 'Double', 'Int'].includes(typeName);
-    if (isNaslNumber) {
-        return String(defaultValue);
-    } else {
-        return tryJSONParse(defaultValue) !== undefined ? tryJSONParse(defaultValue) : defaultValue;
-    }
-}
+
 // 生成构造函数
 function genConstructor(typeKey, definition) {
     if (typeMap[typeKey]) {
@@ -116,7 +104,6 @@ function genConstructor(typeKey, definition) {
                 }
             }
         }
-
         let code = `
             const level = params.level;
             const defaultValue = params.defaultValue;
@@ -125,10 +112,6 @@ function genConstructor(typeKey, definition) {
                 Object.assign(this, defaultValue);
             }
         `;
-        // if (isNaslNumber) {
-        //     code += ``;
-        // }
-
         if (Array.isArray(propList)) {
             propList.forEach((property) => {
                 const {
@@ -138,8 +121,7 @@ function genConstructor(typeKey, definition) {
                 } = property || {};
                 const defaultValue = defaultCode?.code;
 
-                const isNaslNumber = typeAnnotation?.typeKind === 'primitive' && ['Decimal', 'Long', 'Double', 'Int'].includes(typeAnnotation?.typeName);
-
+                // const defaultValue = property.defaultCode;
                 const defaultValueType = Object.prototype.toString.call(defaultValue);
                 const typeKey = genSortedTypeKey(typeAnnotation);
                 const typeDefinition = typeDefinitionMap[typeKey];
@@ -164,10 +146,10 @@ function genConstructor(typeKey, definition) {
                     if ([''].includes(defaultValue)) {
                         parsedValue = undefined;
                     } else {
-                        parsedValue = parseNumberValue(defaultValue, typeAnnotation);
+                        parsedValue = tryJSONParse(defaultValue) ?? defaultValue;
                     }
                 }
-                if (!isNaslNumber && Object.prototype.toString.call(parsedValue) === '[object String]' && !defaultCode?.executeCode) {
+                if (Object.prototype.toString.call(parsedValue) === '[object String]' && !defaultCode?.executeCode) {
                     parsedValue = `\`${parsedValue.replace(/['"`\\]/g, (m) => `\\${m}`)}\``;
                 }
                 const needGenInitFromSchema = typeAnnotation && !['primitive', 'union'].includes(typeAnnotation.typeKind);
@@ -176,31 +158,7 @@ function genConstructor(typeKey, definition) {
                 if (needGenInitFromSchema) {
                     code += `Vue.prototype.$genInitFromSchema('${sortedTypeKey}',`;
                 }
-                // code += `((defaultValue && defaultValue.${propertyName}) === null || (defaultValue && defaultValue.${propertyName}) === undefined) ? ${parsedValue} : defaultValue && defaultValue.${propertyName}`;
-                // parsedValue = defaultValue?.expression?.toJS?.() ?? undefined;// 需要看下为啥这里可以用 toJS
-
-                if (isNaslNumber) {
-                    const consMap = {
-                        Decimal: 'NaslDecimal',
-                        Double: 'NaslDecimal',
-                        Int: 'NaslLong',
-                        Long: 'NaslLong',
-                    };
-                    // ? new NaslDecimal(`\'2.100\'`)
-                    parsedValue = String(parsedValue);
-                    const consName = consMap[typeAnnotation.typeName];
-                    //  ? new ${consName}('${parsedValue}')
-                    // ? defaultValue && defaultValue.${propertyName}
-                    const isNil = (val) => val === undefined || val === null || val === 'undefined' || val === 'null';
-                    const getNilExp = () => isNil(parsedValue) ? `(defaultValue && defaultValue.${propertyName})` : `new ${consName}('${parsedValue}')`;
-                    code += `((defaultValue && defaultValue.${propertyName}) === null || (defaultValue && defaultValue.${propertyName}) === undefined)
-                        ? ${getNilExp()}
-                        : defaultValue && new ${consName}(defaultValue.${propertyName})`;
-                } else {
-                    code += `((defaultValue && defaultValue.${propertyName}) === null || (defaultValue && defaultValue.${propertyName}) === undefined)
-                        ? ${parsedValue}
-                        : defaultValue && defaultValue.${propertyName}`;
-                }
+                code += `((defaultValue && defaultValue.${propertyName}) === null || (defaultValue && defaultValue.${propertyName}) === undefined) ? ${parsedValue} : defaultValue && defaultValue.${propertyName}`;
                 if (needGenInitFromSchema) {
                     code += `, level)`;
                 }
@@ -281,21 +239,6 @@ export function isInstanceOf(variable, typeKey) {
             && [
                 'nasl.core.Long',
                 'nasl.core.Decimal',
-            ].includes(typeKey)
-        ) {
-            return true;
-        } else if ( // 这里数字字面量变成了 对象'[object object]' 所以都不会命中
-            (varStr === '[object Object]' && variable instanceof NaslDecimal)
-            && [
-                'nasl.core.Double',
-                'nasl.core.Decimal',
-            ].includes(typeKey)
-        ) {
-            return true;
-        } else if (
-            (varStr === '[object Object]' && variable instanceof NaslLong)
-            && [
-                'nasl.core.Integer', 'nasl.core.Long',
             ].includes(typeKey)
         ) {
             return true;
@@ -466,8 +409,7 @@ export const genInitData = (typeKey, defaultValue, parentLevel) => {
         if ([''].includes(defaultValue)) {
             parsedValue = undefined;
         } else {
-            // parsedValue = tryJSONParse(defaultValue) !== undefined ? tryJSONParse(defaultValue) : defaultValue;
-            parsedValue = parseNumberValue(defaultValue, typeDefinition);
+            parsedValue = tryJSONParse(defaultValue) !== undefined ? tryJSONParse(defaultValue) : defaultValue;
         }
     }
     if (level > 2 && [undefined, null].includes(parsedValue)) {
@@ -557,13 +499,9 @@ export const toString = (typeKey, variable, tz, tabSize = 0, collection = new Se
     let str = '';
     const isPrimitive = isDefPrimitive(typeKey);
     if (isPrimitive) { // 基础类型
-        // str = '' + variable;
-        str = String(variable);
+        str = '' + variable;
         // >=8位有效数字时，按小e
         if (['nasl.core.Double', 'nasl.core.Decimal'].includes(typeKey)) {
-            if (variable instanceof NaslDecimal) {
-                str = '' + variable.__str;
-            }
             const varArr = str.split('.');
             let count = 0;
             varArr.forEach((varStr) => {
@@ -576,11 +514,7 @@ export const toString = (typeKey, variable, tz, tabSize = 0, collection = new Se
                 str = variable;
             }
         }
-        if (['nasl.core.Integer', 'nasl.core.Long'].includes(typeKey)) {
-            if (variable instanceof NaslLong) {
-                str = '' + variable.value.toString();
-            }
-        }
+
         // 日期时间处理
         if (typeKey === 'nasl.core.Date') {
             str = momentTZ.tz(new Date(variable), getAppTimezone(tz)).format('YYYY-MM-DD');
@@ -613,7 +547,7 @@ export const toString = (typeKey, variable, tz, tabSize = 0, collection = new Se
                 });
                 str = momentTZ.tz(new Date('2022-01-01 ' + varArr.join(':')), getAppTimezone(tz)).format(formatArr.join(':'));
             } else {
-                str = momentTZ.tz(new Date(variable), getAppTimezone(tz)).format('HH:mm:ss');
+                str = momentTZ.tz(new Date(variable), getAppTimezone(tz).format('HH:mm:ss'));
             }
         } else if (typeKey === 'nasl.core.DateTime') {
             str = momentTZ.tz(new Date(variable), getAppTimezone(tz)).format('YYYY-MM-DD HH:mm:ss');
@@ -764,7 +698,7 @@ export const toString = (typeKey, variable, tz, tabSize = 0, collection = new Se
                 str += `\n}`;
             }
         } else {
-            str = String(variable);
+            str = '' + variable;
         }
     }
     return str;
@@ -821,15 +755,14 @@ export const fromString = (variable, typeKey) => {
         const outputDate = formatISO(date, { format: 'extended', fractionDigits: 3 });
         return outputDate;
     } else if (typeName === 'Date' && isValidDate(variable, DateReg)) {
-        return moment(new Date(variable)).format('YYYY-MM-DD');
+        return (new Date(variable)).format('YYYY-MM-dd');
     } else if (typeName === 'Time' && TimeReg.test(variable)) {
         // ???
         return moment(new Date('2022-01-01 ' + variable)).format('HH:mm:ss');
     }
     // 浮点数
     else if (['Decimal', 'Double'].includes(typeName) && FloatNumberReg.test(variable)) {
-        // return parseFloat(+variable);
-        return new NaslDecimal(variable);
+        return parseFloat(+variable);
     }
     // 整数
     else if (['Integer', 'Long'].includes(typeName) && IntegerReg.test(variable)) {
@@ -842,8 +775,7 @@ export const fromString = (variable, typeKey) => {
             numberVar < maxMap[typeName]
             && numberVar > -maxMap[typeName]
         ) {
-            // return numberVar;
-            return new NaslLong(numberVar);
+            return numberVar;
         }
     }
     // 布尔
