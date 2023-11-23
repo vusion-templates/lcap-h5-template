@@ -23,11 +23,3 @@ export const navigateToUserInfoPage = () => {
     const uri = location.href;
     window.wx.miniProgram.navigateTo({ url: `/pages/userinfo/index?redirect_uri=${uri}` });
 };
-
-/* 跳转到手机号页面*/
-export const navigateToUserPhonePage = () => {
-    if (!isMiniApp)
-        return;
-    const uri = location.href;
-    window.wx.miniProgram.navigateTo({ url: `/pages/userphone/index?redirect_uri=${uri}` });
-};
