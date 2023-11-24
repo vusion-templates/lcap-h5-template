@@ -12,7 +12,7 @@
     "lint": "npx eslint --quiet",
     "lint:fix": "npm run lint -- \"./src/**/*.{js,vue}\" --fix",
     "dll": "npx webpack --config webpack.dll.config.js --env.NODE_ENV production && npx webpack --config webpack.dll.config.js --env.NODE_ENV development",
-    "test:unit": "vue-cli-service test:unit",
+    "test:unit": "vue-cli-service test:unit --coverage",
     "test:unit:watch": "npm run test:unit -- --watch",
     "ui": "npx vue ui",
     "manage": "plop",

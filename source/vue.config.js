@@ -1,6 +1,7 @@
 const path = require('path');
 
 module.exports = {
+    parallel: false,
     configureWebpack: {
         resolve: {
             alias: {
