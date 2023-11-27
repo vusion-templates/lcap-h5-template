@@ -259,6 +259,10 @@ export default {
             getUserLanguage() {
                 return navigator.language || navigator.userLanguage;
             },
+            async getCurrentIp() {
+                const res = await configurationInitService().getCurrentIp();
+                return res;
+            },
         };
         Object.keys(porcessPorts).forEach((service) => {
             $global[service] = porcessPorts[service];
