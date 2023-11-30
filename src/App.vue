@@ -7,7 +7,7 @@
 </template>
 
 <script>
-import SFreesassLogin from '@/components/s-freesass-login.vue';
+import SFreesassLogin from '@/components/s-freesass-login';
 import SFreesassTransfer from '@/components/s-freesass-transfer';
 import { localCacheVariableMixin } from '@/mixins/localCacheVariableMixin';
 
@@ -16,10 +16,9 @@ const serviceMap = {
     checkSfToken: `${location.protocol}//sfsso.community1.lcap.qz.163yun.com/api/checkSfToken`,
     checkSfTokenNew: `${location.protocol}//sfsso-community1.app.codewave.163.com/api/checkSfToken`,
 };
-
 export default {
-    mixins: [localCacheVariableMixin],
     components: { SFreesassLogin, SFreesassTransfer },
+    mixins: [localCacheVariableMixin],
     data() {
         return {
             loginFinished: false,
@@ -39,7 +38,6 @@ export default {
         },
     },
     async mounted() {
-        // alert('🚀 appInfo: ' + JSON.stringify(window.appInfo));
         if (this.isSharePage && +window.appInfo?.tenantType === 1) {
             try {
                 let url = serviceMap.checkSfToken;

@@ -41,6 +41,26 @@ export function filterAuthResources(resources) {
 }
 
 export const getAuthGuard = (router, routes, authResourcePaths, appConfig, baseResourcePaths) => async (to, from, next) => {
+    function addAuthRoutes(resources) {
+        if (Array.isArray(resources) && resources.length) {
+            const userResourcePaths = (resources || []).map((resource) => resource?.resourceValue || resource?.ResourceValue);
+            const otherRoutes = filterRoutes(routes, null, (route, ancestorPaths) => {
+                const routePath = route.path;
+                const completePath = [...ancestorPaths, routePath].join('/');
+                const authPath = userResourcePaths.find((userResourcePath) => userResourcePath?.startsWith(completePath));
+                return authPath;
+            });
+            otherRoutes.forEach((route) => {
+                router.addRoute(route);
+            });
+        }
+    }
+    function concatResourcesRoutes(resources, baseRoutes) {
+        return resources.concat(baseRoutes.map((route) => ({
+            resourceValue: route,
+            // 如果后续需要区分路由类型，这里也需要补充 resourceType
+        })));
+    }
     const userInfo = Vue.prototype.$global.userInfo || {};
     const $auth = Vue.prototype.$auth;
     const redirectedFrom = parsePath(to.redirectedFrom);
@@ -52,40 +72,17 @@ export const getAuthGuard = (router, routes, authResourcePaths, appConfig, baseR
         }
         return false;
     });
-
-    function concatResourcesRoutes(resources, baseRoutes) {
-        return resources.concat(baseRoutes.map((route) => ({
-            resourceValue: route,
-            // 如果后续需要区分路由类型，这里也需要补充 resourceType
-        })));
-    }
-
-    function addAuthRoutes(resources) {
-        if (resources && resources.length) {
-            const userResourcePaths = (resources || []).map((resource) => resource?.resourceValue || resource?.ResourceValue);
-            const otherRoutes = filterRoutes(routes, null, (route, ancestorPaths) => {
-                const routePath = route.path;
-                const completePath = [...ancestorPaths, routePath].join('/');
-                const authPath = userResourcePaths.find((userResourcePath) => userResourcePath.startsWith(completePath));
-                return authPath;
-            });
-            otherRoutes.forEach((route) => {
-                router.addRoute(route);
-            });
-        }
-    }
-
     const noAuthView = findNoAuthView(routes);
     if (authPath) {
         if (!$auth.isInit()) {
             if (!userInfo.UserId) {
+                localStorage.setItem('beforeLogin', JSON.stringify(location));
                 next({ path: `${getBasePath()}/login` });
             } else {
                 try {
                     const resources = await $auth.getUserResources(appConfig.domainName);
                     const realResources = filterAuthResources(concatResourcesRoutes(resources, baseResourcePaths));
                     addAuthRoutes(realResources);
-
                     // 即使没有查到权限，也需要重新进一遍，来决定去 无权限页面 还是 404页面
                     next({
                         path: toPath,

@@ -1,13 +1,20 @@
-import Service from 'request-pre';
 import axios from 'axios';
+import Service from 'request-pre';
 import { stringify } from 'qs';
+import cookie from '@/utils/cookie';
+import { addConfigs, shortResponse } from './add.configs';
 import { getFilenameFromContentDispositionHeader } from './tools';
 import paramsSerializer from './paramsSerializer';
-import cookie from '@/utils/cookie';
 import { VanToast as Toast } from '@lcap/mobile-ui';
-import { addConfigs, shortResponse, } from './add.configs';
 
-
+const formatContentType = function (contentType, data) {
+    const map = {
+        'application/x-www-form-urlencoded'(data) {
+            return stringify(data);
+        },
+    };
+    return map[contentType] ? map[contentType](data) : data;
+};
 const parseCookie = (str) =>
     str
         .split(';')
@@ -34,15 +41,7 @@ const foramtCookie = (cookieStr) => {
             maxAge: '',
         };
     });
-    return result
-};
-const formatContentType = function (contentType, data) {
-    const map = {
-        'application/x-www-form-urlencoded'(data) {
-            return stringify(data);
-        },
-    };
-    return map[contentType] ? map[contentType](data) : data;
+    return result;
 };
 
 /**
@@ -52,7 +51,7 @@ const formatContentType = function (contentType, data) {
  * 支持 query 参数
  */
 function download(url) {
-    const { path, method, body = {}, headers = {}, query = {} } = url;
+    const { path, method, body = {}, headers = {}, query = {}, timeout } = url;
 
     return axios({
         url: path,
@@ -60,10 +59,21 @@ function download(url) {
         params: query,
         data: formatContentType(headers['Content-Type'], body),
         responseType: 'blob',
+        timeout,
     }).then((res) => {
         // 包含 content-disposition， 从中解析名字，不包含 content-disposition 的获取请求地址的后缀
-        const effectiveFileName = res.request.getAllResponseHeaders().includes('content-disposition') ? getFilenameFromContentDispositionHeader(res.request.getResponseHeader('content-disposition')) : res.request.responseURL.split('/').pop();
+        let effectiveFileName = res.request.getAllResponseHeaders().includes('content-disposition') ? getFilenameFromContentDispositionHeader(res.request.getResponseHeader('content-disposition')) : res.request.responseURL.split('/').pop();
+        effectiveFileName = decodeURIComponent(effectiveFileName);
         const { data, status, statusText } = res;
+        // 如果没有size长度
+        if (data && data.size === 0) {
+            return Promise.resolve({
+                data: {
+                    code: status,
+                    msg: statusText,
+                },
+            });
+        }
         const downloadUrl = window.URL.createObjectURL(new Blob([data]));
         const link = document.createElement('a');
         link.href = downloadUrl;
@@ -88,8 +98,6 @@ function download(url) {
 }
 
 const requester = function (requestInfo) {
-    // requestInfo = cloneDeep(requestInfo, (value) => value === undefined ? null : value);
-
     const { url, config = {} } = requestInfo;
     const { path, method, body = {}, headers = {}, query = {} } = url;
     const baseURL = config.baseURL ? config.baseURL : '';
@@ -210,7 +218,7 @@ export const createLogicService = function createLogicService(apiSchemaList, ser
                 if (!response) {
                     return Promise.reject();
                 }
-                const status = 'success'
+                const status = 'success';
                 const { config } = requestInfo;
                 const serviceType = config?.serviceType;
                 if (serviceType && serviceType === 'external') {
@@ -238,7 +246,7 @@ export const createLogicService = function createLogicService(apiSchemaList, ser
                 if (!err.response) {
                     if (!config.noErrorTip) {
                         Toast({
-                            message: '系统错误，请联系管理员！',
+                            message: '系统错误，请查看日志！',
                             position: 'top',
                         });
                         return;

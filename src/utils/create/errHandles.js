@@ -5,7 +5,7 @@ export default {
     defaults({ config }, err) {
         if (!config.noErrorTip) {
             Toast({
-                message: err.msg || '系统错误，请联系管理员！',
+                message: err.msg || '系统错误，请查看日志',
                 position: 'top',
             });
         }
@@ -13,7 +13,7 @@ export default {
     500({ config }, err = {}) {
         if (!config.noErrorTip) {
             Toast({
-                message: err.msg || '系统错误，请联系管理员！',
+                message: err.msg || '系统错误，请查看日志',
                 position: 'top',
             });
         }
@@ -27,9 +27,28 @@ export default {
     400({ config }, err = {}) {
         if (!config.noErrorTip) {
             Toast({
-                message: err.msg || '系统错误，请联系管理员！',
+                message: err.msg || '系统错误，请查看日志',
                 position: 'top',
             });
+        }
+    },
+    400({ config }, err = {}) {
+        if (!config.noErrorTip) {
+            Toast({
+                message: err.msg || '系统错误，请查看日志',
+                position: 'top',
+            });
+        }
+    },
+    401({ config }, err = {}) {
+        if (err.Code === 401 && err.Message === 'token.is.invalid') {
+            if (window.LcapMicro?.loginFn) {
+                window.LcapMicro.loginFn();
+                return;
+            }
+        }
+        if (err.Code === 401 && err.Message === 'token.is.invalid') {
+            location.href = '/login';
         }
     },
     403({ config }, err = {}) {
@@ -46,7 +65,7 @@ export default {
     remoteError({ config }, err) {
         if (!config.noErrorTip) {
             Toast({
-                message: '系统错误，请联系管理员！',
+                message: '系统错误，请查看日志',
                 position: 'top',
             });
         }
@@ -54,7 +73,7 @@ export default {
     localError({ config }, err) {
         if (!config.noErrorTip) {
             Toast({
-                message: '系统错误，请联系管理员！',
+                message: '系统错误，请查看日志',
                 position: 'top',
             });
         }

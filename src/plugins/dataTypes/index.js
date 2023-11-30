@@ -1,15 +1,15 @@
-// import generate from '@babel/generator';
 import { Decimal } from 'decimal.js';
-
-import { initService as configurationInitService } from '@/apis/configuration';
-import cookie from '@/utils/cookie';
-import storage from '@/utils/storage/localStorage';
-import authService from '../auth/authService';
-import { initApplicationConstructor, genSortedTypeKey, genInitData, isInstanceOf } from './tools';
-import { navigateToUserInfoPage } from '../common/wx';
-import { getBasePath } from '@/utils/encodeUrl';
 import CryptoJS from 'crypto-js';
+import cookie from '@/utils/cookie';
+import { initService as configurationInitService } from '@/apis/configuration';
+import { initService as lowauthInitService } from '@/apis/lowauth';
+import { initService as ioInitService } from '@/apis/io';
+import storage from '@/utils/storage/localStorage';
+import { initApplicationConstructor, genSortedTypeKey, genInitData, isInstanceOf } from './tools';
+import { getBasePath } from '@/utils/encodeUrl';
+import authService from '../auth/authService';
 import { porcessPorts } from '../router/processService';
+import { navigateToUserInfoPage } from '../common/wx';
 
 window.CryptoJS = CryptoJS;
 const aesKey = ';Z#^$;8+yhO!AhGo';
@@ -19,7 +19,7 @@ export default {
         const dataTypesMap = options.dataTypesMap || {}; // TODO 统一为  dataTypesMap
         const i18nInfo = options.i18nInfo || {};
 
-        initApplicationConstructor(dataTypesMap);
+        initApplicationConstructor(dataTypesMap, Vue);
 
         const genInitFromSchema = (typeKey, defaultValue, level) => genInitData(typeKey, defaultValue, level);
 
@@ -50,7 +50,7 @@ export default {
             frontendVariables,
             // 加
             add(x, y) {
-                if (typeof (x) !== 'number' || typeof (y) !== 'number') {
+                if (typeof x !== 'number' || typeof y !== 'number') {
                     return x + y;
                 }
                 if (!x) {
@@ -103,6 +103,45 @@ export default {
             isEqual(x, y) {
                 return x == y;
             },
+            requestFullscreen() {
+                return document.body.requestFullscreen();
+            },
+            exitFullscreen() {
+                return document.exitFullscreen();
+            },
+            /**
+             * 比较键盘事件
+             * @param {KeyboardEvent} event
+             * @param {String[]} target
+            */
+            compareKeyboardInput(event, target) {
+                // 将target转event
+                const targetEvent = { altKey: false, ctrlKey: false, metaKey: false, shiftKey: false, code: '' };
+                target.forEach((item) => {
+                    if (item === 'Alt') {
+                        targetEvent.altKey = true;
+                    } else if (item === 'Meta') {
+                        targetEvent.metaKey = true;
+                    } else if (item === 'Control') {
+                        targetEvent.ctrlKey = true;
+                    } else if (item === 'Shift') {
+                        targetEvent.shiftKey = true;
+                    } else {
+                        targetEvent.code = item;
+                    }
+                });
+
+                let isMatch = true;
+                for (const key in targetEvent) {
+                    if (Object.hasOwnProperty.call(targetEvent, key)) {
+                        if (targetEvent[key] !== event[key]) {
+                            isMatch = false;
+                        }
+                    }
+                }
+
+                return isMatch;
+            },
             encryptByAES({ string: message }, key = aesKey) {
                 const keyHex = CryptoJS.enc.Utf8.parse(key); //
                 const messageHex = CryptoJS.enc.Utf8.parse(message);
@@ -120,12 +159,6 @@ export default {
                 });
                 const decryptedStr = decrypt.toString(CryptoJS.enc.Utf8);
                 return decryptedStr.toString();
-            },
-            requestFullscreen() {
-                return document.body.requestFullscreen();
-            },
-            exitFullscreen() {
-                return document.exitFullscreen();
             },
             hasAuth(authPath) {
                 return authService.has(authPath);
@@ -194,8 +227,7 @@ export default {
                 const R = 6371; // Radius of the earth in km
                 const dLat = deg2rad(lat2t - lat1t); // deg2rad below
                 const dLon = deg2rad(lng2t - lng1t);
-                const a = Math.sin(dLat / 2) * Math.sin(dLat / 2)
-                    + Math.cos(deg2rad(lat1t)) * Math.cos(deg2rad(lat2t)) * Math.sin(dLon / 2) * Math.sin(dLon / 2);
+                const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) + Math.cos(deg2rad(lat1t)) * Math.cos(deg2rad(lat2t)) * Math.sin(dLon / 2) * Math.sin(dLon / 2);
                 const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
                 const d = R * c; // Distance in km
                 return d * 1000;
@@ -220,6 +252,28 @@ export default {
                     // on cancel
                 });
             },
+            async downloadFile(url, fileName) {
+                await ioInitService()
+                    .downloadFiles({
+                        body: {
+                            urls: [url],
+                            fileName,
+                        },
+                    })
+                    .then((res) => Promise.resolve(res))
+                    .catch((err) => Promise.resolve(err));
+            },
+            async downloadFiles(urls, fileName) {
+                await ioInitService()
+                    .downloadFiles({
+                        body: {
+                            urls,
+                            fileName,
+                        },
+                    })
+                    .then((res) => Promise.resolve(res))
+                    .catch((err) => Promise.resolve(err));
+            },
             async getCustomConfig(configKey = '') {
                 const configKeys = configKey.split('.');
                 const finalConfigKey = configKeys.pop();
@@ -230,10 +284,26 @@ export default {
                 if (configKey.startsWith('extensions.')) {
                     query.group = `${configKeys[0]}.${configKeys[1]}.${groupName}`;
                 }
-                const configuration = configurationInitService();
-                const res = await configuration.getCustomConfig({
+                const res = await configurationInitService().getCustomConfig({
                     path: { configKey: finalConfigKey },
                     query,
+                });
+                return res;
+            },
+            async getCurrentIp() {
+                const res = await configurationInitService().getCurrentIp();
+                return res;
+            },
+            async getUserList(query) {
+                const appEnv = window.appInfo.env;
+                const cookies = document.cookie.split('; ');
+                const token = cookies.find((cookie) => cookie.split('=')[0] === 'authorization')?.split('=')[1];
+                const res = await lowauthInitService().getUserList({
+                    body: {
+                        appEnv,
+                        token,
+                        ...query,
+                    },
                 });
                 return res;
             },
@@ -335,8 +405,7 @@ export default {
 
         const enumsMap = options.enumsMap || {};
         Vue.prototype.$enums = (key, value) => {
-            if (!key || !value)
-                return '';
+            if (!key || !value) return '';
             if (enumsMap[key]) {
                 return enumsMap[key][value];
             } else {
@@ -384,8 +453,7 @@ export default {
 
         // 实体的 updateBy 和 deleteBy 需要提前处理请求参数
         function resolveRequestData(root) {
-            if (!root)
-                return;
+            if (!root) return;
             // console.log(root.concept)
             delete root.folded;
 

@@ -2,7 +2,7 @@ import cloneDeep from 'lodash/cloneDeep';
 import isEqual from 'lodash/isEqual';
 import isObject from 'lodash/isObject';
 import {
-    addDays, subDays, addMonths, format, formatRFC3339, isValid,
+    addDays, subDays, addMonths, formatRFC3339, isValid,
     differenceInYears,
     differenceInQuarters,
     differenceInMonths,
@@ -12,22 +12,21 @@ import {
     differenceInMinutes,
     differenceInSeconds,
     getDayOfYear, getWeekOfMonth, getQuarter, startOfWeek, getMonth, getWeek, getDate, startOfQuarter,
-    addSeconds, addMinutes, addHours, addQuarters, addYears, addWeeks, formatISO,
-    eachDayOfInterval, isMonday, isTuesday, isWednesday, isThursday, isFriday, isSaturday, isSunday
+    addSeconds, addMinutes, addHours, addQuarters, addYears, addWeeks,
+    eachDayOfInterval, isMonday, isTuesday, isWednesday, isThursday, isFriday, isSaturday, isSunday,
+    format
 } from 'date-fns';
 import { formatInTimeZone } from 'date-fns-tz';
-const moment = require('moment');
-const momentTZ = require('moment-timezone');
-import Vue from 'vue';
-
 import { dateFormatter } from './Formatters';
-
-import { toString, fromString, toastAndThrowError as toastAndThrow, isDefString, isDefNumber, isDefList, isDefMap, typeDefinitionMap } from '../dataTypes/tools';
+import Vue from 'vue';
+import { toString, fromString, toastAndThrowError, isDefString, isDefNumber, isDefList, isDefMap, typeDefinitionMap } from '../dataTypes/tools';
 import Decimal from 'decimal.js';
-import { getAppTimezone, isValidTimezoneIANAString } from './timezone';
 import { findAsync, mapAsync, filterAsync, findIndexAsync, sortAsync } from './helper';
+import { getAppTimezone, isValidTimezoneIANAString } from './timezone';
 
 let enumsMap = {};
+const moment = require('moment');
+const momentTZ = require('moment-timezone');
 
 function naslDateToLocalDate(date) {
     const localTZ = Intl.DateTimeFormat().resolvedOptions().timeZone;
@@ -376,13 +375,13 @@ export const utils = {
             }
         }
     },
-    ListFilter(arr, by) {
+    ListFilter: (arr, by) => {
         if (!Array.isArray(arr) || typeof by !== 'function') {
             return null;
         }
         return arr.filter(by);
     },
-    async ListFilterAsync(arr, by) {
+    ListFilterAsync: async (arr, by) => {
         if (!Array.isArray(arr) || typeof by !== 'function') {
             return null;
         }
@@ -669,8 +668,8 @@ export const utils = {
             }
         }
     },
-    // 随着 PageOf 失效，可删除
-    ListSliceToPageOf(arr, page, size) {
+     // 随着 PageOf 失效，可删除
+     ListSliceToPageOf(arr, page, size) {
         if (Array.isArray(arr) && page) {
             const start = (page - 1) * size;
             const end = start + size;

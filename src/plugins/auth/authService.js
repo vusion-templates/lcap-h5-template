@@ -1,11 +1,9 @@
 import Vue from 'vue';
-import queryString from 'query-string';
-
 import { initService as authInitService } from '@/apis/auth';
-import cookie from '@/utils/cookie';
 import { initService as lowauthInitService } from '@/apis/lowauth';
-
+import cookie from '@/utils/cookie';
 import { getBasePath } from '@/utils/encodeUrl';
+import queryString from 'query-string';
 
 const getBaseHeaders = () => {
     const headers = {
@@ -227,7 +225,7 @@ export default {
      * 是否有权限
      * @param {*} authPath 权限路径，如 /dashboard/entity/list
      */
-    has(authPath, domainName) {
+    has(authPath) {
         return (this._map && this._map.has(authPath)) || false;
     },
 };

@@ -1,12 +1,10 @@
 import Vue from 'vue';
 import { installOptions, installFilters, install } from '@vusion/utils';
 import * as Vant from '@lcap/mobile-ui';
-// eslint-disable-next-line no-duplicate-imports
 import { VanToast as Toast } from '@lcap/mobile-ui';
 
 import MEmitter from 'cloud-ui.vusion/src/components/m-emitter.vue';
 import MPubSub from 'cloud-ui.vusion/src/components/m-pub-sub.vue';
-import { MField } from 'cloud-ui.vusion/src/components/m-field.vue';
 
 import filters from '@/filters';
 import { AuthPlugin, DataTypesPlugin, LogicsPlugin, RouterPlugin, ServicesPlugin, UtilsPlugin } from '@/plugins';
@@ -15,7 +13,6 @@ import { filterRoutes, parsePath } from '@/utils/route';
 import { getBasePath } from '@/utils/encodeUrl';
 import { filterAuthResources, findNoAuthView } from '@/router/guards/auth';
 import VueI18n from 'vue-i18n';
-
 import App from './App.vue';
 
 import '@/assets/css/index.css';
@@ -50,7 +47,6 @@ const CloudUI = {
     install,
     MEmitter,
     MPubSub,
-    MField,
 };
 // 梳理下来只有install被使用过
 window.CloudUI = CloudUI;
@@ -191,8 +187,7 @@ const init = (appConfig, platformConfig, routes, metaData) => {
     }
     const afterRouter = Vue.prototype.afterRouter;
 
-    afterRouter &&
-        router.afterEach(async (to, from, next) => {
+    afterRouter && router.afterEach(async (to, from, next) => {
             try {
                 if (afterRouter) {
                     await afterRouter(to, from);

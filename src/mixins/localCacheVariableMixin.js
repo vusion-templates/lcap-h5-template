@@ -4,7 +4,7 @@ import isEmpty from 'lodash/isEmpty';
 const ACTION_LOCAL_CACHE_VARIABLE_TYPE = {
   GET: 'get',
   UPDATE: 'update',
-  UNDEFINED: 'undefined'
+  UNDEFINED: 'undefined',
 };
 
 // 定义一个名为 visibilityMixin 的全局混入对象
@@ -13,11 +13,11 @@ export const localCacheVariableMixin = {
     this.actionLocalCacheVariable(ACTION_LOCAL_CACHE_VARIABLE_TYPE.GET);
   },
   mounted() {
-    document.addEventListener("visibilitychange", this.handleVisibilityChange);
+    document.addEventListener('visibilitychange', this.handleVisibilityChange);
   },
   beforeDestroy() {
     this.actionLocalCacheVariable(ACTION_LOCAL_CACHE_VARIABLE_TYPE.UPDATE);
-    document.removeEventListener("visibilitychange", this.handleVisibilityChange);
+    document.removeEventListener('visibilitychange', this.handleVisibilityChange);
   },
   methods: {
     handleVisibilityChange() {
@@ -29,9 +29,7 @@ export const localCacheVariableMixin = {
       const localCacheVariableSet = this.$localCacheVariableSet;
       const { frontendVariables } = this.$global;
 
-
       for (const localCacheVariableKey of localCacheVariableSet) {
-
         switch (type) {
           // 从 localCache 中获取数据
           case ACTION_LOCAL_CACHE_VARIABLE_TYPE.GET:
@@ -42,7 +40,6 @@ export const localCacheVariableMixin = {
                 frontendVariables[localCacheVariableKey] = localCacheValue;
               }
             }
-
 
             break;
           // 将 frontendVariables 中的数据同步到 localCache 触发时机 应用销毁前 & 应用切换到后台
@@ -64,9 +61,8 @@ export const localCacheVariableMixin = {
             console.warn('actionLocalCacheVariable: type is undefined', type);
             break;
         }
-
       }
     },
 
-  }
+  },
 };

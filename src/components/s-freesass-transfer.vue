@@ -1,15 +1,10 @@
 <template>
     <div :class="$style.freesassroot">
-        <iframe ref="iframe3" style="width:1px;height:1px;opacity: 0;"
-            src="https://sfsso-community1.app.codewave.163.com/sso"></iframe>
-
+        <u-iframe ref="iframe3" style="width:1px;height:1px;opacity: 0;" src="https://sfsso-community1.app.codewave.163.com/sso"></u-iframe>
     </div>
 </template>
 
 <script>
-import auth from '@/apis/auth';
-import cookie from '@/utils/cookie';
-
 export default {
     name: 's-freesass-transfer',
     data() {
