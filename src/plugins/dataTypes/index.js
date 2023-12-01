@@ -33,14 +33,6 @@ export default {
         const frontendVariables = {};
         const localCacheVariableSet = new Set(); // 本地存储的全局变量集合
 
-        if (Array.isArray(options && options.frontendVariables)) {
-            options.frontendVariables.forEach((frontendVariable) => {
-                const { name, typeAnnotation, defaultValue, localCache } = frontendVariable;
-                localCache && localCacheVariableSet.add(name); // 本地存储的全局变量集合
-                frontendVariables[name] = genInitFromSchema(genSortedTypeKey(typeAnnotation), defaultValue);
-            });
-        }
-
         const $global = {
             // 用户信息
             userInfo: {},
@@ -264,6 +256,19 @@ export default {
                 return res;
             },
         };
+        Vue.prototype.$global = $global;
+        window.$global = $global;
+        if (Array.isArray(options && options.frontendVariables)) {
+            options.frontendVariables.forEach((frontendVariable) => {
+                const { name, typeAnnotation, defaultValueFn, defaultCode, localCache } = frontendVariable;
+                localCache && localCacheVariableSet.add(name); // 本地存储的全局变量集合
+                let defaultValue = defaultCode?.code;
+                if (Object.prototype.toString.call(defaultValueFn) === '[object Function]') {
+                    defaultValue = defaultValueFn(Vue);
+                }
+                frontendVariables[name] = genInitFromSchema(genSortedTypeKey(typeAnnotation), defaultValue);
+            });
+        }
         Object.keys(porcessPorts).forEach((service) => {
             $global[service] = porcessPorts[service];
         });
@@ -275,8 +280,6 @@ export default {
 
         // localCacheVariableSet 只是读写并不需要加入到响应式中故 把这个变量挂载到 Vue 的原型上
         Vue.prototype.$localCacheVariableSet = localCacheVariableSet;
-        Vue.prototype.$global = $global;
-        window.$global = $global;
 
         Vue.prototype.$isInstanceOf = isInstanceOf;
 
