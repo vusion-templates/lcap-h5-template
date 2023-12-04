@@ -9,15 +9,15 @@ import { initApplicationConstructor, genSortedTypeKey, genInitData, isInstanceOf
 import { navigateToUserInfoPage } from '../common/wx';
 import { getBasePath } from '@/utils/encodeUrl';
 import CryptoJS from 'crypto-js';
+import { porcessPorts } from '../router/processService';
 
 window.CryptoJS = CryptoJS;
 const aesKey = ';Z#^$;8+yhO!AhGo';
 
-
-
 export default {
     install(Vue, options = {}) {
         const dataTypesMap = options.dataTypesMap || {}; // TODO 统一为  dataTypesMap
+        const i18nInfo = options.i18nInfo || {};
 
         initApplicationConstructor(dataTypesMap);
 
@@ -33,17 +33,11 @@ export default {
         const frontendVariables = {};
         const localCacheVariableSet = new Set(); // 本地存储的全局变量集合
 
-        if (Array.isArray(options && options.frontendVariables)) {
-            options.frontendVariables.forEach((frontendVariable) => {
-                const { name, typeAnnotation, defaultValue, localCache } = frontendVariable;
-                localCache && localCacheVariableSet.add(name); // 本地存储的全局变量集合
-                frontendVariables[name] = genInitFromSchema(genSortedTypeKey(typeAnnotation), defaultValue);
-            });
-        }
-
         const $global = {
             // 用户信息
             userInfo: {},
+            // 国际化信息
+            i18nInfo: i18nInfo,
             // 前端全局变量
             frontendVariables,
             // 加
@@ -235,19 +229,57 @@ export default {
                 });
                 return res;
             },
+            setI18nLocale(newLocale) {
+                // 修改local中的存储的语言标识
+                localStorage.i18nLocale = newLocale;
+                // 修改当前template的语言
+                $global.i18nInfo.locale = newLocale;
+                $global.i18nInfo.currentLocale = newLocale;
+                // 修改当前语言名称
+                $global.i18nInfo.localeName = this.getI18nList().find((item) => item.id === newLocale)?.name;
+                // 更新当前模板的语言
+                appVM.$i18n.locale = newLocale;
+                // 调用UI库更新当前语言
+                window.Vue.prototype.$vantLang = newLocale;
+                // 重新加载页面
+                window.location.reload();
+            },
+            getI18nList() {
+                // 在ide中拼接好
+                return $global.i18nInfo.I18nList || [];
+            },
+            getUserLanguage() {
+                return navigator.language || navigator.userLanguage;
+            },
+            async getCurrentIp() {
+                const res = await configurationInitService().getCurrentIp();
+                return res;
+            },
         };
-        
+        Vue.prototype.$global = $global;
+        window.$global = $global;
+        if (Array.isArray(options && options.frontendVariables)) {
+            options.frontendVariables.forEach((frontendVariable) => {
+                const { name, typeAnnotation, defaultValueFn, defaultCode, localCache } = frontendVariable;
+                localCache && localCacheVariableSet.add(name); // 本地存储的全局变量集合
+                let defaultValue = defaultCode?.code;
+                if (Object.prototype.toString.call(defaultValueFn) === '[object Function]') {
+                    defaultValue = defaultValueFn(Vue);
+                }
+                frontendVariables[name] = genInitFromSchema(genSortedTypeKey(typeAnnotation), defaultValue);
+            });
+        }
+        Object.keys(porcessPorts).forEach((service) => {
+            $global[service] = porcessPorts[service];
+        });
         new Vue({
             data: {
                 $global,
             },
         });
 
-
         // localCacheVariableSet 只是读写并不需要加入到响应式中故 把这个变量挂载到 Vue 的原型上
-        Vue.prototype.$localCacheVariableSet = localCacheVariableSet; 
-        Vue.prototype.$global = $global;
-        window.$global = $global;
+        Vue.prototype.$localCacheVariableSet = localCacheVariableSet;
 
         Vue.prototype.$isInstanceOf = isInstanceOf;
 
@@ -316,9 +348,14 @@ export default {
         };
 
         // 实体的 updateBy 和 deleteBy 需要提前处理请求参数
-        function parseRequestDataType(root, prop, event, current) {
-            // eslint-disable-next-line no-eval
-            const value = eval(root[prop]);
+        function parseRequestDataType(root, _prop) {
+            let value;
+            try {
+                // eslint-disable-next-line no-eval
+                value = eval(root[_prop]);
+            } catch (err) {
+                value = root.value;
+            }
             const type = typeof value;
             // console.log('type:', type, value)
             if (type === 'number') {
@@ -349,7 +386,7 @@ export default {
         }
 
         // 实体的 updateBy 和 deleteBy 需要提前处理请求参数
-        function resolveRequestData(root, event, current) {
+        function resolveRequestData(root) {
             if (!root)
                 return;
             // console.log(root.concept)
@@ -366,14 +403,14 @@ export default {
             } else if (root.concept === 'BooleanLiteral') {
                 root.value = root.value === 'true';
             } else if (root.concept === 'Identifier') {
-                parseRequestDataType.call(this, root, 'expression', event, current);
+                parseRequestDataType.call(this, root, 'expression');
             } else if (root.concept === 'MemberExpression') {
                 if (root.expression) {
-                    parseRequestDataType.call(this, root, 'expression', event, current);
+                    parseRequestDataType.call(this, root, 'expression');
                 }
             }
-            resolveRequestData.call(this, root.left, event, current);
-            resolveRequestData.call(this, root.right, event, current);
+            resolveRequestData.call(this, root.left);
+            resolveRequestData.call(this, root.right);
             return root;
         }
 

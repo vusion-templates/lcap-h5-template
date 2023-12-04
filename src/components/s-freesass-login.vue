@@ -4,7 +4,7 @@
 
             <div style="font-style: normal;font-weight: 500;font-size: 16px;color: #333333; padding: 16px; border-bottom: 1px solid #E5E5E5;;">登录/注册</div>
 
-            <div :class="$style.title">轻舟低代码，人人皆可开发软件应用</div>
+            <div :class="$style.title">CodeWave智能开发平台，人人皆可开发软件应用</div>
             <div :class="$style.iframeWrap" style="width:100%;height:360px;">
                 <van-loading v-show="!loaded" type="spinner"></van-loading>
                 <iframe
@@ -13,7 +13,7 @@
                     ref="iframe2"
                     frameborder="0"
                     style="width:100%;height:100%;"
-                    src="//id.sf.163.com/sdk-login?cmsKey=SdkLoginPage&i18nEnable=true&locale=zh_CN&h=shufanqzlcap&t=shufanqzlcap&fromnsf=lcapAppShare"></iframe>
+                    src="//id.sf.163.com/sdk-login?cmsKey=SdkLoginPage&i18nEnable=true&locale=zh_CN&h=shufanqzlcap&t=shufanqzlcap&fromlcap=lcapAppShare"></iframe>
             </div>
             <div :class="$style.content">
                 <div style="width:14px;height:14px;margin-top:3px;">
@@ -128,7 +128,7 @@ export default {
     font-family: 'PingFang SC';
     font-style: normal;
     font-weight: 500;
-    font-size: 16px;
+    font-size: 14px;
     line-height: 24px;
     color: #333333;
     text-align: center;

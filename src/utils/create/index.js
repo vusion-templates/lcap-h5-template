@@ -100,6 +100,8 @@ const requester = function (requestInfo) {
     headers.DomainName = window.appInfo?.domainName;
     if (window.appInfo?.frontendName)
         headers['LCAP-FRONTEND'] = window.appInfo?.frontendName;
+    // 用户本地时区信息，传递给后端
+    headers.TimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
 
     if (config.download) {
         return download(url);
@@ -209,7 +211,6 @@ export const createLogicService = function createLogicService(apiSchemaList, ser
                     return Promise.reject();
                 }
                 const status = 'success'
-                console.log('自定义接口请求后事件 success: ', response);
                 const { config } = requestInfo;
                 const serviceType = config?.serviceType;
                 if (serviceType && serviceType === 'external') {
@@ -227,7 +228,6 @@ export const createLogicService = function createLogicService(apiSchemaList, ser
         });
         service.postConfig.set('postRequestError', {
             reject(response, params, requestInfo) {
-                console.log('自定义接口请求后事件 fail: ', response);
                 response.Code = response.code || response.status;
                 const status = 'error';
                 const err = response;
