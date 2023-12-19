@@ -49,7 +49,7 @@ function naslDateToLocalDate(date) {
 }
 
 function convertJSDateInTargetTimeZone(date, tz) {
-    return safeNewDate(momentTZ.tz(date, getAppTimezone(tz)).format('YYYY-MM-DD HH:mm:ss.SSS'));
+    return safeNewDate(momentTZ.tz(date, getAppTimezone(tz)).format('YYYY-MM-DD HH:mm:ss'));
 }
 
 function toValue(date, typeKey) {
