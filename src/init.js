@@ -85,10 +85,11 @@ const init = (appConfig, platformConfig, routes, metaData) => {
         // 设置当前语言的翻译信息
         window.Vue.prototype.$vantLang = locale;
 
-        window.Vue.prototype.$vantMessages = {
-            ...window.Vue.prototype.$vantMessages,
-            ...(messages || {}),
-        };
+        const currentMessages = messages || {};
+        Object.keys(currentMessages).forEach((key) => {
+            window.Vue.prototype.$vantMessages[key] = window.Vue.prototype.$vantMessages[key] || {};
+            Object.assign(window.Vue.prototype.$vantMessages[key], currentMessages[key]);
+        });
     }
     Vue.use(LogicsPlugin, metaData);
     Vue.use(RouterPlugin);
