@@ -103,8 +103,24 @@ export const porcessPorts = {
         });
         return res;
     },
+    async getTaskInstanceListV2(query) {
+        const res = await processInitService().getTaskInstanceListV2({
+            body: {
+                ...query,
+            },
+        });
+        return res;
+    },
     async getTaskInstance(query) {
         const res = await processInitService().getTaskInstance({
+            body: {
+                ...query,
+            },
+        });
+        return res;
+    },
+    async getTaskInstanceV2(query) {
+        const res = await processInitService().getTaskInstanceV2({
             body: {
                 ...query,
             },
@@ -161,6 +177,22 @@ export const porcessPorts = {
     },
     async getRejectableTaskDefinitionList(query) {
         const res = await processInitService().getRejectableTaskDefinitionList({
+            body: {
+                ...query,
+            },
+        });
+        return res;
+    },
+    async setProcessDefinitionState(query) {
+        const res = await processInitService().setProcessDefinitionState({
+            body: {
+                ...query,
+            },
+        });
+        return res;
+    },
+    async updateTaskDefinitionStrategy(query) {
+        const res = await processInitService().updateTaskDefinitionStrategy({
             body: {
                 ...query,
             },
