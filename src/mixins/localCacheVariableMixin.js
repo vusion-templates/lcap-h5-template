@@ -38,7 +38,7 @@ export const localCacheVariableMixin = {
             {
               const localCacheValue = storage.get(localCacheVariableKey, true);
               // 若存在 localCacheValue 则同步到 frontendVariables
-              if (localCacheValue) {
+              if (localCacheValue || typeof localCacheValue === 'boolean' || typeof localCacheValue === 'number' || localCacheValue === '') {
                 frontendVariables[localCacheVariableKey] = localCacheValue;
               }
             }
@@ -51,7 +51,7 @@ export const localCacheVariableMixin = {
               const currentValue = frontendVariables[localCacheVariableKey];
 
               // 只同步写入非空值 避免 local 过多冗余数据
-              if (isEmpty(currentValue) && typeof currentValue !== 'boolean' && typeof currentValue !== 'number' && currentValue !== '') {
+              if (isEmpty(currentValue) && typeof currentValue !== 'boolean' && typeof currentValue !== 'number' && typeof currentValue !== 'object' && currentValue !== '') {
                 storage.remove(localCacheVariableKey);
               } else {
                 storage.set(localCacheVariableKey, currentValue, true);
