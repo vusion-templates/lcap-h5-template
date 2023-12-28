@@ -124,7 +124,7 @@ export default {
             exitFullscreen() {
                 return document.exitFullscreen();
             },
-            hasAuth(authPath) {
+            hasAuth({ authPath }) {
                 return authService.has(authPath);
             },
             getLocation() {
