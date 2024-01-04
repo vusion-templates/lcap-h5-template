@@ -98,11 +98,12 @@ const init = (appConfig, platformConfig, routes, metaData) => {
             console.error(err);
         }
     };
+    if (!window?.$toast) {
+        // eslint-disable-next-line new-cap
+        window.$toast = { show: (message) => Toast({ message, position: top }) };
+    }
     if (window?.rendered) {
-        if (!window?.$toast) {
-            // eslint-disable-next-line new-cap
-            window.$toast = { show: (message) => Toast({ message, position: top }) };
-        }
+
         window.rendered();
     }
     const baseResourcePaths = platformConfig.baseResourcePaths || [];
