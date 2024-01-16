@@ -1,8 +1,11 @@
 import Vue from 'vue';
 import queryString from 'query-string';
 
-import auth from '@/apis/auth';
+import { initService as authInitService } from '@/apis/auth';
 import cookie from '@/utils/cookie';
+import { initService as lowauthInitService } from '@/apis/lowauth';
+
+import { getBasePath } from '@/utils/encodeUrl';
 
 const getBaseHeaders = () => {
     const headers = {
@@ -15,12 +18,23 @@ const getBaseHeaders = () => {
 };
 
 const request = function (times) {
-    return auth.GetUser({
-        headers: getBaseHeaders(),
-        config: {
-            noErrorTip: true,
-        },
-    }).then((result) => result.Data).catch((err) => {
+    let userInfoPromise;
+    if (window.appInfo.hasUserCenter) {
+        userInfoPromise = lowauthInitService().GetUser({
+            headers: getBaseHeaders(),
+            config: {
+                noErrorTip: true,
+            },
+        });
+    } else {
+        userInfoPromise = authInitService().GetUser({
+            headers: getBaseHeaders(),
+            config: {
+                noErrorTip: true,
+            },
+        });
+    }
+    return userInfoPromise.then((result) => result.Data).catch((err) => {
         times--;
         if (times > 0) {
             return request(times);
@@ -30,16 +44,24 @@ const request = function (times) {
     });
 };
 
-window.authService = auth;
 let userInfoPromise = null;
 let userResourcesPromise = null;
 
 export default {
     _map: undefined,
+    authService: undefined,
+    lowauthInitService: undefined,
+    start() {
+        this.authService = authInitService();
+        this.lowauthInitService = lowauthInitService();
+        window.authService = this.authService;
+    },
     getUserInfo(times = 1) {
         if (!userInfoPromise) {
             userInfoPromise = request(times).then((userInfo) => {
                 const $global = Vue.prototype.$global = Vue.prototype.$global || {};
+                const frontendVariables = Vue.prototype.$global.frontendVariables || {};
+                frontendVariables.userInfo = userInfo;
                 $global.userInfo = userInfo;
                 return userInfo;
             }).catch((e) => {
@@ -51,44 +73,76 @@ export default {
     },
     getUserResources(DomainName) {
         if (!userResourcesPromise) {
-            userResourcesPromise = auth.GetUserResources({
-                headers: getBaseHeaders(),
-                query: {
-                    DomainName,
-                },
-                config: {
-                    noErrorTip: true,
-                },
-            }).then((result) => {
-                const resources = result.Data.items.filter((resource) => resource.ResourceType === 'ui');
+            if (window.appInfo.hasAuth) {
+                userResourcesPromise = this.lowauthInitService.GetUserResources({
+                    headers: getBaseHeaders(),
+                    query: {
+                        userId: Vue.prototype.$global.userInfo.UserId,
+                        userName: Vue.prototype.$global.userInfo.UserName,
+                    },
+                    config: {
+                        noErrorTip: true,
+                    },
+                }).then((result) => {
+                    let resources = [];
+                    // 初始化权限项
+                    this._map = new Map();
+                    if (Array.isArray(result)) {
+                        resources = result.filter((resource) => resource?.resourceType === 'ui');
+                        resources.forEach((resource) => this._map.set(resource.resourceValue, resource));
+                    }
+                    return resources;
+                }).catch((e) => {
+                    // 获取权限异常
+                    userResourcesPromise = undefined;
+                });
+            } else {
+                // 这个是非下沉应用，调用的是Nuims的接口，此处需非常注意Resource大小写情况，开发时需关注相关测试用例是否覆盖
+                userResourcesPromise = this.authService.GetUserResources({
+                    headers: getBaseHeaders(),
+                    query: {
+                        DomainName,
+                    },
+                    config: {
+                        noErrorTip: true,
+                    },
+                }).then((res) => {
+                    const resources = res.Data.items.reduce((acc, { ResourceType, ResourceValue, ...item }) => {
+                        if (ResourceType === 'ui') {
+                            acc.push({ ...item, ResourceType, ResourceValue, resourceType: ResourceType, resourceValue: ResourceValue }); // 兼容大小写写法，留存大写，避免影响其他隐藏逻辑
+                        }
+                        return acc;
+                    }, []);
 
-                // 初始化权限项
-                this._map = new Map();
-                resources.forEach((resource) => this._map.set(resource.ResourceValue, resource));
-                return resources;
-            }).catch((e) => {
-                // 获取权限异常
-                userResourcesPromise = undefined;
-            });
+                    // 初始化权限项
+                    this._map = new Map();
+                    resources.forEach((resource) => this._map.set(resource.ResourceValue, resource));
+                    return resources;
+                }).catch((e) => {
+                    // 获取权限异常
+                    userResourcesPromise = undefined;
+                });
+            }
         }
         return userResourcesPromise;
     },
     async getKeycloakLogoutUrl() {
         let logoutUrl = '';
+        const basePath = getBasePath();
         if (window.appInfo.hasUserCenter) {
-            // const res = await lowauth.getAppLoginTypes({
-            //     query: {
-            //         Action: 'GetTenantLoginTypes',
-            //         Version: '2020-06-01',
-            //         TenantName: window.appInfo.tenant,
-            //     },
-            // });
-            // const KeycloakConfig = res?.Data.Keycloak;
-            // if (KeycloakConfig) {
-            //     logoutUrl = `${KeycloakConfig?.config?.logoutUrl}?redirect_uri=${window.location.protocol}//${window.location.host}/login`;
-            // }
+            const res = await this.lowauthInitService.getAppLoginTypes({
+                query: {
+                    Action: 'GetTenantLoginTypes',
+                    Version: '2020-06-01',
+                    TenantName: window.appInfo.tenant,
+                },
+            });
+            const KeycloakConfig = res?.Data.Keycloak;
+            if (KeycloakConfig) {
+                logoutUrl = `${KeycloakConfig?.config?.logoutUrl}?redirect_uri=${window.location.protocol}//${window.location.host}${basePath}/login`;
+            }
         } else {
-            const res = await auth.getNuimsTenantLoginTypes({
+            const res = await this.authService.getNuimsTenantLoginTypes({
                 query: {
                     Action: 'GetTenantLoginTypes',
                     Version: '2020-06-01',
@@ -98,7 +152,7 @@ export default {
             const KeycloakConfig = res?.Data.find((item) => (item.LoginType === 'Keycloak'));
 
             if (KeycloakConfig) {
-                logoutUrl = `${KeycloakConfig?.extendProperties?.logoutUrl}?redirect_uri=${window.location.protocol}//${window.location.host}/login`;
+                logoutUrl = `${KeycloakConfig?.extendProperties?.logoutUrl}?redirect_uri=${window.location.protocol}//${window.location.host}${basePath}/login`;
             }
         }
 
@@ -107,21 +161,20 @@ export default {
     async logout() {
         const sleep = (t) => new Promise((r) => setTimeout(r, t));
         if (window.appInfo.hasUserCenter) {
-
-            // const logoutUrl = await this.getKeycloakLogoutUrl();
-            // localStorage.setItem('logoutUrl', logoutUrl);
-            // if (logoutUrl) {
-            //     window.location.href = logoutUrl;
-            //     await sleep(1000);
-            // } else {
-            //     return lowauth.Logout({
-            //         headers: getBaseHeaders(),
-            //     }).then(() => {
-            //         // 用户中心，去除认证和用户名信息
-            //         cookie.erase('authorization');
-            //         cookie.erase('username');
-            //     });
-            // }
+            const logoutUrl = await this.getKeycloakLogoutUrl();
+            localStorage.setItem('logoutUrl', logoutUrl);
+            if (logoutUrl) {
+                window.location.href = logoutUrl;
+                await sleep(1000);
+            } else {
+                return this.lowauthInitService.Logout({
+                    headers: getBaseHeaders(),
+                }).then(() => {
+                    // 用户中心，去除认证和用户名信息
+                    cookie.erase('authorization');
+                    cookie.erase('username');
+                });
+            }
         } else {
             const logoutUrl = await this.getKeycloakLogoutUrl();
             localStorage.setItem('logoutUrl', logoutUrl);
@@ -129,7 +182,7 @@ export default {
                 window.location.href = logoutUrl;
                 await sleep(1000);
             } else {
-                return auth.Logout({
+                return this.authService.Logout({
                     headers: getBaseHeaders(),
                 }).then(() => {
                     cookie.erase('authorization');
@@ -139,19 +192,19 @@ export default {
         }
     },
     loginH5(data) {
-        return auth.LoginH5({
+        return this.authService.LoginH5({
             headers: getBaseHeaders(),
             ...data,
         });
     },
     getNuims(query) {
-        return auth.GetNuims({
+        return this.authService.GetNuims({
             headers: getBaseHeaders(),
             query,
         });
     },
     getConfig() {
-        return auth.GetConfig({
+        return this.authService.GetConfig({
             headers: getBaseHeaders(),
         });
     },
@@ -174,14 +227,11 @@ export default {
      * 是否有权限
      * @param {*} authPath 权限路径，如 /dashboard/entity/list
      */
-    async has(authPath, domainName) {
-        if (!this.isInit()) {
-            await this.getUserResources(domainName);
-        }
+    has(authPath, domainName) {
         return (this._map && this._map.has(authPath)) || false;
     },
 };
 
 export const runAhead = function (domainName) {
-    auth.init(domainName);
+    authInitService().init(domainName);
 };

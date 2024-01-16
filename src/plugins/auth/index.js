@@ -2,6 +2,7 @@ import authService from './authService';
 
 export default {
     install(Vue, options = {}) {
+        authService.start();
         options.allowList = [].concat([], options.allowList);
         const router = options.router;
         const base = (options.base || '').replace(/\/$/, '');
@@ -25,7 +26,7 @@ export default {
          * 账号与权限中心
          */
         Vue.prototype.$auth = authService;
-
+        window.$auth = authService;
         // designer 和 环境直接放行认证和鉴权
         if (process.env.NODE_ENV === 'development' || process.env.VUE_APP_DESIGNER) {
             Vue.directive('auth', {

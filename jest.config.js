@@ -1,9 +1,6 @@
 module.exports = {
     moduleFileExtensions: [
-        'js',
-        'jsx',
-        'json',
-        'vue',
+        'vue', 'js', 'mjs', 'cjs', 'jsx', 'ts', 'tsx', 'json', 'node',
     ],
     transform: {
         '^.+\\.vue$': 'vue-jest',
@@ -16,6 +13,8 @@ module.exports = {
         '^@/(.*)$': '<rootDir>/src/$1',
         '^cloud-ui.vusion.css$': '<rootDir>/node_modules/cloud-ui.vusion/dist-raw/index.css',
         '^cloud-ui.vusion$': '<rootDir>/node_modules/cloud-ui.vusion/dist-raw/index.js',
+        '^@lcap/mobile-ui$': '<rootDir>/node_modules/@lcap/mobile-ui/dist-theme/index.js',
+        '^@lcap/mobile-ui$': '<rootDir>/__mocks__/lcap-mobile-ui.js',
     },
     snapshotSerializers: [
         'jest-serializer-vue',

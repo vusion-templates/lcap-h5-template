@@ -1,7 +1,6 @@
 import cloneDeep from 'lodash/cloneDeep';
 import isEqual from 'lodash/isEqual';
 import isObject from 'lodash/isObject';
-import { utils as cutils } from 'cloud-ui.vusion/dist';
 import {
     addDays, subDays, addMonths, format, formatRFC3339, isValid,
     differenceInYears,
@@ -12,59 +11,122 @@ import {
     differenceInHours,
     differenceInMinutes,
     differenceInSeconds,
+    getDayOfYear, getWeekOfMonth, getQuarter, startOfWeek, getMonth, getWeek, getDate, startOfQuarter,
+    addSeconds, addMinutes, addHours, addQuarters, addYears, addWeeks, formatISO,
+    eachDayOfInterval, isMonday, isTuesday, isWednesday, isThursday, isFriday, isSaturday, isSunday
 } from 'date-fns';
-import { Decimal } from 'decimal.js';
+import { formatInTimeZone } from 'date-fns-tz';
+const moment = require('moment');
+const momentTZ = require('moment-timezone');
 import Vue from 'vue';
+
+import { dateFormatter } from './Formatters';
+
+import { toString, fromString, toastAndThrowError as toastAndThrow, isDefString, isDefNumber, isDefList, isDefMap, typeDefinitionMap } from '../dataTypes/tools';
+import Decimal from 'decimal.js';
+import { getAppTimezone, isValidTimezoneIANAString } from './timezone';
+import { findAsync, mapAsync, filterAsync, findIndexAsync, sortAsync } from './helper';
 
 let enumsMap = {};
 
-function toValue(date, converter) {
+const safeNewDate = (dateStr) => {
+    try {
+        const res = new Date(dateStr.replaceAll('-', '/'));
+        if (['Invalid Date', 'Invalid time value', 'invalid date'].includes(res.toString())) {
+            return new Date(dateStr);
+        } else {
+            return res;
+        }
+    } catch (err) {
+        return new Date(dateStr);
+    }
+};
+
+function naslDateToLocalDate(date) {
+    const localTZ = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    const localDate = momentTZ.tz(date, 'YYYY-MM-DD', localTZ);
+    return safeNewDate(localDate.format('YYYY-MM-DD HH:mm:ss'));
+}
+
+function convertJSDateInTargetTimeZone(date, tz) {
+    return safeNewDate(momentTZ.tz(date, getAppTimezone(tz)).format('YYYY-MM-DD HH:mm:ss'));
+}
+
+function toValue(date, typeKey) {
     if (!date)
         return date;
-    if (converter === 'format')
-        return this.format(date, 'YYYY-MM-DD'); // value 的真实格式
-    else if (converter === 'json')
-        return date.toJSON();
-    else if (converter === 'timestamp')
+    if (typeKey === 'format')
+        return moment(date).format('YYYY-MM-DD'); // value 的真实格式
+    else if (typeKey === 'json')
+        return this.JsonSerialize(date);
+    else if (typeKey === 'timestamp')
         return date.getTime();
     else
         return date;
 }
 /* 改变ios的-时间格式 */
 function fixIOSDateString(value) {
-    if (/^\d{4}-\d{1,2}-\d{1,2}\s\d{1,2}:\d{1,2}:\d{1,2}$/.test(value) || /^\d{4}-\d{1,2}-\d{1,2}/.test(value)) {
+    if (/^\d{4}-\d{1,2}-\d{1,2}\s\d{1,2}:\d{1,2}:\d{1,2}$/.test(value) || /^\d{4}-\d{1,2}-\d{1,2}$/.test(value)) {
         return value.replace(/-/g, '/');
     } else {
         return value;
     }
 }
 
+function uniqueByKey(array, key) {
+    return [...new Map(array.map((x) => [x[key], x])).values()];
+}
+
+function isArrayInBounds(arr, index) {
+    if (!Array.isArray(arr)) {
+        toastAndThrow('传入内容不是数组');
+    }
+    if (typeof index !== 'number' || isNaN(index)) {
+        toastAndThrow('传入下标不是数字');
+    }
+    // 传入要找的下标，大于数组长度
+    if ((index + 1) > arr.length) {
+        toastAndThrow(`列表访问越界，访问下标 ${index}，列表长度 ${arr.length}`);
+    }
+    return true;
+}
+
 export const utils = {
     Vue: undefined,
-    Enum(enumName, value) {
-        if (arguments.length === 0)
+    EnumValueToText(value, enumTypeAnnotation) {
+        const { typeName, typeNamespace } = enumTypeAnnotation || {};
+        if (typeName) {
+            let enumName = typeName;
+            if (typeNamespace?.startsWith('extensions')) {
+                enumName = typeNamespace + '.' + enumName;
+            }
+            if (enumsMap[enumName]) {
+                return enumsMap[enumName][value];
+            }
             return '';
-        else if (arguments.length === 1)
-            return enumsMap[enumName];
-        else if (enumsMap[enumName])
-            return enumsMap[enumName](value);
-        else
-            return '';
+        }
+        return '';
     },
-    EnumValue(enumName, value) {
-        return value;
+    StringToEnumValue(value, enumTypeAnnotation) {
+        const { typeName, typeNamespace } = enumTypeAnnotation || {};
+        if (typeName) {
+            let enumName = typeName;
+            if (typeNamespace?.startsWith('extensions')) {
+                enumName = typeNamespace + '.' + enumName;
+            }
+            if (enumsMap[enumName] && enumsMap[enumName].hasOwnProperty(value)) {
+                return value;
+            }
+            return null;
+        }
+        return null;
     },
-    EnumLabel(enumName, value) {
-        if (arguments.length === 0)
-            return '';
-        else if (arguments.length === 1)
-            return enumsMap[enumName];
-        else if (enumsMap[enumName])
-            return enumsMap[enumName](value);
-        else
-            return '';
-    },
-    EnumList(enumName, value) {
+    EnumToList(enumTypeAnnotation) {
+        const { typeName, typeNamespace } = enumTypeAnnotation || {};
+        let enumName = typeName;
+        if (typeName && typeNamespace?.startsWith('extensions')) {
+            enumName = typeNamespace + '.' + enumName;
+        }
         const enumeration = enumsMap[enumName];
         if (!enumeration)
             return [];
@@ -72,28 +134,60 @@ export const utils = {
             return Object.keys(enumeration).map((key) => ({ text: enumeration[key], value: key }));
         }
     },
-    Split(str, separator) {
-        return str && str.split(separator);
+    JsonSerialize(v, tz) {
+        // 目前入参 v 的类型是 nasl.DateTime、nasl.Date、nasl.Time 时，都是 js 原生 string 类型
+        // 只能使用 regex 粗略判断一下
+        if (this.isInputValidNaslDateTime(v)) {
+            // v3.3 老应用升级的场景，UTC 零时区，零时区展示上用 'Z'，后向兼容
+            // v3.4 新应用，使用默认时区时选项，tz 为空
+            if (!tz) {
+                const d = momentTZ.tz(v, 'UTC').format('YYYY-MM-DDTHH:mm:ss.SSS') + 'Z';
+                return JSON.stringify(d);
+            }
+            // 新应用，设置为零时区，零时区展示上用 'Z'，后向兼容.
+            if (tz === 'UTC') {
+                // TODO: 想用 "+00:00" 展示零时区
+                const d = momentTZ.tz(v, 'UTC').format('YYYY-MM-DDTHH:mm:ss.SSS') + 'Z';
+                return JSON.stringify(d);
+            }
+            // 新应用，设置为其他时区
+            if (tz) {
+                const d = momentTZ.tz(v, getAppTimezone(tz)).format('YYYY-MM-DDTHH:mm:ss.SSSZ');
+                return JSON.stringify(d);
+            }
+        } else if (typeof v === 'string' && /^\d{2}:\d{2}:\d{2}$/.test(v)) {
+            // test if the input v is a pure time-format string in the form of hh:mm:ss
+            return JSON.stringify(v);
+        } else if (typeof v === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(v)) {
+            // test if the input v is a pure date-format string in the form of yyyy-MM-dd
+            return JSON.stringify(v);
+        } else {
+            return JSON.stringify(v);
+        }
     },
-    Join(arr, separator) {
+    Split(str, seperator) {
+        if (Object.prototype.toString.call(str) === '[object String]') {
+            return str.split(seperator);
+        }
+        return [];
+    },
+    Join(arr, seperator) {
         if (Array.isArray(arr)) {
-            return arr.join(separator);
+            return arr.join(seperator);
         }
     },
     Concat(...arr) {
         return arr.join('');
     },
     Length(str1) {
-        // List类型
-        if (Array.isArray(str1)) {
-            return str1.length;
-        }
         // Map类型
         if (isObject(str1)) {
             return Object.keys(str1).length;
         }
-        // string类型
-        return str1 && str1.length;
+        if (typeof str1 !== 'undefined' && str1 !== null && typeof str1.length !== 'undefined') {
+            return str1.length;
+        }
+        return null;
     },
     ToLower(str) {
         return str && str.toLowerCase();
@@ -105,15 +199,20 @@ export const utils = {
         return str && str.trim();
     },
     Get(arr, index) {
-        if (Array.isArray(arr)) {
+        if (isArrayInBounds(arr, index)) {
             return arr[index];
         }
     },
     Set(arr, index, item) {
-        return utils.Vue.set(arr, index, item);
+        if (isArrayInBounds(arr, index)) {
+            return utils.Vue.set(arr, index, item);
+        }
     },
     Contains(arr, item) {
-        return typeof arr.find((ele) => isEqual(ele, item)) !== 'undefined';
+        if (!Array.isArray(arr)) {
+            return false;
+        }
+        return arr.findIndex((e) => isEqual(e, item)) !== -1;
     },
     Add(arr, item) {
         if (Array.isArray(arr)) {
@@ -127,7 +226,7 @@ export const utils = {
         }
     },
     Insert(arr, index, item) {
-        if (Array.isArray(arr)) {
+        if (isArrayInBounds(arr, index)) {
             arr.splice(index, 0, item);
         }
     },
@@ -138,13 +237,287 @@ export const utils = {
         }
     },
     RemoveAt(arr, index) {
-        if (Array.isArray(arr)) {
+        if (isArrayInBounds(arr, index)) {
             return arr.splice(index, 1)[0];
         }
     },
+    ListHead(arr) {
+        if (!Array.isArray(arr) || arr.length === 0) {
+            return null;
+        } else {
+            return arr[0];
+        }
+    },
+    ListLast(arr) {
+        if (!Array.isArray(arr) || arr.length === 0) {
+            return null;
+        } else {
+            return arr[arr.length - 1];
+        }
+    },
+    ListFlatten(arr) {
+        if (Array.isArray(arr) && arr.every((elem) => Array.isArray(elem))) {
+            return arr.flat();
+        } else {
+            return null;
+        }
+    },
+    ListTransform(arr, trans) {
+        if (Array.isArray(arr)) {
+            return arr.map((elem) => trans(elem));
+        } else {
+            return null;
+        }
+    },
+    async ListTransformAsync(arr, trans) {
+        if (Array.isArray(arr)) {
+            return await mapAsync(arr, (elem) => trans(elem));
+        } else {
+            return null;
+        }
+    },
+    ListSum: (arr) => {
+        if (!Array.isArray(arr)) {
+            return null;
+        }
+        const nullRemoved = utils.ListFilter(arr, (elem) => elem !== null && elem !== undefined);
+        return nullRemoved.length === 0 ? null :
+                nullRemoved.reduce((prev, cur) =>
+                    // decimal 可解决 0.1 + 0.2 的精度问题，下同
+                    new Decimal(cur + '').plus(prev), new Decimal('0')).toNumber();
+    },
+    ListProduct: (arr) => {
+        if (!Array.isArray(arr)) {
+            return null;
+        }
+        const nullRemoved = utils.ListFilter(arr, (elem) => elem !== null && elem !== undefined);
+        return nullRemoved.length === 0 ? null :
+                nullRemoved.reduce((prev, cur) =>
+                    new Decimal(cur + '').mul(prev), new Decimal('1')).toNumber();
+    },
+    ListAverage: (arr) => {
+        if (!Array.isArray(arr)) {
+            return null;
+        }
+        const nullRemoved = utils.ListFilter(arr, (elem) => elem !== null && elem !== undefined);
+        return nullRemoved.length === 0 ? null :
+                new Decimal(utils.ListSum(nullRemoved)).div(nullRemoved.length).toNumber();
+    },
+    ListMax: (arr) => {
+        if (!Array.isArray(arr)) {
+            return null;
+        }
+        const nullRemoved = utils.ListFilter(arr, (elem) => elem !== null && elem !== undefined);
+        return nullRemoved.length === 0 ? null :
+                nullRemoved.reduce((prev, cur) => prev >= cur ? prev : cur, nullRemoved[0]);
+    },
+    ListMin: (arr) => {
+        if (!Array.isArray(arr)) {
+            return null;
+        }
+        const nullRemoved = utils.ListFilter(arr, (elem) => elem !== null && elem !== undefined);
+        return nullRemoved.length === 0 ? null :
+                nullRemoved.reduce((prev, cur) => prev <= cur ? prev : cur, nullRemoved[0]);
+    },
+    ListReverse(arr) {
+        if (Array.isArray(arr)) {
+            arr.reverse();
+        }
+    },
+    ListSort(arr, callback, sort) {
+        if (Array.isArray(arr)) {
+            if (typeof callback === 'function') {
+                arr.sort((a, b) => {
+                    const valueA = callback(a);
+                    const valueB = callback(b);
+                    if (Number.isNaN(valueA) || Number.isNaN(valueB) || typeof valueA === 'undefined' || typeof valueB === 'undefined' || valueA === null || valueB === null) {
+                        return 1;
+                    } else {
+                        if (valueA >= valueB) {
+                            if (sort) {
+                                return 1;
+                            }
+                            return -1;
+                        } else {
+                            if (sort) {
+                                return -1;
+                            }
+                            return 1;
+                        }
+                    }
+                });
+            }
+        }
+    },
+    async ListSortAsync(arr, callback, sort) {
+        const sortRule = (valueA, valueB) => {
+            if (Number.isNaN(valueA) || Number.isNaN(valueB) || typeof valueA === 'undefined' || typeof valueB === 'undefined' || valueA === null || valueB === null) {
+                return 1;
+            } else {
+                if (valueA >= valueB) {
+                    if (sort) {
+                        return 1;
+                    }
+                    return -1;
+                } else {
+                    if (sort) {
+                        return -1;
+                    }
+                    return 1;
+                }
+            }
+        };
+        if (Array.isArray(arr)) {
+            if (typeof callback === 'function') {
+                return await sortAsync(arr, sortRule)(callback);
+            }
+        }
+    },
+    ListFind(arr, by) {
+        if (Array.isArray(arr)) {
+            if (typeof by === 'function') {
+                const value = arr.find(by);
+                return (typeof value === 'undefined') ? null : value;
+            }
+        }
+    },
+    async ListFindAsync(arr, by) {
+        if (Array.isArray(arr)) {
+            if (typeof by === 'function') {
+                const value = await findAsync(arr, by);
+                return (typeof value === 'undefined') ? null : value;
+            }
+        }
+    },
+    ListFilter(arr, by) {
+        if (!Array.isArray(arr) || typeof by !== 'function') {
+            return null;
+        }
+        return arr.filter(by);
+    },
+    async ListFilterAsync(arr, by) {
+        if (!Array.isArray(arr) || typeof by !== 'function') {
+            return null;
+        }
+        return await filterAsync(arr, by);
+    },
+    ListFindIndex(arr, callback) {
+        if (Array.isArray(arr)) {
+            if (typeof callback === 'function') {
+                return arr.findIndex(callback);
+            }
+        }
+    },
+    async ListFindIndexAsync(arr, callback) {
+        if (Array.isArray(arr)) {
+            if (typeof callback === 'function') {
+                return await findIndexAsync(arr, callback);
+            }
+        }
+    },
+    ListSlice(arr, start, end) {
+        // 由于 slice 的特性，end 要校验的是长度，而不是下标，所以要减 1
+        if (isArrayInBounds(arr, start) && isArrayInBounds(arr, end - 1)) {
+            return arr.slice(start, end);
+        }
+    },
+    // 不修改原 list，返回新 list
+    ListDistinctBy(arr, listGetVal) {
+        // getVal : <A,B> . A => B 给一个 A 类型的数据，返回 A 类型中被用户选中的 field 的 value
+        // listGetVal: getVal 这样的函数组成的 list
+
+        if (!Array.isArray(arr)) {
+            return null;
+        }
+        // item => List[item.userName, item.id]
+        if (arr.length === 0) {
+            return arr;
+        }
+
+        const res = [];
+        const vis = new Set();
+        for (const item of arr) {
+            // eslint-disable-next-line no-return-await
+            const hashArr = listGetVal.map((fn) => fn(item));
+            // eslint-disable-next-line no-await-in-loop
+            const hash = (hashArr).join('');
+            if (!vis.has(hash)) {
+                vis.add(hash);
+                res.push(item);
+            }
+        }
+        return res;
+    },
+    async ListDistinctByAsync(arr, listGetVal) {
+        // getVal : <A,B> . A => B 给一个 A 类型的数据，返回 A 类型中被用户选中的 field 的 value
+        // listGetVal: getVal 这样的函数组成的 list
+
+        if (!Array.isArray(arr)) {
+            return null;
+        }
+        // item => List[item.userName, item.id]
+        if (arr.length === 0) {
+            return arr;
+        }
+
+        const res = [];
+        const vis = new Set();
+        for (const item of arr) {
+            // eslint-disable-next-line no-return-await
+            const hashArr = listGetVal.map(async (fn) => await fn(item));
+            // eslint-disable-next-line no-await-in-loop
+            const hash = (await Promise.all(hashArr)).join('');
+            if (!vis.has(hash)) {
+                vis.add(hash);
+                res.push(item);
+            }
+        }
+        return res;
+    },
+    ListGroupBy(arr, getVal) {
+        // getVal : <A,B> . A => B 给一个 A 类型的数据，返回 A 类型中被用户选中的 field 的 value
+        if (!arr || typeof getVal !== 'function') {
+            return null;
+        }
+        if (arr.length === 0) {
+            return arr;
+        }
+        const res = {};
+        arr.forEach((e) => {
+            const val = getVal(e);
+            if (res[val]) {
+                // res.get(val) 是一个 array
+                res[val].push(e);
+            } else {
+                res[val] = [e];
+            }
+        });
+        return res;
+    },
+    async ListGroupByAsync(arr, getVal) {
+        // getVal : <A,B> . A => B 给一个 A 类型的数据，返回 A 类型中被用户选中的 field 的 value
+        if (!arr || typeof getVal !== 'function') {
+            return null;
+        }
+        if (arr.length === 0) {
+            return arr;
+        }
+        const res = {};
+        for (let i = 0; i < arr.length; i++) {
+            const e = arr[i];
+            const val = await getVal(e);
+            if (Array.isArray(res[val])) {
+                // res.get(val) 是一个 array
+                res[val].push(e);
+            } else {
+                res[val] = [e];
+            }
+        }
+        return res;
+    },
     MapGet(map, key) {
         if (isObject(map)) {
-            return map[key];
+            return map[key] || null;
         }
     },
     MapPut(map, key, value) {
@@ -154,7 +527,7 @@ export const utils = {
     },
     MapRemove(map, key) {
         if (isObject(map)) {
-            delete map[key];
+            utils.Vue.delete(map, key);
         }
     },
     MapContains(map, key) {
@@ -170,72 +543,340 @@ export const utils = {
         return 0;
     },
     MapValues(map) {
-        if (isObject(map)) {
-            if ('values' in Object) {
-                return Object.values(map);
-            } else {
-                const res = [];
-                for (const key in map) {
-                    if (Object.hasOwnProperty.call(map, key)) {
-                        res.push(map[key]);
-                    }
-                }
-                return res;
-            }
+        if (!isObject(map)) {
+            return [];
         }
-        return [];
-    },
-    MapFilter(map, filterByKey, filterByVal) {
-        if (isObject(map) && typeof filterByKey === 'function' && typeof filterByVal === 'function') {
-            const res = {};
+        if ('values' in Object) {
+            return Object.values(map);
+        } else {
+            const res = [];
             for (const key in map) {
                 if (Object.hasOwnProperty.call(map, key)) {
-                    if (filterByKey.call(this, key) && filterByVal.call(this, map[key])) {
-                        res[key] = map[key];
-                    }
+                    res.push(map[key]);
                 }
-            }
-            if (!Object.keys(res).length) {
-                return null;
             }
             return res;
         }
-        return null;
     },
-    CurrDate() {
-        return new Date().toJSON().replace(/T.+?Z/, '');
+    MapFilter(map, by) {
+        if (!isObject(map) || typeof by !== 'function') {
+            return null;
+        }
+        const res = {};
+        for (const [k, v] of Object.entries(map)) {
+            if (by(k, v)) {
+                res[k] = v;
+            }
+        }
+        return res;
     },
-    CurrTime() {
-        return new Date().toTimeString().split(' ')[0];
+    async MapFilterAsync(map, by) {
+        if (!isObject(map) || typeof by !== 'function') {
+            return null;
+        }
+        const res = {};
+        for (const [k, v] of Object.entries(map)) {
+            if (await by(k, v)) {
+                res[k] = v;
+            }
+        }
+        return res;
     },
-    CurrDateTime() {
-        return new Date().toJSON();
+    MapTransform(map, toKey, toValue) {
+        if (!isObject(map) || typeof toKey !== 'function' || typeof toValue !== 'function') {
+            return null;
+        }
+        const res = {};
+        for (const [k, v] of Object.entries(map)) {
+            res[toKey(k, v)] = toValue(k, v);
+        }
+        return res;
+    },
+    async MapTransformAsync(map, toKey, toValue) {
+        if (!isObject(map) || typeof toKey !== 'function' || typeof toValue !== 'function') {
+            return null;
+        }
+        const res = {};
+        for (const [k, v] of Object.entries(map)) {
+            res[await toKey(k, v)] = await toValue(k, v);
+        }
+        return res;
+    },
+    ListToMap(arr, toKey, toValue) {
+        if (!Array.isArray(arr) || typeof toKey !== 'function' || typeof toValue !== 'function') {
+            return null;
+        }
+        const res = {};
+        for (let i = arr.length - 1; i >= 0; i--) {
+            const e = arr[i];
+            if (toKey(e) !== undefined) {
+                res[toKey(e)] = toValue(e);
+            }
+        }
+
+        return res;
+    },
+    async ListToMapAsync(arr, toKey, toValue) {
+        if (!Array.isArray(arr) || typeof toKey !== 'function' || typeof toValue !== 'function') {
+            return null;
+        }
+        const res = {};
+        for (let i = arr.length - 1; i >= 0; i--) {
+            const e = arr[i];
+            const key = await toKey(e);
+            if (key !== undefined) {
+                res[key] = await toValue(e);
+            }
+        }
+        return res;
+    },
+    ListReverse(arr) {
+        if (Array.isArray(arr)) {
+            arr.reverse();
+        }
+    },
+    ListSort(arr, callback, sort) {
+        if (Array.isArray(arr)) {
+            if (typeof callback === 'function') {
+                arr.sort((a, b) => {
+                    const valueA = callback(a);
+                    const valueB = callback(b);
+                    if (Number.isNaN(valueA) || Number.isNaN(valueB) || typeof valueA === 'undefined' || typeof valueB === 'undefined' || valueA === null || valueB === null) {
+                        return 1;
+                    } else {
+                        if (valueA >= valueB) {
+                            if (sort) {
+                                return 1;
+                            }
+                            return -1;
+                        } else {
+                            if (sort) {
+                                return -1;
+                            }
+                            return 1;
+                        }
+                    }
+                });
+            }
+        }
+    },
+    ListFindAll(arr, callback) {
+        if (Array.isArray(arr)) {
+            if (typeof callback === 'function') {
+                return arr.filter(callback);
+            }
+        }
+    },
+    ListDistinct(arr) {
+        if (Array.isArray(arr)) {
+            const map = new Map();
+            let i = 0;
+            while (i < arr.length) {
+                if (map.get(arr[i])) {
+                    arr.splice(i, 1);
+                    i--;
+                } else {
+                    map.set(arr[i], true);
+                }
+                i++;
+            }
+        }
+    },
+    // 随着 PageOf 失效，可删除
+    ListSliceToPageOf(arr, page, size) {
+        if (Array.isArray(arr) && page) {
+            const start = (page - 1) * size;
+            const end = start + size;
+            const content = arr.slice(start, end);
+            const total = arr.length;
+            const totalPages = Math.ceil(total / size);
+            return {
+                content,
+                number: page,
+                size,
+                numberOfElements: content.length,
+                totalPages,
+                totalElements: total,
+                last: page === totalPages,
+                first: page === 1,
+                empty: total,
+            };
+        }
+    },
+    SliceToListPage(arr, page, size) {
+        if (Array.isArray(arr) && page) {
+            const start = (page - 1) * size;
+            const end = start + size;
+            const list = arr.slice(start, end);
+            const total = arr.length;
+            return { list, total };
+        } else {
+            return { list: [], total: 0 };
+        }
+    },
+    CurrDate(tz) {
+        if (!tz) {
+            return this.CurrDate('global');
+        }
+        const localDate = convertJSDateInTargetTimeZone(new Date(), tz);
+        return moment(localDate).format('YYYY-MM-DD');
+    },
+    CurrTime(tz) {
+        if (!tz) {
+            return this.CurrTime('global');
+        }
+        const localDate = convertJSDateInTargetTimeZone(new Date(), tz);
+        return moment(localDate).format('HH:mm:ss');
+    },
+    CurrDateTime(tz) {
+        // 函数签名用的是 Date 原生对象不是 string，所以先这样就行
+        return new Date();
     },
     AddDays(date = new Date(), amount = 1, converter = 'json') {
-        return toValue(addDays(new Date(fixIOSDateString(date)), amount), converter);
+        return toValue(addDays(safeNewDate(date), amount), converter);
     },
     AddMonths(date = new Date(), amount = 1, converter = 'json') {
         /** 传入的值为标准的时间格式 */
-        return toValue(addMonths(new Date(fixIOSDateString(date)), amount), converter);
+        return toValue(addMonths(safeNewDate(date), amount), converter);
     },
     SubDays(date = new Date(), amount = 1, converter = 'json') {
-        return toValue(subDays(new Date(fixIOSDateString(date)), amount), converter);
+        return toValue(subDays(safeNewDate(date), amount), converter);
+    },
+    GetDateCount(dateStr, metric, tz) {
+        let date;
+        if (this.isInputValidNaslDateTime(dateStr) && !tz) {
+            // v3.3 老应用升级的场景，使用全局配置（全局配置一般默认是‘用户时区’）
+            // v3.4 新应用，使用默认时区时选项，tz 为空
+            date = convertJSDateInTargetTimeZone(dateStr, getAppTimezone('global'));
+        } else if (this.isInputValidNaslDateTime(dateStr) && tz) {
+            // v3.4 新应用，指定了默认值之外的时区选项，必然有时区参数 tz
+            date = convertJSDateInTargetTimeZone(dateStr, tz);
+        } else {
+            // 针对 nasl.Date 类型
+            date = naslDateToLocalDate(dateStr);
+        }
+
+        const [metric1, metric2] = metric.split('-');
+        // 获取当年的最后一天的所在周会返回1，需要额外判断一下
+        function getCurrentWeek(value) {
+            let count = getWeek(value, { weekStartsOn: 1 });
+            if (value.getMonth() + 1 === 12 && count === 1) {
+                count = getWeek(addDays(value, -7), { weekStartsOn: 1 }) + 1;
+            }
+            return count;
+        }
+        switch (metric1) {
+            case 'day':
+                switch (metric2) {
+                    case 'week': return differenceInDays(date, startOfWeek(date, { weekStartsOn: 1 })) + 1;
+                    case 'month': return getDate(date);
+                    case 'quarter': return differenceInDays(date, startOfQuarter(date)) + 1;
+                    case 'year': return getDayOfYear(date);
+                }
+            case 'week':
+                switch (metric2) {
+                    case 'month': return getWeekOfMonth(date);
+                    case 'quarter': return getCurrentWeek(date) - getWeek(startOfQuarter(date)) + 1;
+                    case 'year': return getCurrentWeek(date);
+                }
+            case 'month':
+                switch (metric2) {
+                    case 'quarter': return getMonth(date) + 1 - (getQuarter(date) - 1) * 3;
+                    case 'year': return getMonth(date) + 1;
+                }
+            case 'quarter':
+                return getQuarter(date);
+            default:
+                return null;
+        }
+    },
+    AlterDateTime(dateString, option, count, unit) {
+        const date = safeNewDate(dateString);
+        const amount = option === 'Increase' ? count : -count;
+        let addDate;
+        switch (unit) {
+            case 'second': addDate = addSeconds(date, amount); break;
+            case 'minute': addDate = addMinutes(date, amount); break;
+            case 'hour': addDate = addHours(date, amount); break;
+            case 'day': addDate = addDays(date, amount); break;
+            case 'week': addDate = addWeeks(date, amount); break;
+            case 'month': addDate = addMonths(date, amount); break;
+            case 'quarter': addDate = addQuarters(date, amount); break;
+            case 'year': addDate = addYears(date, amount); break;
+        }
+        if (typeof dateString === 'object' || dateString.includes('T')) {
+            return format(addDate, 'yyyy-MM-dd HH:mm:ss');
+        } else {
+            return format(addDate, 'yyyy-MM-dd');
+        }
+    },
+    isInputValidNaslDateTime(inp) {
+        return inp instanceof Date
+            || (typeof inp === 'string' && /^(\d{4}-\d{2}-\d{2})T(\d{2}:\d{2}:\d{2})/.test(inp))
+            || (typeof inp === 'string' && /^(\d{4}-\d{2}-\d{2}) (\d{2}:\d{2}:\d{2})/.test(inp));
+    },
+    GetSpecificDaysOfWeek(startdatetr, enddatetr, arr, tz) {
+        if (!startdatetr)
+            toastAndThrow(`内置函数GetSpecificDaysOfWeek入参错误：startDate不能为空`);
+        if (!enddatetr)
+            toastAndThrow(`内置函数GetSpecificDaysOfWeek入参错误：endDate不能为空`);
+        if (!Array.isArray(arr)) {
+            toastAndThrow(`内置函数GetSpecificDaysOfWeek入参错误：参数“指定”非合法数组`);
+        }
+
+        let startDate;
+        let endDate;
+        if (this.isInputValidNaslDateTime(startdatetr) && !tz) {
+            // v3.3 老应用升级的场景，使用全局配置（全局配置一般默认是‘用户时区’）
+            // v3.4 新应用，使用默认时区时选项，tz 为空
+            startDate = convertJSDateInTargetTimeZone(startdatetr, getAppTimezone('global'));
+            endDate = convertJSDateInTargetTimeZone(enddatetr, getAppTimezone('global'));
+        } else if (this.isInputValidNaslDateTime(startdatetr) && tz) {
+            // v3.4 新应用，指定了默认值之外的时区选项，必然有时区参数 tz
+            startDate = convertJSDateInTargetTimeZone(startdatetr, getAppTimezone(tz));
+            endDate = convertJSDateInTargetTimeZone(enddatetr, getAppTimezone(tz));
+        } else {
+            // 针对 nasl.Date 类型
+            startDate = naslDateToLocalDate(startdatetr);
+            endDate = naslDateToLocalDate(enddatetr);
+        }
+
+        if (startDate > endDate) {
+            return [];
+        }
+
+        const fns = [isMonday, isTuesday, isWednesday, isThursday, isFriday, isSaturday, isSunday];
+        const dateInRange = eachDayOfInterval({ start: startDate, end: endDate });
+        arr = arr.map((item) => Number(item));
+        const isDays = fns.filter((_, index) => arr.includes((index + 1)));
+        const filtereddate = dateInRange.filter((day) => isDays.some((fn) => fn(day)));
+        if (typeof startdatetr === 'object' || startdatetr.includes('T')) {
+            return filtereddate.map((date) => moment(date).format('YYYY-MM-DD HH:mm:ss'));
+        } else {
+            return filtereddate.map((date) => moment(date).format('YYYY-MM-DD'));
+        }
     },
     FormatDate(value, formatter) {
-        if (!value)
+        if (!value) {
             return '-';
-        return cutils.dateFormatter.format(value, formatter);
+        }
+        return dateFormatter.format(naslDateToLocalDate(value), formatter);
     },
-    FormatDateTime(value, formatter) {
-        if (!value)
+    FormatDateTime(value, formatter, tz) {
+        if (!value) {
             return '-';
-        return cutils.dateFormatter.format(value, formatter);
+        }
+        if (!tz) {
+            return this.FormatDateTime(value, formatter, 'global');
+        }
+        const date = convertJSDateInTargetTimeZone(value, tz);
+        return dateFormatter.format(date, formatter);
     },
     Clone(obj) {
         return cloneDeep(obj);
     },
     New(obj) {
-        return obj;
+        return utils.Vue.prototype.$genInitFromSchema(obj);
     },
     /**
      * 将内容置空，array 置为 []; object 沿用 ClearObject 逻辑; 其他置为 undefined
@@ -246,7 +887,7 @@ export const utils = {
         } else if (isObject(obj)) {
             for (const key in obj) {
                 if (obj.hasOwnProperty(key))
-                    obj[key] = undefined;
+                    obj[key] = null;
             }
         } else {
             obj = undefined;
@@ -290,26 +931,39 @@ export const utils = {
     Convert(value, typeAnnotation) {
         if (typeAnnotation && typeAnnotation.typeKind === 'primitive') {
             if (typeAnnotation.typeName === 'DateTime')
-                return formatRFC3339(new Date(fixIOSDateString(value)));
+                return formatRFC3339(safeNewDate(value));
             else if (typeAnnotation.typeName === 'Date')
-                return format(new Date(fixIOSDateString(value)), 'yyyy/MM/dd');
+                return format(safeNewDate(value), 'yyyy-MM-dd');
             else if (typeAnnotation.typeName === 'Time') {
                 if (/^\d{2}:\d{2}:\d{2}$/.test(value)) // 纯时间 12:30:00
-                    return format(new Date('2022/01/01 ' + value), 'HH:mm:ss');
+                    return format(safeNewDate('2022/01/01 ' + value), 'HH:mm:ss');
                 else
-                    return format(new Date(fixIOSDateString(value)), 'HH:mm:ss');
+                    return format(safeNewDate(value), 'HH:mm:ss');
             } else if (typeAnnotation.typeName === 'String')
                 return String(value);
             else if (typeAnnotation.typeName === 'Double' || typeAnnotation.typeName === 'Decimal') // 小数
                 return parseFloat(+value);
             else if (typeAnnotation.typeName === 'Integer' || typeAnnotation.typeName === 'Long')
                 // 日期时间格式特殊处理; 整数： format 'int' ; 长整数: format: 'long'
-                return /^\d{4}-\d{2}-\d{2}(.*)+/.test(value) ? new Date(fixIOSDateString(value)).getTime() : Math.round(+value);
+                return /^\d{4}-\d{2}-\d{2}(.*)+/.test(value) ? safeNewDate(value).getTime() : Math.round(+value);
             else if (typeAnnotation.typeName === 'Boolean') // 布尔值
                 return !!value;
         }
 
         return value;
+    },
+    ToString(typeKey, value, tz) {
+        // v3.3 老应用升级的场景，使用全局配置（全局配置一般默认是‘用户时区’）
+        // v3.4 新应用，使用默认时区时选项，tz 为空
+        if (typeKey === 'nasl.core.DateTime' && !tz) {
+            return toString(typeKey, value, 'global');
+        } else {
+            // v3.4 新应用，指定了默认值之外的时区选项，必然有时区参数 tz
+            return toString(typeKey, value, getAppTimezone(tz));
+        }
+    },
+    FromString(value, typeKey) {
+        return fromString(value, typeKey);
     },
     /**
      * 数字格式化
@@ -344,16 +998,18 @@ export const utils = {
      * @param {dateTime2} 时间
      * @param {calcType} 计算类型：年(y)、季度(q)、月(M)、星期(w)、天数(d)、小时数(h)、分钟数(m)、秒数(s)
     */
-    DateDiff(dateTime1, dateTime2, calcType) {
-        if (!dateTime1 || !dateTime2)
-            return;
+    DateDiff(dateTime1, dateTime2, calcType, isAbs = true) {
+        if (!dateTime1)
+            toastAndThrow(`内置函数DateDiff入参错误：dateTime1不能为空`);
+        if (!dateTime2)
+            toastAndThrow(`内置函数DateDiff入参错误：dateTime2不能为空`);
         // Time
         const timeReg = /^(20|21|22|23|[0-1]\d):[0-5]\d:[0-5]\d$/;
         if (timeReg.test(dateTime1) && timeReg.test(dateTime2)) {
             dateTime1 = `1970/01/01 ${dateTime1}`;
             dateTime2 = `1970/01/01 ${dateTime2}`;
         }
-        if (!isValid(new Date(fixIOSDateString(dateTime1))) || !isValid(new Date(fixIOSDateString(dateTime2))))
+        if (!isValid(safeNewDate(dateTime1)) || !isValid(safeNewDate(dateTime2)))
             return;
         const map = {
             y: differenceInYears,
@@ -368,7 +1024,23 @@ export const utils = {
         if (!map[calcType])
             return;
         const method = map[calcType];
-        return Math.abs(method(new Date(fixIOSDateString(dateTime2)), new Date(fixIOSDateString(dateTime1))));
+        const diffRes = method(safeNewDate(dateTime2), safeNewDate(dateTime1));
+        return isAbs ? Math.abs(diffRes) : diffRes;
+    },
+    // 时区转换
+    ConvertTimezone(dateTime, tz) {
+        if (!dateTime) {
+            toastAndThrow(`内置函数ConvertTimezone入参错误：指定日期为空`);
+        }
+        if (!isValid(safeNewDate(dateTime))) {
+            toastAndThrow(`内置函数ConvertTimezone入参错误：指定日期不是合法日期类型`);
+        }
+        if (!isValidTimezoneIANAString(tz)) {
+            toastAndThrow(`内置函数ConvertTimezone入参错误：传入时区${tz}不是合法时区字符`);
+        }
+
+        const result = formatInTimeZone(dateTime, tz, "yyyy-MM-dd'T'HH:mm:ssxxx");
+        return result;
     },
     /**
      * 字符串查找
@@ -441,6 +1113,7 @@ export const utils = {
         }
         return str.substr(start, length);
     },
+    // 随着 PageOf 失效，可删除
     /**
      * List<T> 转换为 PageOf<T>
      * @param {List<T>} list 集合
@@ -463,12 +1136,86 @@ export const utils = {
             empty: total,
         };
     },
+    /**
+     * List<T> 转换为 { list: List<T>, total: Integer }
+     * @param {List<T>} list 集合
+     * @param {number} total 总数
+     * @returns {list: List<T>, total: Integer}
+     */
+    CreateListPage(list, total) {
+        return { list, total };
+    },
+    /**
+     * @param {number} value 内容
+     * @param {string} mode 方式
+     * @returns {number} 返回值
+     */
+    Round(value, mode) {
+        const modeMap = {
+            TowardsZero: Decimal.ROUND_DOWN,
+            TowardsInfinity: Decimal.ROUND_UP,
+            HalfUp: Decimal.ROUND_HALF_UP,
+        };
+        return new Decimal(value).toFixed(0, modeMap[mode]);
+    },
+    /**
+     * 空值判断（与）
+     * @param {Object[]} values 值
+     * @returns {boolean} 返回值
+     */
+    HasValue(...values) {
+        const hasValue = (value, typeKey) => {
+            const typeDefinition = typeDefinitionMap[typeKey] || {};
+
+            if (['nasl.core.Null'].includes(typeKey) || value === undefined || value === null) {
+                return false;
+            } else if (['nasl.core.Boolean'].includes(typeKey) || value === true || value === false) {
+                return true;
+            } else if (['nasl.core.DateTime'].includes(typeKey)) {
+                return !!value;
+            } else if (isDefString(typeKey)) {
+                return value.trim() !== '';
+            } else if (isDefNumber(typeKey)) {
+                return !isNaN(value);
+            } else if (isDefList(typeDefinition)) {
+                return value && value.length > 0;
+            } else if (isDefMap(typeDefinition)) {
+                return Object.keys(value).length > 0;
+            } else if (typeof value === 'string') {
+                return value.trim() !== '';
+            } else if (typeof value === 'number') {
+                return !isNaN(value);
+            } else if (Array.isArray(value)) {
+                return value && value.length > 0;
+            } else {
+                // structure/entity
+                return !Object.keys(value).every((key) => {
+                    const v = value[key];
+                    return v === null || v === undefined;
+                });
+            }
+        };
+
+        let isValid = true;
+
+        for (let i = 0; i < values.length; i += 1) {
+            const { value, type } = values[i] || {};
+
+            if (!hasValue(value, type)) {
+                isValid = false;
+                break;
+            }
+        }
+
+        return isValid;
+    },
 };
 
 export default {
     install(Vue, options) {
         utils.Vue = Vue;
         Vue.prototype.$utils = utils;
+        window.$utils = utils;
         enumsMap = options.enumsMap;
     },
 };

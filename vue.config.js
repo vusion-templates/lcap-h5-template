@@ -46,6 +46,7 @@ if (isDesigner) {
 }
 const vueConfig = {
     ...baseConfig,
+    parallel: false,
     pages,
     chainWebpack(config) {
         if (isDesigner) {
@@ -57,6 +58,7 @@ const vueConfig = {
                     args[0].template = path.resolve('./demo.html');
                     return args;
                 });
+
         } else {
             webpackHtml.chain(config, isDevelopment);
             webpackDll.chain(config, publicPathPrefix, isDevelopment);

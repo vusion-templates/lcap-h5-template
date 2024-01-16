@@ -26,15 +26,13 @@ const onProxyReq = function (proxyReq, req, res) {
     cookies.authorization && proxyReq.setHeader('authorization', cookies.authorization);
     cookies.username && proxyReq.setHeader('username', cookies.username);
     proxyReq.setHeader('DomainName', pkg.name.replace(/-client$/, ''));
-
-    // console.log(proxyReq.path, proxyReq.getHeaders());
 };
 module.exports = function (port) {
     const devServer = {
         host,
         port,
         progress: !process.env.SERVER_DEVELOP,
-        open: true,
+        open: false,
         disableHostCheck: true,
         contentBase: path.join(__dirname),
         watchContentBase: false, // dev slow on Windows
